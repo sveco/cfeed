@@ -1,0 +1,4 @@
+﻿http://feeds.newscientist.com/
+http://feeds.newscientist.com/space
+http://feeds.bbci.co.uk/news/rss.xml
+https://www.theregister.co.uk/emergent_tech/artificial_intelligence/headlines.atom

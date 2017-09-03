@@ -1,0 +1,6 @@
+﻿configurable feed display format
+    feedlist-format
+    articlelist-format
+    header-format
+"killfile" feed filters
+configurable highlight
