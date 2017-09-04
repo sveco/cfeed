@@ -12,10 +12,11 @@ namespace CRR
     {
         public string Id { get; set; }
         public string FeedUrl { get; set; }
-
+        public int Index { get; set; }
         private bool _isNew = true;
         public Action<string> OnContentLoaded;
         public bool Matched { get; set; }
+
         public bool IsNew {
             get { return _isNew; }
             private set { _isNew = value; }
@@ -24,7 +25,7 @@ namespace CRR
 
         public string DisplayText {
             get {
-                return $" {Config.getReadState(this.IsNew)} { this.PublishDate.ToString("MMM dd")} { this.Title}";
+                return $" {Configuration.getReadState(this.IsNew)} { this.PublishDate.ToString("MMM dd")} { this.Title}";
             }
         }
         public SyndicationItem Item { set {
@@ -61,13 +62,13 @@ namespace CRR
             Title = i.Title.Text;
         }
 
-        public void LoadOnlineArticle() {
+        public void LoadOnlineArticle(string[] filters) {
             if (OnContentLoaded == null) throw new ArgumentNullException("onLoaded");
             if (Links.Count > 0)
             {
                 var w = new HtmlAgilityPack.HtmlWeb();
                 var doc = w.Load(Links[0].Uri.ToString());
-                HtmlToText conv = new HtmlToText() { Exclude = new List<string> { "orb-banner", "main-nav", "topbar", "bottombar", "fancybox-tmp", "fancybox-loading", "subscription-barrier", "footer", "nav-top", "primary-nav", "related-urls"  } };
+                HtmlToText conv = new HtmlToText() { Filters = filters.ToList() };
                 var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml);
                 OnContentLoaded.Invoke(s);
             }

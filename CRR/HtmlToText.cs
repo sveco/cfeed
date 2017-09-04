@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace HtmlAgilityPack.Samples
 {
@@ -9,7 +10,7 @@ namespace HtmlAgilityPack.Samples
     {
         char[] trimChars = { ' ', '\t', '\n' };
  
-        public List<string> Exclude { get; internal set; }
+        public List<string> Filters { get; internal set; }
 
         public HtmlToText()
         {
@@ -47,10 +48,10 @@ namespace HtmlAgilityPack.Samples
 
         public void ConvertTo(HtmlNode node, TextWriter outText)
         {
-            if (Exclude.Contains(node.Id.Trim()))
+            if (Filters.Select(x => x.TrimStart('#')).Contains(node.Id.Trim()))
                 return;
             if (node.Attributes.Contains("class") &&
-                Exclude.Contains(node.Attributes["class"].Value.Trim()))
+                Filters.Select(x => x.TrimStart('.')).Contains(node.Attributes["class"].Value.Trim()))
                 return;
 
 
@@ -108,6 +109,15 @@ namespace HtmlAgilityPack.Samples
                                 ConvertContentTo(node, outText);
                             }
                             outText.Write(" ");
+                            skip = true;
+                            break;
+                        case "i":
+                            outText.Write("\x1B[3m");
+                            if (node.HasChildNodes)
+                            {
+                                ConvertContentTo(node, outText);
+                            }
+                            outText.Write("\x1B[23m");
                             skip = true;
                             break;
                     }

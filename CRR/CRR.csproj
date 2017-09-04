@@ -36,6 +36,12 @@
     <Reference Include="HtmlAgilityPack, Version=1.5.1.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.1\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
+    <Reference Include="JsonConfig, Version=1.0.5359.16918, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\JsonConfig.1.0.0\lib\JsonConfig.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonFx, Version=2.0.1209.2802, Culture=neutral, PublicKeyToken=315052dd637f8a52, processorArchitecture=MSIL">
+      <HintPath>..\packages\JsonFx.2.0.1209.2802\lib\net40\JsonFx.dll</HintPath>
+    </Reference>
     <Reference Include="LiteDB, Version=3.1.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LiteDB.3.1.3\lib\net35\LiteDB.dll</HintPath>
     </Reference>
@@ -50,7 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Config.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="FeedHandler.cs" />
     <Compile Include="HtmlToText.cs" />
     <Compile Include="Program.cs" />
@@ -60,13 +66,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="settings.conf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="default.conf" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Todo.txt" />
-    <Content Include="urls.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="urls.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Source\Repos\CGui4Net\CGui\CGui.csproj">

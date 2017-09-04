@@ -4,3 +4,8 @@
     header-format
 "killfile" feed filters
 configurable highlight
++article id and class ignore filters
++make settings gracefully default if missing - added default config
+user config as program argument
+n-next unread
++support for custom browser

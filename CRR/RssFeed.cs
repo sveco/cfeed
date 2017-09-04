@@ -1,4 +1,5 @@
-﻿using LiteDB;
+﻿using JsonConfig;
+using LiteDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,9 @@ namespace CRR
 {
     public class RssFeed
     {
-        public string FeedUrl { get; private set; }
+        public string FeedUrl { get; set; }
+        public string[] Filters { get; set; }
+
         public string Title { get; private set; }
         public bool Isloaded { get; private set; } = false;
         public int Index { get; private set; }
@@ -24,7 +27,7 @@ namespace CRR
         private string FormatLine(string Format) {
             return Format
                 .Replace("%i", Index.ToString())
-                .Replace("%n", Config.getReadState(UnreadItems > 0))
+                .Replace("%n", Configuration.getReadState(UnreadItems > 0))
                 .Replace("%u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8))
                 .Replace("%t", Title);
         }
@@ -33,7 +36,7 @@ namespace CRR
         {
             get
             {
-                return FormatLine(Config.FeedListFormat);
+                return FormatLine(Config.Global.UI.Strings.FeedListFormat);
             }
         }
 
@@ -41,11 +44,12 @@ namespace CRR
         {
             get
             {
-                return FormatLine(Config.FeedTitleFormat);
+                return FormatLine(Config.Global.UI.Strings.FeedTitleFormat);
             }
         }
 
         private LiteDatabase _db;
+
         public RssFeed(string url, int index, LiteDatabase db)
         {
             FeedUrl = url;

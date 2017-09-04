@@ -4,6 +4,10 @@
   / __|____| |_ / _ \/ _ \/ _` |
  | (_|_____|  _|  __/  __/ (_| |
   \___|    |_|  \___|\___|\__,_| 
+  Console Feed Reader
+
+  Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and do not use any portion
+  of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
  */
 
 using LiteDB;
@@ -15,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Runtime.InteropServices;
+using JsonConfig;
 
 namespace CRR
 {
@@ -40,29 +45,23 @@ namespace CRR
             mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
             SetConsoleMode(handle, mode);
 
-            var urls = readUrls();
 
             using (var db = new LiteDatabase(@"cfeed.db"))
             {
-                FeedHandler feedHandler = new FeedHandler(urls, db);
+                List<RssFeed> feeds = new List<RssFeed>();
+                var configFeeds = Enumerable.ToList(JsonConfig.Config.Global.Feeds);
+                int i = 0;
+                foreach (var feed in configFeeds)
+                {
+                    feeds.Add(new RssFeed(feed.FeedUrl, i, db) {
+                        Filters = feed.Filters
+                    });
+                    i++;
+                }
+
+                FeedHandler feedHandler = new FeedHandler(feeds, db);
                 feedHandler.DisplayFeedList();
             }
-        }
-
-        private static IList<string> readUrls()
-        {
-            string line;
-            List<string> result = new List<string>();
-
-            // Read the file and display it line by line.
-            System.IO.StreamReader file =
-               new System.IO.StreamReader("urls.txt");
-            while ((line = file.ReadLine()) != null)
-            {
-                result.Add(line);
-            }
-            file.Close();
-            return result;
         }
     }
 }
