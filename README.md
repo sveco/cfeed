@@ -15,7 +15,22 @@ See [settings.conf](https://github.com/sveco/CRR/blob/master/CRR/settings.conf) 
     Feeds: [{FeedUrl: "http://feeds.newscientist.com/"}]
 }
 ```
+
+Any setting in embedded *default.conf* can be overridden in *settings.conf* placed in application root folder.
+
 More about config in next section.
+
+After setting feeds in config file, you can run the app. Application will list configured feeds, and refresh the feed contents in background.
+
+By default, you can open the feed with **Spacebar** or **Enter** key. This will list articles in the feed. Hitting same kays again will open selected feed item. Use **Arrow Up**, **Arrow Down**, **Page Up** and **Page Down** keys to navigate lists. By default return to previous screen using **Backspace** or **Escape** (can be configured differently in settings).
+
+Hitting **R** while on list of feeds will refresh selected feed, and **Control+R** will refresh all feeds."
+
+When on article, article content will be loaded on background. Hitting **O** will open selected article in default (or configured) browser.
+
+![Article List](screenshot1.png "Article List")
+
+
 
 ## Configuration
 TBD
