@@ -30,37 +30,37 @@ namespace CRR
 
         Header feedListHeader = new Header(Config.Global.UI.Strings.ApplicationTitle)
         {
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.FeedListHeaderBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.FeedListHeaderForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground),
             PadChar = '-'
         };
         Footer feedListFooter = new Footer(" Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all")
         {
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.FeedListFooterBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.FeedListFooterForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground),
             PadChar = '-'
         };
         Header articleListHeader = new Header("") {
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleListHeaderBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleListHeaderForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListHeaderBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListHeaderForeground),
             PadChar = '-'
         };
         Footer articleListFooter = new Footer(" ESC/Backspace:Back R:Reload")
         {
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleListFooterBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleListFooterForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterForeground),
             PadChar = '-'
         };
         Header articleHeader = new Header("")
         {
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleHeaderBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleHeaderForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleHeaderBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleHeaderForeground),
             PadChar = '-'
         };
-        Footer articleFooter = new Footer(" ESC/Backspace:Back O:Open in browser N:Next") {
+        Footer articleFooter = new Footer(" ESC/Backspace:Back O:Open in browser N:Next L:Article Link") {
             AutoRefresh = false,
-            BackgroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleFooterBackground),
-            ForegroundColor = Configuration.getColor(Config.Global.UI.Colors.ArticleFooterForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterBackground),
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterForeground),
             PadChar = '-'
         };
 
@@ -70,21 +70,22 @@ namespace CRR
             _db = db;
         }
 
-        public void DisplayFeedList()
+        public void DisplayFeedList(bool refresh)
         {
 
             void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
             {
-                i.Value.Load();
+                i.Value.Load(refresh);
                 i.DisplayText = i.Value.DisplayLine;
-                parent.UpdateItem(i.Index);
             }
+
+            string loadingSuffix = (refresh ? "" : " - Loading...");
 
             var rssFeeds = _feeds
                     .Select((item, index) => new ListItem<RssFeed>()
                     {
                         Index = index,
-                        DisplayText = $"{index + 1} - {item.FeedUrl} - Loading...",
+                        DisplayText = $"{index + 1} - {item.FeedUrl}{loadingSuffix}",
                         Value = item
                     }).ToList();
 
@@ -93,7 +94,7 @@ namespace CRR
             _mainView = new Viewport();
             _mainView.Height = Console.WindowHeight;
 
-            var list = new CGui.Gui.Picklist<RssFeed>(rssFeeds, processItem);
+            var list = new Picklist<RssFeed>(rssFeeds, processItem);
 
             list.Top = Config.Global.UI.Layout.FeedListTop;
             list.Left = Config.Global.UI.Layout.FeedListLeft;
@@ -112,40 +113,38 @@ namespace CRR
         private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
         {
             //Exit app
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.QuitApp.Key, Config.Global.Shortcuts.QuitApp.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.QuitApp.Key, Config.Global.Shortcuts.QuitApp.Modifiers))
             {
                 return false;
             }
 
             //Reload all
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.ReloadAll.Key, Config.Global.Shortcuts.ReloadAll.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.ReloadAll.Key, Config.Global.Shortcuts.ReloadAll.Modifiers))
             {
                 Parallel.ForEach(parent.ListItems, (item) =>
                 {
-                    item.Value.Load();
-                    parent.Refresh();
+                    item.Value.Load(true);
                 });
+                parent.Refresh();
             }
 
             //Reload
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.Reload.Key, Config.Global.Shortcuts.Reload.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.Reload.Key, Config.Global.Shortcuts.Reload.Modifiers))
             {
-                if (selectedItem.Value.Isloaded)
+                if (!selectedItem.Value.IsProcessing)
                 {
                     selectedItem.DisplayText += " - Loading...";
-                    parent.Refresh();
-                    selectedItem.Value.Load();
+                    selectedItem.Value.Load(true);
                     selectedItem.DisplayText = selectedItem.Value.DisplayLine;
-                    parent.Refresh();
                 }
             }
 
             //Open
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.OpenArticle.Key, Config.Global.Shortcuts.OpenArticle.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenArticle.Key, Config.Global.Shortcuts.OpenArticle.Modifiers))
             {
                 if (selectedItem != null)
                 {
-                    if (selectedItem.Value.Isloaded)
+                    if (!selectedItem.Value.IsProcessing)
                     {
                         DisplayArticleList(selectedItem);
                         if (feedListHeader != null) { feedListHeader.Show(); }
@@ -156,7 +155,7 @@ namespace CRR
             }
 
             //Redraw view
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.Refresh.Key, Config.Global.Shortcuts.Refresh.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.RefreshView.Key, Config.Global.Shortcuts.RefreshView.Modifiers))
             {
                 _mainView.Show();
             }
@@ -169,7 +168,7 @@ namespace CRR
                 .Select((item, index) => new ListItem<CFeedItem>()
                 {
                     Index = index,
-                    DisplayText = $"{(index + 1).ToString().PadLeft(3)} {item.DisplayText}",
+                    DisplayText = $"{item.DisplayText}",
                     Value = item
                 });
             _selectedFeed = feed;
@@ -205,6 +204,15 @@ namespace CRR
 
         private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<CFeedItem> selectedItem, Picklist<CFeedItem> parent)
         {
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.MarkRead.Key, Config.Global.Shortcuts.MarkRead.Modifiers))
+            {
+                if (selectedItem != null)
+                {
+                    selectedItem.Value.MarkAsRead(this._db);
+                    selectedItem.DisplayText = $"{(selectedItem.Index + 1).ToString().PadLeft(3)} {selectedItem.Value.DisplayText}";
+                }
+            }
+
             switch (key.Key)
             {
                 case ConsoleKey.Escape:
@@ -224,8 +232,23 @@ namespace CRR
                             articleListHeader.DisplayText += "- Loading...";
                             articleListHeader.Refresh();
                         }
-                        _selectedFeed.Value.Load();
+                        _selectedFeed.Value.Load(true);
+
+                        var items = _selectedFeed.Value.FeedItems
+                            .OrderByDescending(x => x.PublishDate)
+                            .Select((item, index) => {
+                                    item.Index = index + 1;
+                                    return new ListItem<CFeedItem>()
+                                    {
+                                        Index = index,
+                                        DisplayText = $"{item.DisplayText}",
+                                        Value = item
+                                    };
+                                }
+                            );
+                        parent.UpdateList(items);
                         parent.Refresh();
+
                         if (articleListHeader != null)
                         {
                             articleListHeader.DisplayText = _selectedFeed.Value.TitleLine;
@@ -248,7 +271,7 @@ namespace CRR
             }
 
             _selectedArticle.Value.MarkAsRead(this._db);
-            _selectedArticle.DisplayText = $"{(_selectedArticle.Index + 1).ToString().PadLeft(3)} {_selectedArticle.Value.DisplayText}";
+            _selectedArticle.DisplayText = $"{_selectedArticle.Value.DisplayText}";
             if (_selectedFeed != null)
             {
                 _selectedFeed.Value.UnreadItems--;
@@ -263,25 +286,17 @@ namespace CRR
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Feed: " + _selectedArticle.Value.Title);
+            sb.AppendLine("Feed: " + _selectedArticle.Value.FeedUrl);
             sb.AppendLine("Title: " + _selectedArticle.Value.Title);
-            sb.AppendLine("Author(s): ");
-            foreach (var a in _selectedArticle.Value.Authors)
-            {
-                sb.AppendLine(a.Name);
-            }
-            sb.AppendLine("Links: ");
-            foreach (var a in _selectedArticle.Value.Links)
-            {
-                sb.AppendLine(a.Uri.ToString());
-            }
+            sb.AppendLine("Author(s): " + String.Join(", ", _selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
+            sb.AppendLine("Link: " + _selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
             sb.AppendLine("Date: " + _selectedArticle.Value.PublishDate.ToString());
             sb.AppendLine();
 
             Console.Clear();
             if (articleHeader != null)
             {
-                articleHeader.DisplayText = _selectedArticle.Value.FormatLine(Config.Global.UI.Strings.ArticleTitleFormat);
+                articleHeader.DisplayText = _selectedArticle.Value.DisplayTitle;
                 articleHeader.Refresh();
             }
             if (articleFooter != null) { articleFooter.Show(); }
@@ -297,12 +312,14 @@ namespace CRR
             void onContentLoaded(string content)
             {
                 var article = new TextArea(content);
-                article.Top = textArea.LinesCount + 2;
+                article.Top = textArea.LinesCount + 3;
                 article.Left = 2;
-                article.Height = Console.WindowHeight - 11;
+                article.Height = Console.WindowHeight - 12;
                 article.Width = Console.WindowWidth - 6;
                 article.WaitForInput = true;
                 article.OnItemKeyHandler += Article_OnItemKeyHandler;
+                article.ShowScrollbar = true;
+
                 article.Show();
             }
 
@@ -345,7 +362,7 @@ namespace CRR
         private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
         {
             //Next unread
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.NextUnread.Key, Config.Global.Shortcuts.NextUnread.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.NextUnread.Key, Config.Global.Shortcuts.NextUnread.Modifiers))
             {
                 if (_nextUnreadArticle != null && _selectedFeed != null)
                 {
@@ -355,13 +372,13 @@ namespace CRR
             }
 
             //Step back
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.StepBack.Key, Config.Global.Shortcuts.StepBack.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.StepBack.Key, Config.Global.Shortcuts.StepBack.Modifiers))
             {
                 return false;
             }
 
             //Open article
-            if (Configuration.verifyKey(key, Config.Global.Shortcuts.OpenBrowser.Key, Config.Global.Shortcuts.OpenBrowser.Modifiers))
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenBrowser.Key, Config.Global.Shortcuts.OpenBrowser.Modifiers))
             {
                 if (_selectedArticle != null &&
                     _selectedArticle.Value.Links.Count > 0)
@@ -378,7 +395,46 @@ namespace CRR
                         Process.Start(_selectedArticle.Value.Links[0].Uri.ToString());
                     }
                 }
+                return true;
             }
+
+            //Save article
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.SaveArticle.Key, Config.Global.Shortcuts.SaveArticle.Modifiers))
+            {
+                if (_selectedArticle != null)
+                {
+                    using (var sw = File.CreateText(_selectedArticle.Value.ArticleFileName))
+                    {
+                        sw.Write(_selectedArticle.Value.ArticleContent);
+                    }
+                }
+                return true;
+            }
+
+            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenLink.Key, Config.Global.Shortcuts.OpenLink.Modifiers))
+            {
+                if (_selectedArticle != null && _selectedArticle.Value != null && _selectedArticle.Value.IsLoaded)
+                {
+                    var input = new Input("Link #:")
+                    {
+                        Top = Console.WindowHeight - 2
+                    };
+
+                    int linkNumber;
+                    if (int.TryParse(input.InputText, out linkNumber))
+                    {
+                        if (_selectedArticle.Value.ExternalLinks != null 
+                            && _selectedArticle.Value.ExternalLinks.Count >= linkNumber
+                            && linkNumber > 0)
+                        {
+                            Process.Start(Config.Global.Browser, _selectedArticle.Value.ExternalLinks[linkNumber-1].ToString());
+                        }
+                    }
+
+                }
+                return true;
+            }
+
             return true;
         }
     }

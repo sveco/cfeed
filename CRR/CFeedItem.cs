@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack.Samples;
+using JsonConfig;
 using LiteDB;
 using System;
 using System.Collections.Generic;
@@ -10,51 +11,100 @@ namespace CRR
 {
     public class CFeedItem
     {
-        public string Id { get; set; }
+        private IList<Uri> externalLinks;
+        public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
+
+        public bool IsLoaded { get; private set; }
+
+        private static string displayFormat = Config.Global.UI.Strings.ArticleListFormat as string;
+        private static string titleFormat = Config.Global.UI.Strings.ArticleTitleFormat as string;
+        private static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
+        private static string fileNameFormat = Config.Global.SavedFileName;
+
+        public Guid Id { get; set; }
+        public string SyndicationItemId { get; set; }
         public string FeedUrl { get; set; }
-        public int Index { get; set; }
-        private bool _isNew = true;
-        public Action<string> OnContentLoaded;
-        public bool Matched { get; set; }
-
-        public bool IsNew {
-            get { return _isNew; }
-            private set { _isNew = value; }
-        }
-
-
-        public string DisplayText {
-            get {
-                return $" {Configuration.getReadState(this.IsNew)} { this.PublishDate.ToString("MMM dd")} { this.Title}";
-            }
-        }
-        public SyndicationItem Item { set {
-                setValues(value);
-            } }
-
         public DateTime PublishDate { get; set; }
         public string Summary { get; set; }
         public Collection<SyndicationLink> Links { get; set; }
         public Collection<SyndicationPerson> Authors { get; set; }
         public string Title { get; set; }
-        public string FormatLine(string Format)
+
+        [BsonIgnore]
+        public Action<string> OnContentLoaded;
+        public bool Matched { get; set; }
+
+        [BsonIgnore]
+        public int Index { get; set; }
+
+        private bool _isNew = true;
+        public bool IsNew {
+            get { return _isNew; }
+            private set { _isNew = value; }
+        }
+        [BsonIgnore]
+        private string FormatLine(string Format)
         {
             return Format
+                .Replace("%i", Index.ToString().PadLeft(3))
+                .Replace("%n", Configuration.GetReadState(this.IsNew))
+                .Replace("%d", PublishDate.ToString(dateFormat))
                 .Replace("%t", Title);
         }
 
-        public CFeedItem() { }
+        [BsonIgnore]
+        public string DisplayText {
+            get {
+                return FormatLine(displayFormat);
+            }
+        }
 
-        public CFeedItem(SyndicationItem i)
+        [BsonIgnore]
+        public string DisplayTitle
         {
-            setValues(i);
-        }
-        public CFeedItem(SyndicationItem i, Action<string> a) {
-            setValues(i);
-            OnContentLoaded = a;
+            get
+            {
+                return FormatLine(titleFormat);
+            }
         }
 
-        private void setValues(SyndicationItem i) {
+        [BsonIgnore]
+        public string ArticleFileName {
+            get {
+                return FormatLine(fileNameFormat);
+            }
+        }
+
+        [BsonIgnore]
+        public string ArticleContent { get; private set;}
+
+        [BsonIgnore]
+        public SyndicationItem Item {
+            set {
+                SetValues(value);
+            }
+        }
+
+
+        /// <summary>
+        /// Only for serialization. DO NOT USE!
+        /// </summary>
+        public CFeedItem() {
+
+        }
+
+        public CFeedItem(string feedUrl) {
+            FeedUrl = feedUrl;
+        }
+
+        public CFeedItem(string feedUrl, SyndicationItem i)
+        {
+            FeedUrl = feedUrl;
+            Item = i;
+        }
+
+        private void SetValues(SyndicationItem i) {
+            SyndicationItemId = i.Id;
             PublishDate = i.PublishDate.DateTime;
             Summary = i.Summary.Text;
             Links = i.Links;
@@ -69,7 +119,9 @@ namespace CRR
                 var w = new HtmlAgilityPack.HtmlWeb();
                 var doc = w.Load(Links[0].Uri.ToString());
                 HtmlToText conv = new HtmlToText() { Filters = filters.ToList() };
-                var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml);
+                var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out externalLinks);
+                ArticleContent = s;
+                IsLoaded = true;
                 OnContentLoaded.Invoke(s);
             }
         }

@@ -18,14 +18,23 @@ namespace CRR
         public static readonly string ITALIC = "\x1B[1m";
         public static readonly string ITALIC_OFF = "\x1B[21m";
 
-        public static string getReadState(bool IsNew)
+        public static class AnsiColor
         {
-            var width = Math.Max(Config.Global.UI.Strings.ReadStateRead.Length, Config.Global.UI.Strings.ReadStateNew.Length) + 1;
-            var result = IsNew ? Config.Global.UI.Strings.ReadStateNew : Config.Global.UI.Strings.ReadStateRead;
+            public static readonly string Reset = "\x1b[0m";
+            public static readonly string Cyan = "\x1b[36m";
+        }
+
+        private static string readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
+        private static string readStateNew = Config.Global.UI.Strings.ReadStateNew as string;
+
+        public static string GetReadState(bool IsNew)
+        {
+            var width = Math.Max(readStateRead.Length, readStateNew.Length) + 1;
+            var result = IsNew ? readStateNew : readStateRead;
             return result.PadRight(width);
         }
 
-        public static ConsoleColor getColor(string color) {
+        public static ConsoleColor GetColor(string color) {
             ConsoleColor result = new ConsoleColor();
             if (Enum.TryParse<ConsoleColor>(color, out result))
             {
@@ -37,12 +46,11 @@ namespace CRR
 
         }
 
-        public static List<ConsoleKey> getKeys(string[] keys) {
+        public static List<ConsoleKey> GetKeys(string[] keys) {
             List<ConsoleKey> result = new List<ConsoleKey>();
             foreach (var key in keys)
             {
-                ConsoleKey k;
-                if (Enum.TryParse(key, out k))
+                if (Enum.TryParse(key, out ConsoleKey k))
                 {
                     result.Add(k);
                 }
@@ -54,7 +62,7 @@ namespace CRR
             return result;
         }
 
-        public static ConsoleModifiers getModifier(string modifier)
+        public static ConsoleModifiers GetModifier(string modifier)
         {
             ConsoleModifiers result = new ConsoleModifiers();
             if (Enum.TryParse(modifier, out result))
@@ -67,22 +75,26 @@ namespace CRR
             }
         }
 
-        public static ConsoleModifiers getBitviseModifiers(string[] modifiers)
+        public static ConsoleModifiers GetBitviseModifiers(string[] modifiers)
         {
-            return modifiers.Select(x => getModifier(x)).Aggregate<ConsoleModifiers>((running, next) => (running | next));
+            return modifiers.Select(x => GetModifier(x)).Aggregate<ConsoleModifiers>((running, next) => (running | next));
         }
 
-        public static bool verifyKey(ConsoleKeyInfo key, string[] keys, string[] modifiers)
+        public static bool VerifyKey(ConsoleKeyInfo key, string[] keys, string[] modifiers)
         {
-            if (getKeys(keys).Contains(key.Key))
+            if (GetKeys(keys).Contains(key.Key))
             {
-                if (Config.Global.Shortcuts.QuitApp.Modifiers.Length > 0)
+                if (modifiers.Length > 0)
                 {
-                    if ((key.Modifiers & getBitviseModifiers(modifiers)) != 0)
+                    if ((key.Modifiers & GetBitviseModifiers(modifiers)) != 0)
                     {
                         return true;
                     }
                     else { return false; }
+                }
+                if (key.Modifiers != 0)
+                {
+                    return false;
                 }
                 return true;
             }

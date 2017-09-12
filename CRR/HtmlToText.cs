@@ -8,6 +8,9 @@ namespace HtmlAgilityPack.Samples
 {
     public class HtmlToText
     {
+        IList<Uri> Links = new List<Uri>();
+        Uri BaseUri;
+
         char[] trimChars = { ' ', '\t', '\n' };
  
         public List<string> Filters { get; internal set; }
@@ -27,14 +30,15 @@ namespace HtmlAgilityPack.Samples
             return sw.ToString();
         }
 
-        public string ConvertHtml(string html)
+        public string ConvertHtml(string html, Uri baseUri, out IList<Uri> links)
         {
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
-
+            BaseUri = baseUri;
             StringWriter sw = new StringWriter();
             ConvertTo(doc.DocumentNode, sw);
             sw.Flush();
+            links = this.Links;
             return sw.ToString();
         }
 
@@ -97,27 +101,47 @@ namespace HtmlAgilityPack.Samples
                             outText.Write(Environment.NewLine);
                             break;
                         case "li":
-                            outText.Write(Environment.NewLine + "• ");
+                            outText.Write(Environment.NewLine + "* ");
                             break;
                         case "img":
                             outText.Write(Environment.NewLine + "[img:" + node.Attributes["alt"]?.Value + "]");
                             break;
                         case "a":
-                            outText.Write(" ");
+                            outText.Write("[Link:");
                             if (node.HasChildNodes)
                             {
                                 ConvertContentTo(node, outText);
                             }
-                            outText.Write(" ");
+                            outText.Write("]");
+                            if (node.Attributes.Contains("href"))
+                            {
+                                var uriName = node.Attributes["href"].Value;
+
+                                Uri uriResult;
+                                if (Uri.TryCreate(uriName, UriKind.Absolute, out uriResult)
+                                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
+                                {
+                                    Links.Add(uriResult);
+                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
+                                }
+
+                                if (Uri.TryCreate(BaseUri, uriName, out uriResult)
+                                    && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
+                                {
+                                    Links.Add(uriResult);
+                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
+                                }
+
+                            }
                             skip = true;
                             break;
                         case "i":
-                            outText.Write("\x1B[3m");
+                            outText.Write(" ");
                             if (node.HasChildNodes)
                             {
                                 ConvertContentTo(node, outText);
                             }
-                            outText.Write("\x1B[23m");
+                            outText.Write(" ");
                             skip = true;
                             break;
                     }

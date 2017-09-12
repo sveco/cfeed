@@ -1,11 +1,8 @@
 ﻿using JsonConfig;
 using LiteDB;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace CRR
@@ -13,10 +10,13 @@ namespace CRR
     public class RssFeed
     {
         public string FeedUrl { get; set; }
+        [BsonIgnore]
         public string[] Filters { get; set; }
 
         public string Title { get; private set; }
+        [BsonIgnore]
         public bool Isloaded { get; private set; } = false;
+        public bool IsProcessing { get; private set; } = false;
         public int Index { get; private set; }
         private SyndicationFeed Feed { get; set; }
 
@@ -24,14 +24,16 @@ namespace CRR
         public int UnreadItems { get; set; }
         public IList<CFeedItem> FeedItems { get; set; }
 
+        [BsonIgnore]
         private string FormatLine(string Format) {
             return Format
                 .Replace("%i", Index.ToString())
-                .Replace("%n", Configuration.getReadState(UnreadItems > 0))
+                .Replace("%n", Configuration.GetReadState(UnreadItems > 0))
                 .Replace("%u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8))
-                .Replace("%t", Title);
+                .Replace("%t", Title != null ? Title : FeedUrl);
         }
 
+        [BsonIgnore]
         public string DisplayLine
         {
             get
@@ -40,6 +42,7 @@ namespace CRR
             }
         }
 
+        [BsonIgnore]
         public string TitleLine
         {
             get
@@ -58,59 +61,66 @@ namespace CRR
             FeedItems = new List<CFeedItem>();
         }
 
-        private void getFeed()
+        private void GetFeed(bool refresh)
         {
+            IsProcessing = true;
             UnreadItems = 0;
             FeedItems.Clear();
+            int index = 0;
 
-            XmlReaderSettings settings = new XmlReaderSettings() {
-                DtdProcessing = DtdProcessing.Parse
-            };
-            XmlReader reader = XmlReader.Create(FeedUrl, settings);
-            this.Feed = SyndicationFeed.Load(reader);
-            this.Title = Feed.Title.Text;
-            reader.Close();
-            Isloaded = true;
-
+            //load items from db
             var items = _db.GetCollection<CFeedItem>("items");
-            var currentFeedItems = items.Find(x => x.FeedUrl == FeedUrl);
 
-            foreach (var i in this.Feed.Items)
+            this.FeedItems = items.Find(x => x.FeedUrl == FeedUrl)
+                .OrderByDescending(x => x.PublishDate)
+                .Select((item, x) => { item.Index = x + 1; return item; })
+                .ToList();
+
+            //if refresh is on, get feed from web
+            if (refresh)
             {
-                var result = items.Find(x => x.Id == i.Id).FirstOrDefault();
-                //var savedFeedItem = currentFeedItems.Where(x => x.Id == i.Id).FirstOrDefault();
-                if (result != null)
+                XmlReaderSettings settings = new XmlReaderSettings()
                 {
-                    UnreadItems += result.IsNew ? 1 : 0;
-                    result.Item = i;
-                    items.Update(result);
-                    this.FeedItems.Add(result);
-                    result.Matched = true;
-                }
-                else
+                    DtdProcessing = DtdProcessing.Parse
+                };
+                XmlReader reader = XmlReader.Create(FeedUrl, settings);
+                this.Feed = SyndicationFeed.Load(reader);
+                this.Title = Feed.Title.Text;
+                reader.Close();
+                Isloaded = true;
+                foreach (var i in this.Feed.Items)
                 {
-                    UnreadItems++;
-                    var newItem = new CFeedItem {Id = i.Id,  FeedUrl = FeedUrl, Item = i };
-                    items.Insert(newItem);
-                    this.FeedItems.Add(newItem);
+                    var result = items.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
+                    if (result != null)
+                    {
+                        //UnreadItems += result.IsNew ? 1 : 0;
+                        result.Item = i;
+                        result.Index = index + 1;
+                        items.Update(result);
+                    }
+                    else
+                    {
+                        //UnreadItems++;
+                        var newItem = new CFeedItem(FeedUrl, i)
+                        {
+                            FeedUrl = FeedUrl,
+                            Index = index + 1
+                        };
+                        items.Insert(newItem);
+                        this.FeedItems.Add(newItem);
+                    }
+                    index++;
                 }
             }
 
-            foreach (var saved in currentFeedItems)
-            {
-                if (this.FeedItems.Count(x => x.Id == saved.Id) == 0)
-                {
-                    this.FeedItems.Add(saved);
-                }
-            }
-
-
+            UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
             TotalItems = this.FeedItems.Count();
+            IsProcessing = false;
         }
 
-        public void Load()
+        public void Load(bool refresh)
         {
-            this.getFeed();
+            this.GetFeed(refresh);
         }
     }
 }

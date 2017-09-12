@@ -9,3 +9,10 @@ configurable highlight
 user config as program argument
 n-next unread
 +support for custom browser
+support for custom sort order
+saving article content
+opml support / rewrite url config
+list article urls
+mark as read
+search
+purge articles
