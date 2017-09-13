@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace HtmlAgilityPack.Samples
 {
@@ -122,14 +123,14 @@ namespace HtmlAgilityPack.Samples
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
+                                    outText.Write($"{Configuration.AnsiColor.Cyan} [{Links.Count}]  {Configuration.AnsiColor.Reset}");
                                 }
 
                                 if (Uri.TryCreate(BaseUri, uriName, out uriResult)
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
+                                    outText.Write($"{Configuration.AnsiColor.Cyan} [{Links.Count}]  {Configuration.AnsiColor.Reset}");
                                 }
 
                             }

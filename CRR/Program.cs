@@ -81,7 +81,7 @@ namespace CRR
                 }
 
                 FeedHandler feedHandler = new FeedHandler(feeds, db);
-                feedHandler.DisplayFeedList(false);
+                feedHandler.DisplayFeedList(true);
             }
         }
     }

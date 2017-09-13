@@ -9,12 +9,15 @@ using System.Text;
 using System.Threading.Tasks;
 using JsonConfig;
 using System.IO;
+using System.Threading;
 
 namespace CRR
 {
     public class FeedHandler
     {
         private static string articleRootPath = Config.Global.SavedFileRoot;
+        private static string loadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
+        private static string loadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
 
         private IList<RssFeed> _feeds = new List<RssFeed>();
         private LiteDatabase _db;
@@ -74,14 +77,17 @@ namespace CRR
 
         public void DisplayFeedList(bool refresh)
         {
+            string prefix = (refresh ? "" : loadingPrefix);
+            string suffix = (refresh ? "" : loadingSuffix);
 
             void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
             {
-                i.Value.Load(refresh);
-                i.DisplayText = i.Value.DisplayLine;
+                new Thread(delegate () {
+                    i.DisplayText = prefix + i.DisplayText + suffix;
+                    i.Value.Load(refresh);
+                    i.DisplayText = i.Value.DisplayLine;
+                }).Start();
             }
-
-            string loadingSuffix = (refresh ? "" : " - Loading...");
 
             var rssFeeds = _feeds
                     .Select((item, index) => new ListItem<RssFeed>()
@@ -132,7 +138,7 @@ namespace CRR
             {
                 Parallel.ForEach(parent.ListItems, (item) =>
                 {
-                    item.DisplayText += " - Loading...";
+                    item.DisplayText = loadingPrefix + item.DisplayText + loadingSuffix;
                     item.Value.Load(true);
                     item.DisplayText = item.Value.DisplayLine;
                 });
@@ -144,9 +150,11 @@ namespace CRR
             {
                 if (!selectedItem.Value.IsProcessing)
                 {
-                    selectedItem.DisplayText += " - Loading...";
-                    selectedItem.Value.Load(true);
-                    selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+                    new Thread(delegate () {
+                        selectedItem.DisplayText = loadingPrefix + selectedItem.DisplayText + loadingSuffix;
+                        selectedItem.Value.Load(true);
+                        selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+                    }).Start();
                 }
             }
 
@@ -240,7 +248,7 @@ namespace CRR
                     {
                         if (articleListHeader != null)
                         {
-                            articleListHeader.DisplayText += "- Loading...";
+                            articleListHeader.DisplayText = loadingPrefix + articleListHeader.DisplayText + loadingSuffix;
                             articleListHeader.Refresh();
                         }
                         _selectedFeed.Value.Load(true);
