@@ -4,8 +4,10 @@ using LiteDB;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 
 namespace CRR
 {
@@ -53,6 +55,35 @@ namespace CRR
         }
 
         [BsonIgnore]
+        private string FormatFileName(string Format)
+        {
+            var fullPath = Format
+                .Replace("%i", Index.ToString().PadLeft(3))
+                .Replace("%n", Configuration.GetReadState(this.IsNew))
+                .Replace("%d", PublishDate.ToString(dateFormat))
+                .Replace("%t", Title);
+
+            var pathEndsAt = fullPath.LastIndexOf('\\');
+            string result;
+            if (pathEndsAt > 0)
+            {
+                var pathOnly = fullPath.Substring(0, pathEndsAt).SanitizePath();
+                var fileNameOnly = fullPath.Substring(pathEndsAt, fullPath.Length - pathEndsAt).SanitizeFileName();
+                result = pathOnly + "\\" + fileNameOnly;
+            }
+            else {
+                result = fullPath.SanitizeFileName();
+            }
+
+            if (!Path.IsPathRooted(result))
+            {
+                result = System.IO.Path.GetFullPath(result);
+            }
+
+            return result;
+        }
+
+        [BsonIgnore]
         public string DisplayText {
             get {
                 return FormatLine(displayFormat);
@@ -71,7 +102,7 @@ namespace CRR
         [BsonIgnore]
         public string ArticleFileName {
             get {
-                return FormatLine(fileNameFormat);
+                return FormatFileName(fileNameFormat);
             }
         }
 
@@ -122,7 +153,20 @@ namespace CRR
                 var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out externalLinks);
                 ArticleContent = s;
                 IsLoaded = true;
-                OnContentLoaded.Invoke(s);
+                Save();
+                OnContentLoaded.Invoke(ArticleContent);
+            }
+        }
+
+        public void LoadArticle(string[] filters)
+        {
+            if (File.Exists(ArticleFileName)) {
+                ArticleContent = File.ReadAllText(ArticleFileName);
+                IsLoaded = true;
+                OnContentLoaded.Invoke(ArticleContent);
+            }
+            else {
+                LoadOnlineArticle(filters);
             }
         }
 
@@ -135,6 +179,23 @@ namespace CRR
             {
                 result.IsNew = false;
                 items.Update(result);
+            }
+        }
+
+        internal void Save()
+        {
+            var filename = ArticleFileName;
+
+            FileInfo i = new FileInfo(filename);
+
+            if (!i.Directory.Exists)
+            {
+                i.Directory.Create();
+            }
+
+            using (var sw = File.CreateText(filename))
+            {
+                sw.Write(ArticleContent);
             }
         }
     }

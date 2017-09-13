@@ -14,6 +14,8 @@ namespace CRR
 {
     public class FeedHandler
     {
+        private static string articleRootPath = Config.Global.SavedFileRoot;
+
         private IList<RssFeed> _feeds = new List<RssFeed>();
         private LiteDatabase _db;
         private ListItem<CFeedItem> _selectedArticle;
@@ -25,8 +27,8 @@ namespace CRR
         private string[] _filters = new string[] { };
 
         private Viewport _mainView;
-        private Viewport _articelListView;
-        private Viewport _articleView;
+        //private Viewport _articelListView;
+        //private Viewport _articleView;
 
         Header feedListHeader = new Header(Config.Global.UI.Strings.ApplicationTitle)
         {
@@ -92,7 +94,14 @@ namespace CRR
 
             //Initialize mainview
             _mainView = new Viewport();
-            _mainView.Height = Console.WindowHeight;
+            if (!(Config.Global.UI.Layout.WindowWidth is NullExceptionPreventer))
+            {
+                _mainView.Width = Config.Global.UI.Layout.WindowWidth;
+            }
+            if (!(Config.Global.UI.Layout.WindowHeight is NullExceptionPreventer))
+            {
+                _mainView.Height = Config.Global.UI.Layout.WindowHeight;
+            }
 
             var list = new Picklist<RssFeed>(rssFeeds, processItem);
 
@@ -123,7 +132,9 @@ namespace CRR
             {
                 Parallel.ForEach(parent.ListItems, (item) =>
                 {
+                    item.DisplayText += " - Loading...";
                     item.Value.Load(true);
+                    item.DisplayText = item.Value.DisplayLine;
                 });
                 parent.Refresh();
             }
@@ -336,7 +347,7 @@ namespace CRR
                 PrepareArticle();
 
                 Parallel.Invoke(
-                    new Action(() => _selectedArticle.Value.LoadOnlineArticle(_filters)),
+                    new Action(() => _selectedArticle.Value.LoadArticle(_filters)),
                     new Action(() => _articleContent.Show())
                     );
                 //Given lack of inspiration and a late hour, i commit this code for next article in hope that one day I will rewrite it
@@ -347,7 +358,7 @@ namespace CRR
                     _selectedArticle = _nextUnreadArticle;
                     PrepareArticle();
                     Parallel.Invoke(
-                        new Action(() => _selectedArticle.Value.LoadOnlineArticle(_filters)),
+                        new Action(() => _selectedArticle.Value.LoadArticle(_filters)),
                         new Action(() => _articleContent.Show())
                         );
                 }
@@ -403,10 +414,7 @@ namespace CRR
             {
                 if (_selectedArticle != null)
                 {
-                    using (var sw = File.CreateText(_selectedArticle.Value.ArticleFileName))
-                    {
-                        sw.Write(_selectedArticle.Value.ArticleContent);
-                    }
+                    _selectedArticle.Value.Save();
                 }
                 return true;
             }
@@ -427,7 +435,15 @@ namespace CRR
                             && _selectedArticle.Value.ExternalLinks.Count >= linkNumber
                             && linkNumber > 0)
                         {
-                            Process.Start(Config.Global.Browser, _selectedArticle.Value.ExternalLinks[linkNumber-1].ToString());
+                            try
+                            {
+                                Process.Start(Config.Global.Browser, _selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                            }
+                            catch (System.ComponentModel.Win32Exception ex)
+                            {
+                                Debug.Write(ex.Message);
+                                Debug.Write(ex.StackTrace);
+                            }
                         }
                     }
 

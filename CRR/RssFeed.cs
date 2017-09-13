@@ -14,6 +14,9 @@ namespace CRR
         public string[] Filters { get; set; }
 
         public string Title { get; private set; }
+
+        public string CustomTitle { get; set; }
+
         [BsonIgnore]
         public bool Isloaded { get; private set; } = false;
         public bool IsProcessing { get; private set; } = false;
@@ -27,10 +30,10 @@ namespace CRR
         [BsonIgnore]
         private string FormatLine(string Format) {
             return Format
-                .Replace("%i", Index.ToString())
+                .Replace("%i", (Index + 1).ToString())
                 .Replace("%n", Configuration.GetReadState(UnreadItems > 0))
                 .Replace("%u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8))
-                .Replace("%t", Title != null ? Title : FeedUrl);
+                .Replace("%t", CustomTitle ?? Title ?? FeedUrl);
         }
 
         [BsonIgnore]
@@ -53,12 +56,13 @@ namespace CRR
 
         private LiteDatabase _db;
 
-        public RssFeed(string url, int index, LiteDatabase db)
+        public RssFeed(string url, int index, LiteDatabase db, string customTitle = "")
         {
             FeedUrl = url;
             Index = index;
             _db = db;
             FeedItems = new List<CFeedItem>();
+            CustomTitle = customTitle;
         }
 
         private void GetFeed(bool refresh)

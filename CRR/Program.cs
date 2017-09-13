@@ -74,7 +74,7 @@ namespace CRR
                 int i = 0;
                 foreach (var feed in configFeeds)
                 {
-                    feeds.Add(new RssFeed(feed.FeedUrl, i, db) {
+                    feeds.Add(new RssFeed(feed.FeedUrl, i, db, feed.Title) {
                         Filters = feed.Filters
                     });
                     i++;
