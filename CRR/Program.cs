@@ -31,6 +31,7 @@ THE SOFTWARE.
 
  */
 
+using CGui.Gui;
 using JsonConfig;
 using LiteDB;
 using System;
@@ -49,25 +50,37 @@ namespace CRR
         const uint ENABLE_QUICK_EDIT = 0x0040;
         const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
 
-        private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
-        {
-            // Put your own handler here
-            return true;
-        }
+        //private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
+        //{
+        //    // Put your own handler here
+        //    return true;
+        //}
 
         static void Main(string[] args)
         {
+            var arguments = new ArgumentParser(args);
+
             var handle = GetStdHandle(STD_OUTPUT_HANDLE);
             if (GetConsoleMode(handle, out uint mode))
             {
                 mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
                 mode |= DISABLE_NEWLINE_AUTO_RETURN;
-                mode |= ENABLE_EXTENDED_FLAGS;
+                //mode |= ENABLE_EXTENDED_FLAGS;
                 SetConsoleMode(handle, mode);
             }
-            SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
+            //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
 
-            using (var db = new LiteDatabase(@"cfeed.db"))
+            //arguments
+            var database = arguments.GetArgValue<string>("d", Config.Global.Database);
+            var refresh = arguments.GetArgValue<bool>("r", Config.Global.Refresh);
+
+            //show help?
+            if (arguments.GetArgValue<bool>("h"))
+            {
+                ShowHelp();
+            }
+
+            using (var db = new LiteDatabase(database))
             {
                 List<RssFeed> feeds = new List<RssFeed>();
                 var configFeeds = Enumerable.ToList(Config.Global.Feeds);
@@ -81,8 +94,20 @@ namespace CRR
                 }
 
                 FeedHandler feedHandler = new FeedHandler(feeds, db);
-                feedHandler.DisplayFeedList(true);
+                feedHandler.DisplayFeedList(refresh);
             }
+        }
+
+        private static void ShowHelp()
+        {
+            var content = "TBD: Help. Esc to continue to app.";
+            var help = new TextArea(content);
+            help.Top = 0;
+            help.Left = 0;
+            help.Width = Console.WindowWidth;
+            help.Height = Console.WindowHeight;
+            help.WaitForInput = true;
+            help.Show();
         }
     }
 }

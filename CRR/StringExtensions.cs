@@ -23,5 +23,11 @@ namespace CRR
             Regex r = new Regex(string.Format("[{0}]", Regex.Escape(regexSearch)));
             return r.Replace(path, "");
         }
+
+        public static int VisibleLength(this string str) {
+            var stripedAnsi = Regex.Replace(str, @"\e\[(\d+;)*(\d+)?[ABCDHJKfmsu]", "");
+            var stripedControl = Regex.Replace(stripedAnsi, @"[^\x20-\x7F]", "");
+            return stripedControl.Length;
+        }
     }
 }

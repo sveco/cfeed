@@ -13,9 +13,9 @@ namespace CRR
 {
     public class CFeedItem
     {
-        private IList<Uri> externalLinks;
-        public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
-
+        //private IList<Uri> externalLinks;
+        //public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
+        [BsonIgnore]
         public bool IsLoaded { get; private set; }
 
         private static string displayFormat = Config.Global.UI.Strings.ArticleListFormat as string;
@@ -30,6 +30,9 @@ namespace CRR
         public string Summary { get; set; }
         public Collection<SyndicationLink> Links { get; set; }
         public Collection<SyndicationPerson> Authors { get; set; }
+
+        public Collection<Uri> ExternalLinks { get; set; }
+
         public string Title { get; set; }
 
         [BsonIgnore]
@@ -143,14 +146,25 @@ namespace CRR
             Title = i.Title.Text;
         }
 
-        public void LoadOnlineArticle(string[] filters) {
+        public void LoadOnlineArticle(string[] filters, LiteDatabase db) {
             if (OnContentLoaded == null) throw new ArgumentNullException("onLoaded");
             if (Links.Count > 0)
             {
                 var w = new HtmlAgilityPack.HtmlWeb();
                 var doc = w.Load(Links[0].Uri.ToString());
                 HtmlToText conv = new HtmlToText() { Filters = filters.ToList() };
-                var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out externalLinks);
+                Collection<Uri> links = new Collection<Uri>();
+                var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links);
+                ExternalLinks = links;
+
+                var items = db.GetCollection<CFeedItem>("items");
+                var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+                if (result != null)
+                {
+                    result.ExternalLinks = links;
+                    items.Update(result);
+                }
+
                 ArticleContent = s;
                 IsLoaded = true;
                 Save();
@@ -158,7 +172,7 @@ namespace CRR
             }
         }
 
-        public void LoadArticle(string[] filters)
+        public void LoadArticle(string[] filters, LiteDatabase db)
         {
             if (File.Exists(ArticleFileName)) {
                 ArticleContent = File.ReadAllText(ArticleFileName);
@@ -166,7 +180,7 @@ namespace CRR
                 OnContentLoaded.Invoke(ArticleContent);
             }
             else {
-                LoadOnlineArticle(filters);
+                LoadOnlineArticle(filters, db);
             }
         }
 

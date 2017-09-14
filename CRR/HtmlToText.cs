@@ -1,6 +1,7 @@
 ﻿using CRR;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace HtmlAgilityPack.Samples
 {
     public class HtmlToText
     {
-        IList<Uri> Links = new List<Uri>();
+        Collection<Uri> Links = new Collection<Uri>();
         Uri BaseUri;
 
         char[] trimChars = { ' ', '\t', '\n' };
@@ -31,7 +32,7 @@ namespace HtmlAgilityPack.Samples
             return sw.ToString();
         }
 
-        public string ConvertHtml(string html, Uri baseUri, out IList<Uri> links)
+        public string ConvertHtml(string html, Uri baseUri, out Collection<Uri> links)
         {
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -123,14 +124,14 @@ namespace HtmlAgilityPack.Samples
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write($"{Configuration.AnsiColor.Cyan} [{Links.Count}]  {Configuration.AnsiColor.Reset}");
+                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
                                 }
 
                                 if (Uri.TryCreate(BaseUri, uriName, out uriResult)
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write($"{Configuration.AnsiColor.Cyan} [{Links.Count}]  {Configuration.AnsiColor.Reset}");
+                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
                                 }
 
                             }

@@ -355,7 +355,7 @@ namespace CRR
                 PrepareArticle();
 
                 Parallel.Invoke(
-                    new Action(() => _selectedArticle.Value.LoadArticle(_filters)),
+                    new Action(() => _selectedArticle.Value.LoadArticle(_filters, _db)),
                     new Action(() => _articleContent.Show())
                     );
                 //Given lack of inspiration and a late hour, i commit this code for next article in hope that one day I will rewrite it
@@ -366,7 +366,7 @@ namespace CRR
                     _selectedArticle = _nextUnreadArticle;
                     PrepareArticle();
                     Parallel.Invoke(
-                        new Action(() => _selectedArticle.Value.LoadArticle(_filters)),
+                        new Action(() => _selectedArticle.Value.LoadArticle(_filters, _db)),
                         new Action(() => _articleContent.Show())
                         );
                 }

@@ -26,7 +26,7 @@ namespace CRR
 
         private static string readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
         private static string readStateNew = Config.Global.UI.Strings.ReadStateNew as string;
-
+    
         public static string GetReadState(bool IsNew)
         {
             var width = Math.Max(readStateRead.Length, readStateNew.Length) + 1;
