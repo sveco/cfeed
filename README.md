@@ -2,9 +2,9 @@
 Readme file
 
 ## About
-Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for .net. It uses System.ServiceModel.Syndication namespace to read RSS 2.0 or Atom 1.0 feeds and HtmlAgilityPack to render textual article content.
+Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for Windows platform built in C#. It uses System.ServiceModel.Syndication namespace to read RSS 2.0 or Atom 1.0 feeds and HtmlAgilityPack to render textual article content.
 
-This project was inspierd by wonderfull Newsbeuter and lack of similar tool for Windows platform.
+This project was inspierd by wonderfull Newsbeuter and a lack of similar tool for Windows platform.
 
 ## Basic Usage
 Before running cfeed for the first time, you have to do some basic configuration. The only required configuration consists of list of URL's of RSS or Atom feeds.
@@ -33,15 +33,180 @@ When on article, article content will be loaded on background. Hitting **O** wil
 
 
 ## Configuration
-TBD
+
+Cfeed uses json files to store app configuration. Embedded *default.conf* provides default settings when no other config file is present. User setting are stored in *settings.conf*. Any setting in latter file overrides default settings.
+The *settings.conf* also includes list of feeds, but there are plans to move this to separate *feedlist.conf* file.
+
+Structure of JSON object is
+
+Feeds - list of feeds and feed related settings
+UI - look & feel of application
+Shortcuts - key bindings
+App - app related settings, like external browser etc.
+
+***Feeds***
+
+Basic setting.conf can look like this:
+
+```Json
+{
+    Feeds: [
+    {
+        #URL of RSS otr Atom feed
+        FeedUrl: "http://feeds.newscientist.com/",
+        #Define filters for html id's and classes. Elements from those classes will be ignored when converting html to text. use '.' prefix for classes and # for id's.
+        Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
+        #Custom title to override default feed title
+        Title: "New Scientist - Home Custom"
+    }
+}
+```
+
+Only FeedUrl is required, other settings are optional. Filers can be used to "filter" out unwanted content, like page navigation, links, registration forms etc.
+To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
+Any content inside filtered elements will not be rendered.
+Title can be used to display custom title of feed, instead of the one defined by feed itself.
+
+***UI***
+
+UI section of config can be used to customize look and feel of application.
+
+***UI.Strings***
+
+Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed.
+
+Following tables defines identifiers for each UI.String element
+
+Setting | Meaning | Default value
+:------------ | :------------- | :------------
+**ApplicationTitleFormat** | Application title shown on feeds list| "cfeed v%V - console feed reader"
+**FeedListFormat** | defines how the feed title will be displayed in list. | "%i %n [%u] %t"
+**ArticleListFormat** | Defines line to show for each article. | "%i %n %d %t"
+**FeedTitleFormat** | Title of feed show when articles are listed. | "cFeed v%V - Articles in \'%t\' %u"
+**ArticleTitleFormat** | Title shown when article is displayed | "cFeed v%V - Article:%t"
+**ReadStateNew** | string to show when feed contains unread items, or article is new. | "[N]"
+**ReadStateRead** |  string to show when all items in feed has been read, or article is not new. | "[ ]"
+**LoadingSuffix** | Suffix for feed title to show while loading | " - Loading..."
+**LoadingPrefix** | Prefix for feed title to show while loading | ""
+
+Replacement strings for *ApplicationTitleFormat*:
+
+String | Meaning
+------------ | -------------
+%V | Major.Minor version
+%v | Full version, Major.Minor.Revision.Build
+
+Replacement strings for *FeedListFormat* and *FeedTitleFormat*:
+
+String | Meaning
+------------ | -------------
+%i | Feed index
+%l | RSS/ATOM feed url
+%n | Read state flag (New/Read)
+%u | # of unread / total items
+%T | # of total items
+%U | # of unread items
+%t | CustomTitle ?? Title ?? FeedUrl
+%V | Major.Minor version
+%v | Full version, Major.Minor.Revision.Build
+
+Replacement strings for *ArticleListFormat* and *ArticleTitleFormat*:
+
+String | Meaning
+------------ | -------------
+%i | Feed index
+%l | RSS/ATOM feed url
+%n | Read state flag (New/Read)
+%d | Article publish date
+%t | Article title
+%s | Summary
+
+
+***UI.Colors***
+
+Colors section can be used to define custom color "theme" for the app. List of available UI elements to customize color is in following table.
+For a valid list of color names see this [list on MSDN](https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx).
+
+Setting | Default value
+:------------ | :-------------
+DefaultForeground | "White"
+DefaultBackground | "Black"
+DefaultSelectedForeground | "Black"
+DefaultSelectedBackground | "DarkYellow"
+FeedListHeaderBackground | "DarkCyan"
+FeedListHeaderForeground | "Yellow"
+FeedListFooterBackground | "DarkCyan"
+FeedListFooterForeground | "Yellow"
+ArticleListFooterBackground | "DarkCyan"
+ArticleListFooterForeground | "Yellow"
+ArticleListHeaderBackground | "DarkCyan"
+ArticleListHeaderForeground | "Yellow"
+ArticleHeaderBackground | "DarkCyan"
+ArticleHeaderForeground | "Yellow"
+ArticleFooterBackground | "DarkCyan"
+ArticleFooterForeground | "Yellow"
+ArticleTextHighlight | "Yellow"
+LinkHighlight | "DarkCyan
+
+***UI.Layout***
+
+Defines general layout of the application.
+
+Setting | Default value
+:------------ | :-------------
+FeedListLeft | 2
+FeedListTop | 1
+FeedMaxItems | 20
+ArticleListLeft | 2
+ArticleListTop | 1
+ArticleListHeight | -3 (this means bottom of article list is 3 rows above console last line)
+
+***Shortcuts***
+
+Defines keyboard keys that trigger particular action. For a valid list of **[keys see this link](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx)**.
+For a valid list of **[modifiers see here](https://msdn.microsoft.com/en-us/library/system.consolemodifiers(v=vs.110).aspx)**.
+Some key combinations are used by windows itself if you enable advanced console features. **[Avoid those combinations](https://technet.microsoft.com/en-us/library/mt427362.aspx)**.
+
+Setting | Key | Action | Scope
+:------------ | :------------- | :------------- | :-------------
+QuitApp      | { Key: ["Q"] } | Exits the app | Feed list
+Reload       | { Key: ["R"] } | Reloads selected feed or article | Feed list, Article list
+ReloadAll    | { Key: ["R"], Modifiers: ["Control"]} | Reolad all feeds | Feed list
+OpenArticle  | { Key: ["Enter", "Spacebar"] } | Opens selected article | Article list
+OpenBrowser  | { Key: ["O"] } | Opens article in default or configured browser | Article list, Article
+OpenFeed     | { Key: ["Enter", "Spacebar"] } | Lists articles in selected feed | Feed list
+RefreshView  | { Key: ["F"] } | Redraws the UI | Feed list
+NextUnread   | { Key: ["N"] } | Opens next unread article | Article
+StepBack     | { Key: ["Escape", "Backspace"]} | Navigates back | Feed list, Article list, Article
+SaveArticle  | { Key: ["S"] } | Important! Avoid Control+S, console ignores it | Article
+MarkRead     | { Key: ["M"] } | Marks selected article as read | Article list
+OpenLink     | { Key: ["L"] } | Prompts for link # and opens selected link in browser | Article
+
+***Other settings***
+
+Setting | Description | Default value
+:------------ | :---------------------------------------------- | -----------------------
+SavedFileName | Format for file name of saved articles          | ".\\saved\\%d\\%t.txt"
+Database      | Name of liteDB database used to store metadata  | "cfeed.db" 
+Refresh       | Refresh feeds on load                           | true
+
+Replacement strings for *SavedFileName*. File name will be sanitized. Absolute, relative and network locations are supported, just make sure you have access right to write do defined location.
+
+String | Meaning
+------------ | -------------
+%i | Feed index
+%l | RSS/ATOM feed url
+%n | Read state flag (New/Read)
+%d | Article publish date
+%t | Article title
 
 ## Acknowledgments
 Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and do not use any portion
 of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
 
-This app uses [JsonConfig](https://github.com/Dynalon/JsonConfig) to parse configuration files.
-HtmlAgilityPack is used to parse article content.
-LiteDb is used as local storage.
++ This app uses [JsonConfig](https://github.com/Dynalon/JsonConfig) to parse configuration files.
++ [HtmlAgilityPack](https://github.com/zzzprojects/html-agility-pack) is used to parse article content.
++ [LiteDb](https://github.com/mbdavid/LiteDB) is used for local storage of article metadata.
 
 ### Todos
 + Write unit tests

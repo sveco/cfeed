@@ -31,9 +31,14 @@ namespace CRR
         private string FormatLine(string Format) {
             return Format
                 .Replace("%i", (Index + 1).ToString())
+                .Replace("%l", FeedUrl)
                 .Replace("%n", Configuration.GetReadState(UnreadItems > 0))
+                .Replace("%U", UnreadItems.ToString())
+                .Replace("%T", TotalItems.ToString())
                 .Replace("%u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8))
-                .Replace("%t", CustomTitle ?? Title ?? FeedUrl);
+                .Replace("%t", CustomTitle ?? Title ?? FeedUrl)
+                .Replace("%V", Configuration.MAJOR_VERSION)
+                .Replace("%v", Configuration.VERSION);
         }
 
         [BsonIgnore]

@@ -54,7 +54,9 @@ namespace CRR
                 .Replace("%i", Index.ToString().PadLeft(3))
                 .Replace("%n", Configuration.GetReadState(this.IsNew))
                 .Replace("%d", PublishDate.ToString(dateFormat))
-                .Replace("%t", Title);
+                .Replace("%t", Title)
+                .Replace("%s", Summary)
+                .Replace("%l", FeedUrl);
         }
 
         [BsonIgnore]
@@ -64,7 +66,8 @@ namespace CRR
                 .Replace("%i", Index.ToString().PadLeft(3))
                 .Replace("%n", Configuration.GetReadState(this.IsNew))
                 .Replace("%d", PublishDate.ToString(dateFormat))
-                .Replace("%t", Title);
+                .Replace("%t", Title)
+                .Replace("%l", FeedUrl);
 
             var pathEndsAt = fullPath.LastIndexOf('\\');
             string result;

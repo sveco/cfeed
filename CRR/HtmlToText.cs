@@ -1,4 +1,5 @@
 ﻿using CRR;
+using JsonConfig;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -109,7 +110,7 @@ namespace HtmlAgilityPack.Samples
                             outText.Write(Environment.NewLine + "[img:" + node.Attributes["alt"]?.Value + "]");
                             break;
                         case "a":
-                            outText.Write("[Link:");
+                            outText.Write(" [Link:");
                             if (node.HasChildNodes)
                             {
                                 ConvertContentTo(node, outText);
@@ -118,20 +119,20 @@ namespace HtmlAgilityPack.Samples
                             if (node.Attributes.Contains("href"))
                             {
                                 var uriName = node.Attributes["href"].Value;
+                                var linkHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+                                var resetColor = Configuration.TextColor.Reset;
 
                                 Uri uriResult;
                                 if (Uri.TryCreate(uriName, UriKind.Absolute, out uriResult)
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
-                                }
-
-                                if (Uri.TryCreate(BaseUri, uriName, out uriResult)
+                                    outText.Write(linkHighlight + " [" + Links.Count + "] " + resetColor);
+                                } else if (Uri.TryCreate(BaseUri, uriName, out uriResult)
                                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                                 {
                                     Links.Add(uriResult);
-                                    outText.Write(Configuration.AnsiColor.Cyan + " [" + Links.Count + "] " + Configuration.AnsiColor.Reset);
+                                    outText.Write(linkHighlight + " [" + Links.Count + "] " + resetColor);
                                 }
 
                             }

@@ -18,6 +18,8 @@ namespace CRR
         private static string articleRootPath = Config.Global.SavedFileRoot;
         private static string loadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
         private static string loadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
+        private static string articleTextHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
+        private static string colorReset =  Configuration.TextColor.Reset;
 
         private IList<RssFeed> _feeds = new List<RssFeed>();
         private LiteDatabase _db;
@@ -33,12 +35,20 @@ namespace CRR
         //private Viewport _articelListView;
         //private Viewport _articleView;
 
-        Header feedListHeader = new Header(Config.Global.UI.Strings.ApplicationTitle)
+        Header feedListHeader = new Header(Format(Config.Global.UI.Strings.ApplicationTitleFormat))
         {
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground),
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground),
             PadChar = '-'
         };
+
+        private static string Format(string ApplicationTitle)
+        {
+            return ApplicationTitle
+                .Replace("%v", Configuration.VERSION)
+                .Replace("%V", Configuration.MAJOR_VERSION);
+        }
+
         Footer feedListFooter = new Footer(" Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all")
         {
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground),
@@ -305,11 +315,11 @@ namespace CRR
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Feed: " + _selectedArticle.Value.FeedUrl);
-            sb.AppendLine("Title: " + _selectedArticle.Value.Title);
-            sb.AppendLine("Author(s): " + String.Join(", ", _selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
-            sb.AppendLine("Link: " + _selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
-            sb.AppendLine("Date: " + _selectedArticle.Value.PublishDate.ToString());
+            sb.AppendLine(articleTextHighlight + "Feed: " + colorReset + _selectedArticle.Value.FeedUrl);
+            sb.AppendLine(articleTextHighlight + "Title: " + colorReset + _selectedArticle.Value.Title);
+            sb.AppendLine(articleTextHighlight + "Author(s): " + colorReset + String.Join(", ", _selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
+            sb.AppendLine(articleTextHighlight + "Link: " + colorReset + _selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
+            sb.AppendLine(articleTextHighlight + "Date: " + colorReset + _selectedArticle.Value.PublishDate.ToString());
             sb.AppendLine();
 
             Console.Clear();
@@ -323,8 +333,8 @@ namespace CRR
             var textArea = new TextArea(sb.ToString());
             textArea.Top = 2;
             textArea.Left = 2;
-            textArea.Height = textArea.LinesCount + 1;
             textArea.Width = Console.WindowWidth - 6;
+            textArea.Height = textArea.LinesCount + 1;
             textArea.WaitForInput = false;
             _articleContent = textArea;
 
@@ -422,9 +432,13 @@ namespace CRR
             {
                 if (_selectedArticle != null)
                 {
-                    _selectedArticle.Value.Save();
+                    //_selectedArticle.Value.LoadOnlineArticle(_filters, _db);
+                    Parallel.Invoke(
+                        new Action(() => _selectedArticle.Value.LoadOnlineArticle(_filters, _db)),
+                        new Action(() => _articleContent.Show())
+                        );
                 }
-                return true;
+                return false;
             }
 
             if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenLink.Key, Config.Global.Shortcuts.OpenLink.Modifiers))

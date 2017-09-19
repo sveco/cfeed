@@ -5,11 +5,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace CRR
 {
     public static class Configuration
     {
+        private static Version version = Assembly.GetExecutingAssembly().GetName().Version;
+        public static readonly string VERSION = version.ToString();
+        public static readonly string MAJOR_VERSION = version.Major.ToString() + "." + version.Minor.ToString();
+
+
         public static readonly string UNDERLINE = "\x1B[4m";
         public static readonly string UNDERLINE_OFF = "\x1B[24m";
         public static readonly string BOLD = "\x1B[1m";
@@ -22,6 +28,18 @@ namespace CRR
         {
             public static readonly string Reset = "\x1b[0m";
             public static readonly string Cyan = "\x1b[36m";
+        }
+
+        public static class TextColor {
+            public static readonly string Reset = "\x1b[Reset]";
+
+            public static string ForegroundColor(string c) {
+                return "\x1b[f:" + c + "]";
+            }
+            public static string BackgroundColor(string c)
+            {
+                return "\x1b[b:" + c + "]";
+            }
         }
 
         private static string readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
