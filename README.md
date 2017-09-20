@@ -10,7 +10,7 @@ This project was inspierd by wonderfull Newsbeuter and a lack of similar tool fo
 Before running cfeed for the first time, you have to do some basic configuration. The only required configuration consists of list of URL's of RSS or Atom feeds.
 See [settings.conf](https://github.com/sveco/CRR/blob/master/CRR/settings.conf) for example configuration. You can remove everything except the **Feeds** section. The only required property in **Feeds** colleciton is **FeedUrl**. Minimal *settings.conf* looks like this:
 
-```json
+```
 {
     Feeds: [{FeedUrl: "http://feeds.newscientist.com/"}]
 }
@@ -48,7 +48,7 @@ App - app related settings, like external browser etc.
 
 Basic setting.conf can look like this:
 
-```Json
+```
 {
     Feeds: [
     {
@@ -163,9 +163,11 @@ ArticleListHeight | -3 (this means bottom of article list is 3 rows above consol
 
 ***Shortcuts***
 
-Defines keyboard keys that trigger particular action. For a valid list of **[keys see this link](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx)**.
+Defines keyboard keys and modifiers combination that trigger particular action. For a valid list of **[keys see this link](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx)**.
 For a valid list of **[modifiers see here](https://msdn.microsoft.com/en-us/library/system.consolemodifiers(v=vs.110).aspx)**.
 Some key combinations are used by windows itself if you enable advanced console features. **[Avoid those combinations](https://technet.microsoft.com/en-us/library/mt427362.aspx)**.
+
+Each Key and Modifiers object can be an array. If you define more than one Key, pressing any of the keys will trigger action. If you define more than one modifier, all modifiers have to be pressed. For example, definiton {Key: ["S,D"], Modifiers: ["Control", "Alt"] } means it will trigger on CTRL+ALT+S or CTRL+ALT+D.
 
 Setting | Key | Action | Scope
 :------------ | :------------- | :------------- | :-------------
@@ -201,7 +203,7 @@ String | Meaning
 %t | Article title
 
 ## Acknowledgments
-Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and do not use any portion
+Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and does not use any portion
 of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
 
 + This app uses [JsonConfig](https://github.com/Dynalon/JsonConfig) to parse configuration files.
