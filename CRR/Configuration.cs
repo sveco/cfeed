@@ -104,7 +104,7 @@ namespace CRR
             {
                 if (modifiers.Length > 0)
                 {
-                    if ((key.Modifiers & GetBitviseModifiers(modifiers)) != 0)
+                    if ((key.Modifiers == GetBitviseModifiers(modifiers)))
                     {
                         return true;
                     }
