@@ -66,6 +66,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgumentParser.cs" />
+    <Compile Include="ArticleView.cs" />
+    <Compile Include="ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="FeedHandler.cs" />
     <Compile Include="HtmlToText.cs" />
