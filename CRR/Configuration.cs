@@ -12,26 +12,21 @@ namespace CRR
     public static class Configuration
     {
         private static Version version = Assembly.GetExecutingAssembly().GetName().Version;
+
+        public static readonly string ArticleRootPath = Config.Global.SavedFileRoot;
+        public static readonly string LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
+        public static readonly string LoadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
+        public static readonly string ArticleTextHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
+        public static readonly string ColorReset = "\x1b[Reset]";
+
         public static readonly string VERSION = version.ToString();
         public static readonly string MAJOR_VERSION = version.Major.ToString() + "." + version.Minor.ToString();
 
-
-        public static readonly string UNDERLINE = "\x1B[4m";
-        public static readonly string UNDERLINE_OFF = "\x1B[24m";
-        public static readonly string BOLD = "\x1B[1m";
-        public static readonly string BOLD_OFF = "\x1B[21m";
-        public static readonly string RESET = "\x1B[0m";
-        public static readonly string ITALIC = "\x1B[1m";
-        public static readonly string ITALIC_OFF = "\x1B[21m";
-
-        public static class AnsiColor
-        {
-            public static readonly string Reset = "\x1b[0m";
-            public static readonly string Cyan = "\x1b[36m";
-        }
-
+        /// <summary>
+        /// Converts color name to "flag" that CGUI textbox renderer understands
+        /// </summary>
         public static class TextColor {
-            public static readonly string Reset = "\x1b[Reset]";
+
 
             public static string ForegroundColor(string c) {
                 return "\x1b[f:" + c + "]";

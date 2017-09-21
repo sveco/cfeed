@@ -15,12 +15,6 @@ namespace CRR
 {
     public class FeedHandler
     {
-        private static string articleRootPath = Config.Global.SavedFileRoot;
-        private static string loadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
-        private static string loadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
-        private static string articleTextHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
-        private static string colorReset =  Configuration.TextColor.Reset;
-
         private IList<RssFeed> _feeds = new List<RssFeed>();
         private LiteDatabase _db;
         private ListItem<CFeedItem> _selectedArticle;
@@ -32,8 +26,6 @@ namespace CRR
         private string[] _filters = new string[] { };
 
         private Viewport _mainView;
-        //private Viewport _articelListView;
-        //private Viewport _articleView;
 
         Header feedListHeader = new Header(Format(Config.Global.UI.Strings.ApplicationTitleFormat))
         {
@@ -49,7 +41,7 @@ namespace CRR
                 .Replace("%V", Configuration.MAJOR_VERSION);
         }
 
-        Footer feedListFooter = new Footer(" Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all")
+        Footer feedListFooter = new Footer(Config.Global.UI.Strings.FeedListFooter)
         {
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground),
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground),
@@ -60,7 +52,7 @@ namespace CRR
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListHeaderForeground),
             PadChar = '-'
         };
-        Footer articleListFooter = new Footer(" ESC/Backspace:Back R:Reload")
+        Footer articleListFooter = new Footer(Config.Global.UI.Strings.ArticleListFooter)
         {
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterBackground),
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterForeground),
@@ -72,7 +64,7 @@ namespace CRR
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleHeaderForeground),
             PadChar = '-'
         };
-        Footer articleFooter = new Footer(" ESC/Backspace:Back O:Open in browser N:Next L:Article Link") {
+        Footer articleFooter = new Footer(Config.Global.UI.Strings.ArticleFooter) {
             AutoRefresh = false,
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterBackground),
             ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterForeground),
@@ -87,8 +79,8 @@ namespace CRR
 
         public void DisplayFeedList(bool refresh)
         {
-            string prefix = (refresh ? "" : loadingPrefix);
-            string suffix = (refresh ? "" : loadingSuffix);
+            string prefix = (refresh ? "" : Configuration.LoadingPrefix);
+            string suffix = (refresh ? "" : Configuration.LoadingSuffix);
 
             void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
             {
@@ -103,7 +95,7 @@ namespace CRR
                     .Select((item, index) => new ListItem<RssFeed>()
                     {
                         Index = index,
-                        DisplayText = $"{index + 1} - {item.FeedUrl}{loadingSuffix}",
+                        DisplayText = $"{index + 1} - {item.FeedUrl}{Configuration.LoadingSuffix}",
                         Value = item
                     }).ToList();
 
@@ -148,7 +140,7 @@ namespace CRR
             {
                 Parallel.ForEach(parent.ListItems, (item) =>
                 {
-                    item.DisplayText = loadingPrefix + item.DisplayText + loadingSuffix;
+                    item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
                     item.Value.Load(true);
                     item.DisplayText = item.Value.DisplayLine;
                 });
@@ -161,7 +153,7 @@ namespace CRR
                 if (!selectedItem.Value.IsProcessing)
                 {
                     new Thread(delegate () {
-                        selectedItem.DisplayText = loadingPrefix + selectedItem.DisplayText + loadingSuffix;
+                        selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
                         selectedItem.Value.Load(true);
                         selectedItem.DisplayText = selectedItem.Value.DisplayLine;
                     }).Start();
@@ -258,7 +250,7 @@ namespace CRR
                     {
                         if (articleListHeader != null)
                         {
-                            articleListHeader.DisplayText = loadingPrefix + articleListHeader.DisplayText + loadingSuffix;
+                            articleListHeader.DisplayText = Configuration.LoadingPrefix + articleListHeader.DisplayText + Configuration.LoadingSuffix;
                             articleListHeader.Refresh();
                         }
                         _selectedFeed.Value.Load(true);
@@ -315,11 +307,11 @@ namespace CRR
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine(articleTextHighlight + "Feed: " + colorReset + _selectedArticle.Value.FeedUrl);
-            sb.AppendLine(articleTextHighlight + "Title: " + colorReset + _selectedArticle.Value.Title);
-            sb.AppendLine(articleTextHighlight + "Author(s): " + colorReset + String.Join(", ", _selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
-            sb.AppendLine(articleTextHighlight + "Link: " + colorReset + _selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
-            sb.AppendLine(articleTextHighlight + "Date: " + colorReset + _selectedArticle.Value.PublishDate.ToString());
+            sb.AppendLine(Configuration.ArticleTextHighlight + "Feed: " + Configuration.ColorReset + _selectedArticle.Value.FeedUrl);
+            sb.AppendLine(Configuration.ArticleTextHighlight + "Title: " + Configuration.ColorReset + _selectedArticle.Value.Title);
+            sb.AppendLine(Configuration.ArticleTextHighlight + "Author(s): " + Configuration.ColorReset + String.Join(", ", _selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
+            sb.AppendLine(Configuration.ArticleTextHighlight + "Link: " + Configuration.ColorReset + _selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
+            sb.AppendLine(Configuration.ArticleTextHighlight + "Date: " + Configuration.ColorReset + _selectedArticle.Value.PublishDate.ToString());
             sb.AppendLine();
 
             Console.Clear();

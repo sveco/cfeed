@@ -56,7 +56,9 @@ namespace CRR
                 .Replace("%d", PublishDate.ToString(dateFormat))
                 .Replace("%t", Title)
                 .Replace("%s", Summary)
-                .Replace("%l", FeedUrl);
+                .Replace("%l", FeedUrl)
+                .Replace("%V", Configuration.MAJOR_VERSION)
+                .Replace("%v", Configuration.VERSION);
         }
 
         [BsonIgnore]

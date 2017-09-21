@@ -120,7 +120,7 @@ namespace HtmlAgilityPack.Samples
                             {
                                 var uriName = node.Attributes["href"].Value;
                                 var linkHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.LinkHighlight);
-                                var resetColor = Configuration.TextColor.Reset;
+                                var resetColor = Configuration.ColorReset;
 
                                 Uri uriResult;
                                 if (Uri.TryCreate(uriName, UriKind.Absolute, out uriResult)
