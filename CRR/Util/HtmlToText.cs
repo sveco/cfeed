@@ -1,13 +1,12 @@
-﻿using CRR;
-using JsonConfig;
+﻿using JsonConfig;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
+using HtmlAgilityPack;
 
-namespace HtmlAgilityPack.Samples
+namespace cFeed.Util
 {
     public class HtmlToText
     {

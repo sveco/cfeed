@@ -1,19 +1,17 @@
-﻿using CGui.Gui;
-using CGui.Gui.Primitives;
-using LiteDB;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JsonConfig;
-using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+using cFeed.Entities;
+using CGui.Gui;
+using CGui.Gui.Primitives;
+using JsonConfig;
+using LiteDB;
 
-namespace CRR
+namespace cFeed
 {
-    public class FeedHandler
+    public class FeedListView
     {
         private IList<RssFeed> feeds = new List<RssFeed>();
         private LiteDatabase db;
@@ -45,15 +43,15 @@ namespace CRR
         };
 
 
-        public FeedHandler(IList<RssFeed> Feeds, LiteDatabase Db)
+        public FeedListView(IList<RssFeed> Feeds, LiteDatabase Db)
         {
             feeds = Feeds;
             db = Db;
 
-            articleList = new ArticleListView(_mainView, db);
+            articleList = new ArticleListView(db);
         }
 
-        public void DisplayFeedList(bool refresh)
+        public void Show(bool refresh)
         {
             string prefix = (refresh ? "" : Configuration.LoadingPrefix);
             string suffix = (refresh ? "" : Configuration.LoadingSuffix);
@@ -144,9 +142,7 @@ namespace CRR
                     if (!selectedItem.Value.IsProcessing)
                     {
                         articleList.DisplayArticleList(selectedItem);
-                        if (feedListHeader != null) { feedListHeader.Show(); }
-                        if (feedListFooter != null) { feedListFooter.Show(); }
-                        parent.Refresh();
+                        _mainView.Refresh();
                     }
                 }
             }
@@ -154,7 +150,7 @@ namespace CRR
             //Redraw view
             if (Configuration.VerifyKey(key, Config.Global.Shortcuts.RefreshView.Key, Config.Global.Shortcuts.RefreshView.Modifiers))
             {
-                _mainView.Show();
+                _mainView.Refresh();
             }
             return true;
         }

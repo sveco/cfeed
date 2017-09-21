@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using cFeed.Entities;
 using CGui.Gui;
 using CGui.Gui.Primitives;
 using JsonConfig;
 using LiteDB;
 
-namespace CRR
+namespace cFeed
 {
     public class ArticleListView
     {
-        private Viewport mainView;
         private ListItem<RssFeed> selectedFeed;
         private LiteDatabase db;
         private ArticleView article;
@@ -32,15 +29,14 @@ namespace CRR
 
         private Viewport _view;
 
-        public ArticleListView(Viewport MainView,  LiteDatabase Db)
+        public ArticleListView(LiteDatabase Db)
         {
-            mainView = MainView;
             db = Db;
             article = new ArticleView(db);
 
-            //_view = new Viewport();
-            //_view.Controls.Add(articleListHeader);
-            //_view.Controls.Add(articleListFooter);
+            _view = new Viewport();
+            _view.Controls.Add(articleListHeader);
+            _view.Controls.Add(articleListFooter);
 
         }
 
@@ -50,7 +46,7 @@ namespace CRR
 
             var items = feed.Value.FeedItems
                 .OrderByDescending(x => x.PublishDate)
-                .Select((item, index) => new ListItem<CFeedItem>()
+                .Select((item, index) => new ListItem<FeedItem>()
                 {
                     Index = index,
                     DisplayText = $"{item.DisplayText}",
@@ -62,33 +58,38 @@ namespace CRR
             if (articleListHeader != null)
             {
                 articleListHeader.DisplayText = feed.Value.TitleLine;
-                articleListHeader.Show();
+                //articleListHeader.Show();
             }
-            if (articleListFooter != null) { articleListFooter.Show(); }
+            //if (articleListFooter != null) { articleListFooter.Show(); }
 
-            var list = new Picklist<CFeedItem>(items.ToList());
+            var articleList = new Picklist<FeedItem>(items.ToList());
+            articleList.ListItems = items.ToList();
+
             if (Config.Global.UI.Layout.ArticleListHeight > 0)
             {
-                list.Height = Config.Global.UI.Layout.ArticleListHeight;
+                articleList.Height = Config.Global.UI.Layout.ArticleListHeight;
             }
-            else if (Config.Global.UI.Layout.ArticleListHeight < 0 && mainView != null)
+            else if (Config.Global.UI.Layout.ArticleListHeight < 0 && _view != null)
             {
-                list.Height = mainView.Height + Config.Global.UI.Layout.ArticleListHeight;
+                articleList.Height = _view.Height + Config.Global.UI.Layout.ArticleListHeight;
             }
             else
             {
-                list.Height = 10;
+                articleList.Height = 10;
             }
-            list.Width = Console.WindowWidth - Config.Global.UI.Layout.ArticleListLeft;
-            list.Top = Config.Global.UI.Layout.ArticleListTop;
-            list.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
-            list.ShowScrollbar = true;
-            list.Show();
+            articleList.Width = Console.WindowWidth - Config.Global.UI.Layout.ArticleListLeft;
+            articleList.Top = Config.Global.UI.Layout.ArticleListTop;
+            articleList.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
+            articleList.ShowScrollbar = true;
+            
+            _view.Show();
 
-            Console.Clear();
+            articleList.Show();
+
+            //Console.Clear();
         }
 
-        private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<CFeedItem> selectedItem, Picklist<CFeedItem> parent)
+        private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<FeedItem> selectedItem, Picklist<FeedItem> parent)
         {
             if (Configuration.VerifyKey(key, Config.Global.Shortcuts.MarkRead.Key, Config.Global.Shortcuts.MarkRead.Modifiers))
             {
@@ -109,8 +110,8 @@ namespace CRR
                 case ConsoleKey.Spacebar:
                     article.DisplayArticle(selectedItem, selectedFeed, parent);
 
-
-
+                    _view.Refresh();
+                    parent.Refresh();
                     break;
 
                 case ConsoleKey.R:
@@ -127,7 +128,7 @@ namespace CRR
                             .OrderByDescending(x => x.PublishDate)
                             .Select((item, index) => {
                                 item.Index = index + 1;
-                                return new ListItem<CFeedItem>()
+                                return new ListItem<FeedItem>()
                                 {
                                     Index = index,
                                     DisplayText = $"{item.DisplayText}",

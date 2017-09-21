@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CRR
+namespace cFeed.Util
 {
     /// <summary>
     /// This class is a wrapper for getting a list of named arguments from command line 

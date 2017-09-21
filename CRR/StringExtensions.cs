@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-namespace CRR
+namespace cFeed
 {
-	public static class StringExtensions
+  public static class StringExtensions
 	{
 		public static string SanitizeFileName(this string filename)
 		{

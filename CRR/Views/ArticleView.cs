@@ -1,24 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using cFeed.Entities;
 using CGui.Gui;
 using CGui.Gui.Primitives;
 using JsonConfig;
 using LiteDB;
 
-namespace CRR
+namespace cFeed
 {
     public class ArticleView
     {
-        private ListItem<CFeedItem> selectedArticle;
+        private ListItem<FeedItem> selectedArticle;
         private ListItem<RssFeed> selectedFeed;
-        private Picklist<CFeedItem> parentArticleList;
+        private Picklist<FeedItem> parentArticleList;
         private LiteDatabase db;
-        private ListItem<CFeedItem> _nextUnreadArticle;
+        private ListItem<FeedItem> _nextUnreadArticle;
         private string[] _filters;
         private TextArea _articleContent;
         private bool _displayNext = false;
@@ -105,7 +105,7 @@ namespace CRR
             selectedArticle.Value.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
         }
 
-        public void DisplayArticle(ListItem<CFeedItem> SelectedArticle, ListItem<RssFeed> SelectedFeed, Picklist<CFeedItem> Parent)
+        public void DisplayArticle(ListItem<FeedItem> SelectedArticle, ListItem<RssFeed> SelectedFeed, Picklist<FeedItem> Parent)
         {
             if (SelectedArticle != null)
             {
@@ -131,11 +131,6 @@ namespace CRR
                         new Action(() => _articleContent.Show())
                         );
                 }
-
-                Console.Clear();
-                //if (articleListHeader != null) { articleListHeader.Show(); }
-                //if (articleListFooter != null) { articleListFooter.Show(); }
-                Parent.Refresh();
             }
         }
 
@@ -198,7 +193,9 @@ namespace CRR
                 {
                     var input = new Input("Link #:")
                     {
-                        Top = Console.WindowHeight - 2
+                        Top = Console.WindowHeight - 2,
+                        ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+                        BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
                     };
 
                     int linkNumber;
@@ -210,7 +207,12 @@ namespace CRR
                         {
                             try
                             {
-                                Process.Start(Config.Global.Browser, selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                                if (!String.IsNullOrWhiteSpace(Config.Global.Browser)) {
+                                    Process.Start(Config.Global.Browser, selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                                }
+                                else {
+                                    Process.Start(selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                                }
                             }
                             catch (System.ComponentModel.Win32Exception ex)
                             {

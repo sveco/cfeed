@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C517A101-2396-4F0E-8F75-3752DF56A830}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>CRR</RootNamespace>
+    <RootNamespace>cfeed</RootNamespace>
     <AssemblyName>cfeed</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -33,14 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>CRR.Program</StartupObject>
+    <StartupObject>cFeed.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>cfeed.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.0.0.3\lib\net40\CGui.dll</HintPath>
+    <Reference Include="CGui, Version=1.0.0.4, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.0.0.4\lib\net40\CGui.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.1.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.1\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -65,17 +65,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArgumentParser.cs" />
-    <Compile Include="ArticleView.cs" />
-    <Compile Include="ArticleListView.cs" />
+    <Compile Include="Util\ArgumentParser.cs" />
+    <Compile Include="Views\ArticleView.cs" />
+    <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="FeedHandler.cs" />
-    <Compile Include="HtmlToText.cs" />
-    <Compile Include="NativeMethods.cs" />
+    <Compile Include="Views\FeedListView.cs" />
+    <Compile Include="Util\HtmlToText.cs" />
+    <Compile Include="Native\NativeMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RssFeed.cs" />
-    <Compile Include="CFeedItem.cs" />
+    <Compile Include="Entities\RssFeed.cs" />
+    <Compile Include="Entities\FeedItem.cs" />
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -91,5 +91,6 @@
     <Content Include="Todo.txt" />
     <EmbeddedResource Include="urls.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -5,7 +5,7 @@ using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Xml;
 
-namespace CRR
+namespace cFeed.Entities
 {
     public class RssFeed
     {
@@ -25,7 +25,7 @@ namespace CRR
 
         public int TotalItems { get; private set; }
         public int UnreadItems { get; set; }
-        public IList<CFeedItem> FeedItems { get; set; }
+        public IList<FeedItem> FeedItems { get; set; }
 
         [BsonIgnore]
         private string FormatLine(string Format) {
@@ -66,7 +66,7 @@ namespace CRR
             FeedUrl = url;
             Index = index;
             _db = db;
-            FeedItems = new List<CFeedItem>();
+            FeedItems = new List<FeedItem>();
             CustomTitle = customTitle;
         }
 
@@ -78,7 +78,7 @@ namespace CRR
             int index = 0;
 
             //load items from db
-            var items = _db.GetCollection<CFeedItem>("items");
+            var items = _db.GetCollection<FeedItem>("items");
 
             this.FeedItems = items.Find(x => x.FeedUrl == FeedUrl)
                 .OrderByDescending(x => x.PublishDate)
@@ -110,7 +110,7 @@ namespace CRR
                     else
                     {
                         //UnreadItems++;
-                        var newItem = new CFeedItem(FeedUrl, i)
+                        var newItem = new FeedItem(FeedUrl, i)
                         {
                             FeedUrl = FeedUrl,
                             Index = index + 1

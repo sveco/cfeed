@@ -1,17 +1,15 @@
-﻿using HtmlAgilityPack.Samples;
-using JsonConfig;
-using LiteDB;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.ServiceModel.Syndication;
-using System.Text.RegularExpressions;
+using cFeed.Util;
+using JsonConfig;
+using LiteDB;
 
-namespace CRR
+namespace cFeed.Entities
 {
-    public class CFeedItem
+    public class FeedItem
     {
         //private IList<Uri> externalLinks;
         //public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
@@ -128,15 +126,15 @@ namespace CRR
         /// <summary>
         /// Only for serialization. DO NOT USE!
         /// </summary>
-        public CFeedItem() {
+        public FeedItem() {
 
         }
 
-        public CFeedItem(string feedUrl) {
+        public FeedItem(string feedUrl) {
             FeedUrl = feedUrl;
         }
 
-        public CFeedItem(string feedUrl, SyndicationItem i)
+        public FeedItem(string feedUrl, SyndicationItem i)
         {
             FeedUrl = feedUrl;
             Item = i;
@@ -162,7 +160,7 @@ namespace CRR
                 var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links);
                 ExternalLinks = links;
 
-                var items = db.GetCollection<CFeedItem>("items");
+                var items = db.GetCollection<FeedItem>("items");
                 var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
                 if (result != null)
                 {
@@ -192,7 +190,7 @@ namespace CRR
         public void MarkAsRead(LiteDatabase db)
         {
             _isNew = false;
-            var items = db.GetCollection<CFeedItem>("items");
+            var items = db.GetCollection<FeedItem>("items");
             var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
             if (result != null)
             {

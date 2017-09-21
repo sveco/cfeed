@@ -37,10 +37,11 @@ using LiteDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using static CRR.NativeMethods;
+using cFeed.Util;
+using cFeed.Entities;
+using cFeed.Native;
 
-namespace CRR
+namespace cFeed
 {
     class Program
     {
@@ -60,13 +61,13 @@ namespace CRR
         {
             var arguments = new ArgumentParser(args);
 
-            var handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            if (GetConsoleMode(handle, out uint mode))
+            var handle = NativeMethods.GetStdHandle(STD_OUTPUT_HANDLE);
+            if (NativeMethods.GetConsoleMode(handle, out uint mode))
             {
                 mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
                 mode |= DISABLE_NEWLINE_AUTO_RETURN;
                 //mode |= ENABLE_EXTENDED_FLAGS;
-                SetConsoleMode(handle, mode);
+                NativeMethods.SetConsoleMode(handle, mode);
             }
             //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
 
@@ -93,8 +94,8 @@ namespace CRR
                     i++;
                 }
 
-                FeedHandler feedHandler = new FeedHandler(feeds, db);
-                feedHandler.DisplayFeedList(refresh);
+                FeedListView feedList = new FeedListView(feeds, db);
+                feedList.Show(refresh);
             }
         }
 

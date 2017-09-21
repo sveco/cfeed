@@ -1,13 +1,10 @@
-﻿using JsonConfig;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
+using JsonConfig;
 
-namespace CRR
+namespace cFeed
 {
     public static class Configuration
     {
