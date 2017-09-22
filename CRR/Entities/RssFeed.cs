@@ -2,14 +2,21 @@
 using LiteDB;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic;
 using System.ServiceModel.Syndication;
 using System.Xml;
+using System;
+using System.Reflection.Emit;
+using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace cFeed.Entities
 {
     public class RssFeed
     {
         public string FeedUrl { get; set; }
+        public string FeedQuery { get; set; }
+
         [BsonIgnore]
         public string[] Filters { get; set; }
 
@@ -61,9 +68,10 @@ namespace cFeed.Entities
 
         private LiteDatabase _db;
 
-        public RssFeed(string url, int index, LiteDatabase db, string customTitle = "")
+        public RssFeed(string url, string query, int index, LiteDatabase db, string customTitle = "")
         {
             FeedUrl = url;
+            FeedQuery = query;
             Index = index;
             _db = db;
             FeedItems = new List<FeedItem>();
@@ -80,13 +88,51 @@ namespace cFeed.Entities
             //load items from db
             var items = _db.GetCollection<FeedItem>("items");
 
-            this.FeedItems = items.Find(x => x.FeedUrl == FeedUrl)
-                .OrderByDescending(x => x.PublishDate)
-                .Select((item, x) => { item.Index = x + 1; return item; })
-                .ToList();
+            if (!string.IsNullOrEmpty(FeedUrl) &&
+                !string.IsNullOrEmpty(FeedQuery)) {
+                //Filtered real feed
+                try
+                {
+                    this.FeedItems =
+                    items.Find(x => x.FeedUrl == FeedUrl)
+                    .Where(this.FeedQuery)
+                    .OrderByDescending(x => x.PublishDate)
+                    .Select((item, x) => { item.Index = x + 1; return item; })
+                    .ToList();
+                }
+                catch (ParseException x)
+                {
+                    Debug.Write("Syntax error in FeedQuery:" + this.FeedQuery);
+                    Debug.Write(x);
+                }
+            } else if (!string.IsNullOrEmpty(FeedUrl) &&
+                string.IsNullOrEmpty(FeedQuery))
+            {
+                //Only feed, no filtering
+                this.FeedItems =
+                    items.Find(x => x.FeedUrl == FeedUrl)
+                    .OrderByDescending(x => x.PublishDate)
+                    .Select((item, x) => { item.Index = x + 1; return item; })
+                    .ToList();
+            }
+            else if (!string.IsNullOrEmpty(FeedQuery)) {
+                //Dynamic feed
+                try
+                {
+                    this.FeedItems = items.FindAll().Where(this.FeedQuery)
+                        .OrderByDescending(x => x.PublishDate)
+                        .Select((item, x) => { item.Index = x + 1; return item; })
+                        .ToList();
+                }
+                catch (ParseException x)
+                {
+                    Debug.Write("Syntax error in FeedQuery:" + this.FeedQuery);
+                    Debug.Write(x);
+                }
+            }
 
             //if refresh is on, get feed from web
-            if (refresh)
+            if (refresh && !String.IsNullOrEmpty(FeedUrl))
             {
                 XmlReaderSettings settings = new XmlReaderSettings()
                 {
@@ -116,7 +162,20 @@ namespace cFeed.Entities
                             Index = index + 1
                         };
                         items.Insert(newItem);
-                        this.FeedItems.Add(newItem);
+
+                        if ((!string.IsNullOrEmpty(FeedQuery)))
+                        {
+                            var single = new List<FeedItem> { newItem };
+                            var filtered = single.Where(this.FeedQuery).FirstOrDefault();
+                            if (filtered != null)
+                            {
+                                this.FeedItems.Add(newItem);
+                            }
+                        }
+                        else
+                        {
+                            this.FeedItems.Add(newItem);
+                        }
                     }
                     index++;
                 }

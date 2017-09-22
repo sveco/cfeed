@@ -40,6 +40,8 @@ using System.Linq;
 using cFeed.Util;
 using cFeed.Entities;
 using cFeed.Native;
+using System.Diagnostics;
+using System.IO;
 
 namespace cFeed
 {
@@ -56,6 +58,7 @@ namespace cFeed
         //    // Put your own handler here
         //    return true;
         //}
+        private static FeedListView feedList;
 
         static void Main(string[] args)
         {
@@ -81,21 +84,35 @@ namespace cFeed
                 ShowHelp();
             }
 
+            FileInfo conf = new FileInfo("settings.conf");
+            Config.WatchUserConfig(conf);
+            Config.OnUserConfigFileChanged += Config_OnUserConfigFileChanged;
+
             using (var db = new LiteDatabase(database))
             {
                 List<RssFeed> feeds = new List<RssFeed>();
+
+
                 var configFeeds = Enumerable.ToList(Config.Global.Feeds);
                 int i = 0;
                 foreach (var feed in configFeeds)
                 {
-                    feeds.Add(new RssFeed(feed.FeedUrl, i, db, feed.Title) {
+                    feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title) {
                         Filters = feed.Filters
                     });
                     i++;
                 }
 
-                FeedListView feedList = new FeedListView(feeds, db);
+                feedList = new FeedListView(feeds, db);
                 feedList.Show(refresh);
+            }
+        }
+
+        private static void Config_OnUserConfigFileChanged()
+        {
+            if (feedList != null)
+            {
+                feedList.RefreshConfig();
             }
         }
 

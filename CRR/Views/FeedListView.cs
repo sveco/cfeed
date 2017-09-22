@@ -69,7 +69,7 @@ namespace cFeed
                     .Select((item, index) => new ListItem<RssFeed>()
                     {
                         Index = index,
-                        DisplayText = $"{index + 1} - {item.FeedUrl}{Configuration.LoadingSuffix}",
+                        DisplayText = $"{index + 1} - {item.FeedUrl}{prefix}",
                         Value = item
                     }).ToList();
 
@@ -153,6 +153,24 @@ namespace cFeed
                 _mainView.Refresh();
             }
             return true;
+        }
+
+        internal void RefreshConfig()
+        {
+            if (feedListHeader != null)
+            {
+                feedListHeader.DisplayText = Format(Config.Global.UI.Strings.ApplicationTitleFormat);
+                feedListHeader.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground);
+                feedListHeader.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground);
+                feedListHeader.Refresh();
+            }
+            if (feedListFooter != null)
+            {
+                feedListFooter.DisplayText = Config.Global.UI.Strings.FeedListFooter;
+                feedListFooter.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground);
+                feedListFooter.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground);
+                feedListFooter.Refresh();
+            }
         }
     }
 }

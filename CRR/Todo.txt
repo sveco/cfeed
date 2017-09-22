@@ -1,18 +1,20 @@
-﻿configurable feed display format
-    feedlist-format
-    articlelist-format
-    header-format
+﻿+configurable feed display format
++    feedlist-format
++    articlelist-format
++    header-format
 "killfile" feed filters
-configurable highlight
++configurable highlight
 +article id and class ignore filters
 +make settings gracefully default if missing - added default config
 user config as program argument
-n-next unread
++n-next unread
 +support for custom browser
 support for custom sort order
-saving article content
++saving article content
 opml support / rewrite url config
 list article urls
-mark as read
++mark as read
 search
 purge articles
++dynamic feed support
+BUG: Feed does not update when last item in feed is read

@@ -67,6 +67,29 @@ To use filter, look source of the page that you want to display. Prepend all "cl
 Any content inside filtered elements will not be rendered.
 Title can be used to display custom title of feed, instead of the one defined by feed itself.
 
+***Dynamic Feeds***
+
+Yay! It is now supported to filter articles in online feed by defining FeedQuery, or create dynamic feed by specifying FeedQuery without the FeedUrl. Latter will search all downloaded articles, and crete "virtual" feed from search results.
+
+*Example: Dynamic feed*
+```
+{ 
+    #Dynamic feed - find all articles with word 'Mars' in Title or Summary.
+    FeedQuery: "(Summary.Contains(\"Mars\") || Title.Contains(\"Mars\"))",
+    Title: "Dynamic feed - Mars"
+}
+```
+
+*Example: Filterd feed*
+```
+{ 
+    #Filtered feed - find all articles in newscientist feed with word 'Mars' in Title or Summary
+    FeedUrl: "http://feeds.newscientist.com/",
+    FeedQuery: "(Summary.Contains(\"Mars\") || Title.Contains(\"Mars\"))",
+    Title: "Online feed - Mars"
+}
+```
+
 ***UI***
 
 UI section of config can be used to customize look and feel of application.
