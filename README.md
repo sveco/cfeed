@@ -80,7 +80,7 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
 }
 ```
 
-*Example: Filterd feed*
+*Example: Filtered feed*
 ```
 { 
     #Filtered feed - find all articles in newscientist feed with word 'Mars' in Title or Summary
@@ -95,7 +95,7 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
 FeedQuery string is interpreted using System.Linq.Dynamic.DynamicQueryable class. Supported entities to use in query are listed in following table:
 
 Name | Type | Meaning
-:------------- | :------------
+:------------- | :------------ | :------------
 FeedUrl | String | Url of parent rss feed
 PublishDate | String |Article publish date
 Summary | String | Short article summary
