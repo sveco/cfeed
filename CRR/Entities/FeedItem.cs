@@ -45,6 +45,28 @@ namespace cFeed.Entities
             get { return _isNew; }
             private set { _isNew = value; }
         }
+
+        private bool IsDownloaded {
+            get {
+                try
+                {
+                    return File.Exists(ArticleFileName);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is UnauthorizedAccessException ||
+                        ex is DirectoryNotFoundException)
+                    {
+                        Logging.Logger.Log(ex);
+                        return false;
+                    }
+                    else {
+                        throw;
+                    }
+                }
+            }
+        }
+
         [BsonIgnore]
         private string FormatLine(string Format)
         {
@@ -177,10 +199,24 @@ namespace cFeed.Entities
 
         public void LoadArticle(string[] filters, LiteDatabase db)
         {
-            if (File.Exists(ArticleFileName)) {
-                ArticleContent = File.ReadAllText(ArticleFileName);
-                IsLoaded = true;
-                OnContentLoaded.Invoke(ArticleContent);
+            if (this.IsDownloaded) {
+                try
+                {
+                    ArticleContent = File.ReadAllText(ArticleFileName);
+                    IsLoaded = true;
+                    OnContentLoaded.Invoke(ArticleContent);
+                }
+                catch (Exception x)
+                {
+                    if (x is FileNotFoundException ||
+                        x is UnauthorizedAccessException ||
+                        x is FileNotFoundException)
+                    {
+                        //For all purposes, file is not accessible to us
+                        Logging.Logger.Log(x);
+                        IsLoaded = false;
+                    }
+                }
             }
             else {
                 LoadOnlineArticle(filters, db);

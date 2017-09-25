@@ -102,8 +102,8 @@ namespace cFeed.Entities
                 }
                 catch (ParseException x)
                 {
-                    Debug.Write("Syntax error in FeedQuery:" + this.FeedQuery);
-                    Debug.Write(x);
+                    Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+                    Logging.Logger.Log(x);
                 }
             } else if (!string.IsNullOrEmpty(FeedUrl) &&
                 string.IsNullOrEmpty(FeedQuery))
@@ -126,8 +126,8 @@ namespace cFeed.Entities
                 }
                 catch (ParseException x)
                 {
-                    Debug.Write("Syntax error in FeedQuery:" + this.FeedQuery);
-                    Debug.Write(x);
+                    Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+                    Logging.Logger.Log(x);
                 }
             }
 
@@ -140,6 +140,7 @@ namespace cFeed.Entities
                 };
                 XmlReader reader = XmlReader.Create(FeedUrl, settings);
                 this.Feed = SyndicationFeed.Load(reader);
+                Logging.Logger.Log(FeedUrl + " loaded");
                 this.Title = Feed.Title.Text;
                 reader.Close();
                 Isloaded = true;
@@ -165,11 +166,19 @@ namespace cFeed.Entities
 
                         if ((!string.IsNullOrEmpty(FeedQuery)))
                         {
-                            var single = new List<FeedItem> { newItem };
-                            var filtered = single.Where(this.FeedQuery).FirstOrDefault();
-                            if (filtered != null)
+                            try
                             {
-                                this.FeedItems.Add(newItem);
+                                var single = new List<FeedItem> { newItem };
+                                var filtered = single.Where(this.FeedQuery).FirstOrDefault();
+                                if (filtered != null)
+                                {
+                                    this.FeedItems.Add(newItem);
+                                }
+                            }
+                            catch (ParseException x)
+                            {
+                                Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+                                Logging.Logger.Log(x);
                             }
                         }
                         else

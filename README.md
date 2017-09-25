@@ -90,6 +90,20 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
 }
 ```
 
+**FeedQuery syntax**
+
+FeedQuery string is interpreted using System.Linq.Dynamic.DynamicQueryable class. Supported entities to use in query are listed in following table:
+
+Name | Type | Meaning
+:------------- | :------------
+FeedUrl | String | Url of parent rss feed
+PublishDate | String |Article publish date
+Summary | String | Short article summary
+Title | Strong | Article title
+IsNew | Boolean | Is article new or read
+Index | Integer | Article Index
+
+
 ***UI***
 
 UI section of config can be used to customize look and feel of application.
@@ -214,6 +228,9 @@ Setting | Description | Default value
 SavedFileName | Format for file name of saved articles          | ".\\saved\\%d\\%t.txt"
 Database      | Name of liteDB database used to store metadata  | "cfeed.db" 
 Refresh       | Refresh feeds on load                           | true
+Browser       | Custom browser to use to open articles, links and images | \<empty\>
+Debug         | Debug level to write to log. Levels are None, Debug, Info, Warning, Error, Critical, in that order. Setting level to "Warning", will log Warning, Error and Critical. SEtting none turns off logging. | "Warning"
+
 
 Replacement strings for *SavedFileName*. File name will be sanitized. Absolute, relative and network locations are supported, just make sure you have access right to write do defined location.
 
@@ -224,6 +241,15 @@ String | Meaning
 %n | Read state flag (New/Read)
 %d | Article publish date
 %t | Article title
+
+## Command Line Arguments
+```
+cfeed [-h] [-d \<database\>] [-r \<true|false>]
+
+ -h  Show help.
+ -d  Database; Override default db location.
+ -r  Refresh; Whether to refresh all feeds on first load.
+```
 
 ## Acknowledgments
 Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and does not use any portion

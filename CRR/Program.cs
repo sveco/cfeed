@@ -40,8 +40,8 @@ using System.Linq;
 using cFeed.Util;
 using cFeed.Entities;
 using cFeed.Native;
-using System.Diagnostics;
 using System.IO;
+using cFeed.Logging;
 
 namespace cFeed
 {
@@ -62,6 +62,8 @@ namespace cFeed
 
         static void Main(string[] args)
         {
+            Logging.Logger.Log(LogLevel.Info, "App started.");
+
             var arguments = new ArgumentParser(args);
 
             var handle = NativeMethods.GetStdHandle(STD_OUTPUT_HANDLE);

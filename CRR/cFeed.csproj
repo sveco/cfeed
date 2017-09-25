@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C517A101-2396-4F0E-8F75-3752DF56A830}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>cfeed</RootNamespace>
+    <RootNamespace>cFeed</RootNamespace>
     <AssemblyName>cfeed</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -70,6 +70,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logging\LogData.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />
@@ -96,5 +98,6 @@
     <Content Include="Todo.txt" />
     <EmbeddedResource Include="urls.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

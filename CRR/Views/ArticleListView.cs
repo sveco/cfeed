@@ -91,7 +91,7 @@ namespace cFeed
 
         private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<FeedItem> selectedItem, Picklist<FeedItem> parent)
         {
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.MarkRead.Key, Config.Global.Shortcuts.MarkRead.Modifiers))
+            if (key.VerifyKey((ConfigObject) Config.Global.Shortcuts.MarkRead))
             {
                 if (selectedItem != null)
                 {
@@ -100,52 +100,50 @@ namespace cFeed
                 }
             }
 
-            switch (key.Key)
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
             {
-                case ConsoleKey.Escape:
-                case ConsoleKey.Backspace:
-                    return false;
+                return false;
+            }
 
-                case ConsoleKey.Enter:
-                case ConsoleKey.Spacebar:
-                    article.DisplayArticle(selectedItem, selectedFeed, parent);
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
+            {
+                article.DisplayArticle(selectedItem, selectedFeed, parent);
+                _view.Refresh();
+                parent.Refresh();
+            }
 
-                    _view.Refresh();
-                    parent.Refresh();
-                    break;
-
-                case ConsoleKey.R:
-                    if (selectedFeed != null)
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Reload))
+            {
+                if (selectedFeed != null)
+                {
+                    if (articleListHeader != null)
                     {
-                        if (articleListHeader != null)
-                        {
-                            articleListHeader.DisplayText = Configuration.LoadingPrefix + articleListHeader.DisplayText + Configuration.LoadingSuffix;
-                            articleListHeader.Refresh();
-                        }
-                        selectedFeed.Value.Load(true);
-
-                        var items = selectedFeed.Value.FeedItems
-                            .OrderByDescending(x => x.PublishDate)
-                            .Select((item, index) => {
-                                item.Index = index + 1;
-                                return new ListItem<FeedItem>()
-                                {
-                                    Index = index,
-                                    DisplayText = $"{item.DisplayText}",
-                                    Value = item
-                                };
-                            }
-                            );
-                        parent.UpdateList(items);
-                        parent.Refresh();
-
-                        if (articleListHeader != null)
-                        {
-                            articleListHeader.DisplayText = selectedFeed.Value.TitleLine;
-                            articleListHeader.Refresh();
-                        }
+                        articleListHeader.DisplayText = Configuration.LoadingPrefix + articleListHeader.DisplayText + Configuration.LoadingSuffix;
+                        articleListHeader.Refresh();
                     }
-                    break;
+                    selectedFeed.Value.Load(true);
+
+                    var items = selectedFeed.Value.FeedItems
+                        .OrderByDescending(x => x.PublishDate)
+                        .Select((item, index) => {
+                            item.Index = index + 1;
+                            return new ListItem<FeedItem>()
+                            {
+                                Index = index,
+                                DisplayText = $"{item.DisplayText}",
+                                Value = item
+                            };
+                        }
+                        );
+                    parent.UpdateList(items);
+                    parent.Refresh();
+
+                    if (articleListHeader != null)
+                    {
+                        articleListHeader.DisplayText = selectedFeed.Value.TitleLine;
+                        articleListHeader.Refresh();
+                    }
+                }
             }
             return true;
         }

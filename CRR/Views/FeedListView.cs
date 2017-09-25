@@ -104,13 +104,13 @@ namespace cFeed
         private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
         {
             //Exit app
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.QuitApp.Key, Config.Global.Shortcuts.QuitApp.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.QuitApp))
             {
                 return false;
             }
 
             //Reload all
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.ReloadAll.Key, Config.Global.Shortcuts.ReloadAll.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.ReloadAll))
             {
                 Parallel.ForEach(parent.ListItems, (item) =>
                 {
@@ -122,7 +122,7 @@ namespace cFeed
             }
 
             //Reload
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.Reload.Key, Config.Global.Shortcuts.Reload.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Reload))
             {
                 if (!selectedItem.Value.IsProcessing)
                 {
@@ -135,7 +135,7 @@ namespace cFeed
             }
 
             //Open
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenArticle.Key, Config.Global.Shortcuts.OpenArticle.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
             {
                 if (selectedItem != null)
                 {
@@ -148,7 +148,7 @@ namespace cFeed
             }
 
             //Redraw view
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.RefreshView.Key, Config.Global.Shortcuts.RefreshView.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.RefreshView))
             {
                 _mainView.Refresh();
             }

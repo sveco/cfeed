@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -137,7 +138,7 @@ namespace cFeed
         private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
         {
             //Next unread
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.NextUnread.Key, Config.Global.Shortcuts.NextUnread.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.NextUnread))
             {
                 if (_nextUnreadArticle != null && selectedFeed != null)
                 {
@@ -147,13 +148,13 @@ namespace cFeed
             }
 
             //Step back
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.StepBack.Key, Config.Global.Shortcuts.StepBack.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
             {
                 return false;
             }
 
             //Open article
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenBrowser.Key, Config.Global.Shortcuts.OpenBrowser.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
             {
                 if (selectedArticle != null &&
                     selectedArticle.Value.Links.Count > 0)
@@ -174,7 +175,7 @@ namespace cFeed
             }
 
             //Save article
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.SaveArticle.Key, Config.Global.Shortcuts.SaveArticle.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.SaveArticle))
             {
                 if (selectedArticle != null)
                 {
@@ -187,7 +188,7 @@ namespace cFeed
                 return false;
             }
 
-            if (Configuration.VerifyKey(key, Config.Global.Shortcuts.OpenLink.Key, Config.Global.Shortcuts.OpenLink.Modifiers))
+            if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenLink))
             {
                 if (selectedArticle != null && selectedArticle.Value != null && selectedArticle.Value.IsLoaded)
                 {
@@ -214,10 +215,9 @@ namespace cFeed
                                     Process.Start(selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
                                 }
                             }
-                            catch (System.ComponentModel.Win32Exception ex)
+                            catch (Win32Exception ex)
                             {
-                                Debug.Write(ex.Message);
-                                Debug.Write(ex.StackTrace);
+                                Logging.Logger.Log(ex);
                             }
                         }
                     }

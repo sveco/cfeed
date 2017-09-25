@@ -90,19 +90,21 @@ namespace cFeed
             return modifiers.Select(x => GetModifier(x)).Aggregate<ConsoleModifiers>((running, next) => (running | next));
         }
 
-        public static bool VerifyKey(ConsoleKeyInfo key, string[] keys, string[] modifiers)
+        public static bool VerifyKey(this ConsoleKeyInfo Key, dynamic KeyConfig)
         {
-            if (GetKeys(keys).Contains(key.Key))
+            string[] keys = KeyConfig.Key;
+            string[] modifiers = KeyConfig.Modifiers;
+            if (GetKeys(keys).Contains(Key.Key))
             {
                 if (modifiers.Length > 0)
                 {
-                    if ((key.Modifiers == GetBitviseModifiers(modifiers)))
+                    if ((Key.Modifiers == GetBitviseModifiers(modifiers)))
                     {
                         return true;
                     }
                     else { return false; }
                 }
-                if (key.Modifiers != 0)
+                if (Key.Modifiers != 0)
                 {
                     return false;
                 }
