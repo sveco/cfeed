@@ -42,6 +42,7 @@ using cFeed.Entities;
 using cFeed.Native;
 using System.IO;
 using cFeed.Logging;
+using System.Text;
 
 namespace cFeed
 {
@@ -74,6 +75,7 @@ namespace cFeed
                 //mode |= ENABLE_EXTENDED_FLAGS;
                 NativeMethods.SetConsoleMode(handle, mode);
             }
+            Console.OutputEncoding = Encoding.UTF8;
             //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
 
             //arguments

@@ -14,6 +14,16 @@ namespace cFeed
         public static readonly string LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
         public static readonly string LoadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
         public static readonly string ArticleTextHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
+
+        public static readonly string ArticleTextFeedUrlLabel = Config.Global.UI.Strings.ArticleTextFeedUrlLabel;
+        public static readonly string ArticleTextTitleLabel = Config.Global.UI.Strings.ArticleTextTitleLabel;
+        public static readonly string ArticleTextAuthorsLabel = Config.Global.UI.Strings.ArticleTextAuthorsLabel;
+        public static readonly string ArticleTextLinkLabel = Config.Global.UI.Strings.ArticleTextLinkLabel;
+        public static readonly string ArticleTextPublishDatelLabel = Config.Global.UI.Strings.ArticleTextPublishDatelLabel;
+
+        /// <summary>
+        /// Special tag that tells CGui to reset color to default
+        /// </summary>
         public static readonly string ColorReset = "\x1b[Reset]";
 
         public static readonly string VERSION = version.ToString();
@@ -36,11 +46,20 @@ namespace cFeed
 
         private static string readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
         private static string readStateNew = Config.Global.UI.Strings.ReadStateNew as string;
-    
+        private static string downloadStateDownloaded = Config.Global.UI.Strings.DownloadStateDownloaded as string;
+        private static string downloadStatePending = Config.Global.UI.Strings.DownloadStatePending as string;
+
         public static string GetReadState(bool IsNew)
         {
-            var width = Math.Max(readStateRead.Length, readStateNew.Length) + 1;
+            var width = Math.Max(readStateRead.Length, readStateNew.Length);
             var result = IsNew ? readStateNew : readStateRead;
+            return result.PadRight(width);
+        }
+
+        public static string GetDownloadState(bool IsDownloaded)
+        {
+            var width = Math.Max(downloadStateDownloaded.Length, downloadStatePending.Length);
+            var result = IsDownloaded ? downloadStateDownloaded : downloadStatePending;
             return result.PadRight(width);
         }
 

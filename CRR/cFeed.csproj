@@ -39,8 +39,8 @@
     <ApplicationIcon>cfeed.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.0.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.0.0.5\lib\net40\CGui.dll</HintPath>
+    <Reference Include="CGui, Version=1.0.0.6, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.0.0.6\lib\net40\CGui.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.1.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.1\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -98,6 +98,5 @@
     <Content Include="Todo.txt" />
     <EmbeddedResource Include="urls.txt" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

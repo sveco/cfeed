@@ -69,7 +69,7 @@ namespace cFeed
                     .Select((item, index) => new ListItem<RssFeed>()
                     {
                         Index = index,
-                        DisplayText = $"{index + 1} - {item.FeedUrl}{prefix}",
+                        DisplayText = $"{index + 1} - {prefix}{item.FeedUrl}{suffix}",
                         Value = item
                     }).ToList();
 
@@ -112,12 +112,19 @@ namespace cFeed
             //Reload all
             if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.ReloadAll))
             {
-                Parallel.ForEach(parent.ListItems, (item) =>
+                new Thread(() =>
                 {
-                    item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-                    item.Value.Load(true);
-                    item.DisplayText = item.Value.DisplayLine;
-                });
+                    Thread.CurrentThread.IsBackground = true;
+                    /* run your code here */
+                    Parallel.ForEach(parent.ListItems, (item) =>
+                    {
+                        item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+                        item.Value.Load(true);
+                        item.DisplayText = item.Value.DisplayLine;
+                    });
+                }).Start();
+
+
                 parent.Refresh();
             }
 

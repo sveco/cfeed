@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Threading;
 
 namespace cFeed.Logging
 {
@@ -45,10 +47,19 @@ namespace cFeed.Logging
                     LogData entry;
                     logQueue.TryDequeue(out entry);
                     string logPath = logDir + entry.LogDate + "_" + logFile;
-
-                    using (System.IO.StreamWriter file = new System.IO.StreamWriter(logPath, true, System.Text.Encoding.UTF8))
+                    try
                     {
-                        file.WriteLine(string.Format("{0}\t{1}", entry.LogTime, entry.Message));
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter(logPath, true, System.Text.Encoding.UTF8))
+                        {
+                            file.WriteLine(string.Format("{0}\t{1}", entry.LogTime, entry.Message));
+                        }
+                    }
+                    catch (IOException) {
+                        Thread.Sleep(100);
+                        using (System.IO.StreamWriter file = new System.IO.StreamWriter(logPath, true, System.Text.Encoding.UTF8))
+                        {
+                            file.WriteLine(string.Format("{0}\t{1}", entry.LogTime, entry.Message));
+                        }
                     }
                 }
             });
