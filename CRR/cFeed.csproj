@@ -12,6 +12,13 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
+    <ShouldCreateLogs>True</ShouldCreateLogs>
+    <AdvancedSettingsExpanded>True</AdvancedSettingsExpanded>
+    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+    <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
+    <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
+    <AssemblyVersionSettings>None.None.None.Increment</AssemblyVersionSettings>
+    <AssemblyFileVersionSettings>None.None.IncrementOnDemand.Increment</AssemblyFileVersionSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -73,6 +80,7 @@
     <Compile Include="Logging\LogData.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
+    <Compile Include="Util\Formatter.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />

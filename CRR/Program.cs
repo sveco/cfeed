@@ -102,7 +102,8 @@ namespace cFeed
                 {
                     feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title) {
                         Filters = feed.Filters,
-                        Hidden = feed.Hidden
+                        Hidden = feed.Hidden,
+                        Tags = feed.Tags
                     });
                     i++;
                 }

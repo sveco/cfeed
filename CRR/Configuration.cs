@@ -21,6 +21,8 @@ namespace cFeed
     public static readonly string ArticleTextLinkLabel = Config.Global.UI.Strings.ArticleTextLinkLabel;
     public static readonly string ArticleTextPublishDatelLabel = Config.Global.UI.Strings.ArticleTextPublishDatelLabel;
 
+    public static readonly string ReplacementPattern = @"\%([a-zA-Z]):?([\d*])?([rl]?)?";
+
     /// <summary>
     /// Special tag that tells CGui to reset color to default
     /// </summary>

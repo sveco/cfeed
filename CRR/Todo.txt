@@ -6,3 +6,5 @@ list article urls
 search
 purge articles
 mark all read
+BUG: Dynamic feeds are not updated after article is read
+BUG: Feed unread count not updated after article is read

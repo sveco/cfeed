@@ -42,7 +42,6 @@ namespace cFeed
             PadChar = '-'
         };
 
-
         public FeedListView(IList<RssFeed> Feeds, LiteDatabase Db)
         {
             feeds = Feeds;

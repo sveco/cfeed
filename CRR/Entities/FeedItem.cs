@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace cFeed.Entities
     public Guid Id { get; set; }
     public string SyndicationItemId { get; set; }
     public string FeedUrl { get; set; }
+    public string[] Tags { get; set; }
     public DateTime PublishDate { get; set; }
     public string Summary { get; set; }
     public Collection<SyndicationLink> Links { get; set; }
@@ -77,17 +79,20 @@ namespace cFeed.Entities
     [BsonIgnore]
     private string FormatLine(string Format)
     {
-      return Format
-          .Replace("%i", Index.ToString().PadLeft(3))
-          .Replace("%n", Configuration.GetReadState(this.IsNew))
-          .Replace("%D", Configuration.GetDownloadState(this.IsDownloaded))
-          .Replace("%x", Configuration.GetDeletedState(this.Deleted)) //only shown when article is marked as deleted, afterwards filtered out
-          .Replace("%d", PublishDate.ToString(dateFormat))
-          .Replace("%t", Title)
-          .Replace("%s", Summary)
-          .Replace("%l", FeedUrl)
-          .Replace("%V", Configuration.MAJOR_VERSION)
-          .Replace("%v", Configuration.VERSION);
+      Dictionary<string, string> replacementTable = new Dictionary<string, string>
+      {
+        { "i", (Index + 1).ToString()},
+        { "n", Configuration.GetReadState(this.IsNew)},
+        { "D", Configuration.GetDownloadState(this.IsDownloaded)},
+        { "x", Configuration.GetDeletedState(this.Deleted)},  //only shown when article is marked as deleted, afterwards filtered out
+        { "d", PublishDate.ToString(dateFormat)},
+        { "t", Title},
+        { "s", Summary},
+        { "l", FeedUrl},
+        { "V", Configuration.VERSION},
+        { "v", Configuration.VERSION}
+      }; 
+      return Formatter.FormatLine(Format, replacementTable);
     }
 
     [BsonIgnore]
@@ -203,6 +208,7 @@ namespace cFeed.Entities
         {
           result.ExternalLinks = ExternalLinks;
           result.ImageLinks = ImageLinks;
+          result.Tags = Tags;
           items.Update(result);
         }
 

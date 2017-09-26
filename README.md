@@ -58,6 +58,8 @@ Basic setting.conf can look like this:
         Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
         #Custom title to override default feed title
         Title: "New Scientist - Home Custom",
+        #Tags can be used to categorize feeds and articles. Thas can be used in query to filter on
+        Tags: ["Science"],
         #If uncommented, feed will be hidden and only accessible via FeedQuery
         #Hidden: true
     }
@@ -113,7 +115,8 @@ UI section of config can be used to customize look and feel of application.
 
 ***UI.Strings***
 
-Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed.
+Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed. To define "column width use following format:
+%i:3r is replaced by Index, right aligned and padded to 3 characters width.
 
 Following tables defines identifiers for each UI.String element
 
@@ -123,8 +126,8 @@ Setting | Meaning | Default value
 **ReadStateRead** | String to show when all items in feed has been read, or article is not new. | " "
 **DownloadStateDownloaded** | String to show when article content is saved locally |  "D"
 **DownloadStatePending** | String to show when article content is not downloaded | " "
-**FeedListFormat** | Format of feed list items | "%i %n [%u] %t"
-**ArticleListFormat** | Format of list item when articles are displayed | "%i [%n\|%D] %d %t"
+**FeedListFormat** | Format of feed list items | "%i:3r %n [%u] %t"
+**ArticleListFormat** | Format of list item when articles are displayed | "%i:3r [%n|%D|%x] %d %t""
 **ArticleTitleFormat** | Title shown when article is displayed | "%t"
 **ArticleListDateFormat** | Date format for publish date | "MMM dd"
 **FeedTitleFormat** Title shown in header when list of feeds is displayed | "cFeed v%V - Articles in \'%t\' %u "
@@ -297,6 +300,14 @@ of newsbeuter code. This is open source project to provide windows users with pu
 + Write unit tests
 + Add more features
 + Get some rest
+
+### Contributing
+
+1. Fork it!
+2. Create your feature branch: git checkout -b my-new-feature
+3. Commit your changes: git commit -am 'Add some feature'
+4. Push to the branch: git push origin my-new-feature
+5. Submit a pull request :D
 
 License
 ----
