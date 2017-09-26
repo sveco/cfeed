@@ -87,6 +87,7 @@ namespace cFeed
 
       articleList.Show();
 
+      selectedFeed.DisplayText = selectedFeed.Value.DisplayLine;
       //Console.Clear();
     }
 

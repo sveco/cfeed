@@ -115,8 +115,8 @@ UI section of config can be used to customize look and feel of application.
 
 ***UI.Strings***
 
-Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed. To define "column width use following format:
-%i:3r is replaced by Index, right aligned and padded to 3 characters width.
+Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed. To define column width use following format:
+"%i:3r" is replaced by Index, right aligned and padded to 3 characters width. To align string left, use "l", e.g. "%i:3l".
 
 Following tables defines identifiers for each UI.String element
 
@@ -127,7 +127,7 @@ Setting | Meaning | Default value
 **DownloadStateDownloaded** | String to show when article content is saved locally |  "D"
 **DownloadStatePending** | String to show when article content is not downloaded | " "
 **FeedListFormat** | Format of feed list items | "%i:3r %n [%u] %t"
-**ArticleListFormat** | Format of list item when articles are displayed | "%i:3r [%n|%D|%x] %d %t""
+**ArticleListFormat** | Format of list item when articles are displayed | "%i:3r [%n\|%D\|%x] %d %t""
 **ArticleTitleFormat** | Title shown when article is displayed | "%t"
 **ArticleListDateFormat** | Date format for publish date | "MMM dd"
 **FeedTitleFormat** Title shown in header when list of feeds is displayed | "cFeed v%V - Articles in \'%t\' %u "

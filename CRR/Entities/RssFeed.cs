@@ -19,7 +19,13 @@ namespace cFeed.Entities
     public string FeedUrl { get; set; }
     public string FeedQuery { get; set; }
     public bool Hidden { get; set; }
-
+    /// <summary>
+    /// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
+    /// </summary>
+    [BsonIgnore]
+    public bool IsDynamic {
+      get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
+    }
     [BsonIgnore]
     public string[] Filters { get; set; }
 
@@ -35,8 +41,8 @@ namespace cFeed.Entities
     public int Index { get; private set; }
     private SyndicationFeed Feed { get; set; }
 
-    public int TotalItems { get; private set; }
-    public int UnreadItems { get; set; }
+    public int TotalItems { get { return FeedItems.Count(); } }
+    public int UnreadItems { get { return FeedItems.Where(x => x.IsNew == true).Count(); } }
     public IList<FeedItem> FeedItems { get; set; }
 
     [BsonIgnore]
@@ -91,7 +97,7 @@ namespace cFeed.Entities
     private void GetFeed(bool refresh)
     {
       IsProcessing = true;
-      UnreadItems = 0;
+      //UnreadItems = 0;
       FeedItems.Clear();
       int index = 0;
 
@@ -207,8 +213,8 @@ namespace cFeed.Entities
         }
       }
 
-      UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
-      TotalItems = this.FeedItems.Count();
+      //UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
+      //TotalItems = this.FeedItems.Count();
       IsProcessing = false;
     }
 

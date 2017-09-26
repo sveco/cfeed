@@ -48,7 +48,7 @@ namespace cFeed
 
       if (selectedFeed != null)
       {
-        selectedFeed.Value.UnreadItems--;
+        //selectedFeed.Value.UnreadItems--;
         if (selectedFeed.Value.Filters != null)
         {
           _filters = selectedFeed.Value.Filters;
