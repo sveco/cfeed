@@ -116,15 +116,28 @@ Following tables defines identifiers for each UI.String element
 
 Setting | Meaning | Default value
 :------------ | :------------- | :------------
-**ApplicationTitleFormat** | Application title shown on feeds list| "cfeed v%V - console feed reader"
-**FeedListFormat** | defines how the feed title will be displayed in list. | "%i %n [%u] %t"
-**ArticleListFormat** | Defines line to show for each article. | "%i %n %d %t"
-**FeedTitleFormat** | Title of feed show when articles are listed. | "cFeed v%V - Articles in \'%t\' %u"
-**ArticleTitleFormat** | Title shown when article is displayed | "cFeed v%V - Article:%t"
-**ReadStateNew** | string to show when feed contains unread items, or article is new. | "[N]"
-**ReadStateRead** |  string to show when all items in feed has been read, or article is not new. | "[ ]"
-**LoadingSuffix** | Suffix for feed title to show while loading | " - Loading..."
-**LoadingPrefix** | Prefix for feed title to show while loading | ""
+**ReadStateNew** | String to show when feed contains unread items, or article is new. | "N"
+**ReadStateRead** | String to show when all items in feed has been read, or article is not new. | " "
+**DownloadStateDownloaded** | String to show when article content is saved locally |  "D"
+**DownloadStatePending** | String to show when article content is not downloaded | " "
+**FeedListFormat** | Format of feed list items | "%i %n [%u] %t"
+**ArticleListFormat** | Format of list item when articles are displayed | "%i [%n\|%D] %d %t"
+**ArticleTitleFormat** | Title shown when article is displayed | "%t"
+**ArticleListDateFormat** | Date format for publish date | "MMM dd"
+**FeedTitleFormat** Title shown in header when list of feeds is displayed | "cFeed v%V - Articles in \'%t\' %u "
+**ArticleTitleFormat** | Title shown in header when single article is displayed | "cFeed v%V - Article:%t "
+**ApplicationTitleFormat** | Title shown in header when sfeed list is displayed | " cfeed v%V - console feed reader "
+**LoadingSuffix** | Suffix shown when feed or article are being loaded | " - Loading..."
+**LoadingPrefix** | Prefix shown when feed or article are being loaded | ""
+**FeedListFooter** | Footer of feed list | " Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all "
+**ArticleListFooter** | Footer of article list | " ESC/Backspace:Back M:Mark read U:Mark Unread R:Reload "
+**ArticleFooter** | Footer of article | ESC/Backspace:Back O:Open N:Next L:Link I:Image "
+**ArticleTextFeedUrlLabel** | Label shown in article summary | "Feed: "
+**ArticleTextTitleLabel** | Label shown in article summary | "Title: "
+**ArticleTextAuthorsLabel** | Label shown in article summary |"Author(s): "
+**ArticleTextLinkLabel** | Label shown in article summary | "Link: ,
+**ArticleTextPublishDatelLabel** | Label shown in article summary | "Date: "
+
 
 Replacement strings for *ApplicationTitleFormat*:
 
@@ -140,6 +153,8 @@ String | Meaning
 %i | Feed index
 %l | RSS/ATOM feed url
 %n | Read state flag (New/Read)
+%D | Download state flag (Downloaded/Pending)
+%x | Deleted flag
 %u | # of unread / total items
 %T | # of total items
 %U | # of unread items
@@ -208,18 +223,34 @@ Each Key and Modifiers object can be an array. If you define more than one Key, 
 
 Setting | Key | Action | Scope
 :------------ | :------------- | :------------- | :-------------
-QuitApp      | { Key: ["Q"] } | Exits the app | Feed list
-Reload       | { Key: ["R"] } | Reloads selected feed or article | Feed list, Article list
-ReloadAll    | { Key: ["R"], Modifiers: ["Control"]} | Reolad all feeds | Feed list
-OpenArticle  | { Key: ["Enter", "Spacebar"] } | Opens selected article | Article list
-OpenBrowser  | { Key: ["O"] } | Opens article in default or configured browser | Article list, Article
-OpenFeed     | { Key: ["Enter", "Spacebar"] } | Lists articles in selected feed | Feed list
-RefreshView  | { Key: ["F"] } | Redraws the UI | Feed list
-NextUnread   | { Key: ["N"] } | Opens next unread article | Article
-StepBack     | { Key: ["Escape", "Backspace"]} | Navigates back | Feed list, Article list, Article
-SaveArticle  | { Key: ["S"] } | Important! Avoid Control+S, console ignores it | Article
-MarkRead     | { Key: ["M"] } | Marks selected article as read | Article list
-OpenLink     | { Key: ["L"] } | Prompts for link # and opens selected link in browser | Article
+QuitApp     |   { Key: ["Q"] }                        | Exits the app                     | Feed list
+Reload      |   { Key: ["R"] }                        | Reloads selected feed or article  | Feed list, Article list
+ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]} | Reolad all feeds                  | Feed list
+OpenArticle |   { Key: ["Enter", "Spacebar"] }        | Opens selected article            | Article list
+OpenBrowser |   { Key: ["O"] }                        | Opens article in browser          | Article list, Article
+OpenFeed    |   { Key: ["Enter", "Spacebar"] }        | Lists articles in selected feed   | Feed list
+RefreshView |   { Key: ["F"] }                        | Redraws the UI                    | Feed list
+Prev        |   { Key: ["OemComma"] }                 | (<) Previous article              | Article
+PrevUnread  |   { Key: ["Oem4"] }                     | ([) Previous unread article       | Article
+Next        |   { Key: ["OemPeriod"] }                | (>) Next Article                  | Article
+NextUnread  |   { Key: ["Oem6"] }                     | (]) Next unread article           | Article
+Delete      |   { Key: ["X"] }                        | Mark selected article for deletion| Article
+StepBack    |   { Key: ["Escape", "Backspace"]}       | Navigates back                    | Feed list, Article list, Article
+SaveArticle |   { Key: ["S"] }                        | Reolads article from web and saves| Article
+Download    |   { Key: ["D"] }                        | Downloads Article                 | Article list
+MarkRead    |   { Key: ["M"] }                        | Mark selected article as read     | Article list
+MarkUnread  |   { Key: ["U"] }                        | Remove read flag                  | Article list
+OpenLink    |   { Key: ["L"] }                        | Open numbered link in browser     | Article
+OpenImage   |   { Key: ["I"] }                        | Open numbered image in browser    | Article
+
+Following keys are set by default on picklists and text area. They are not configurable, however they are fairly obvious.
+
+Key     | Action   | Scope
+:------ | :------- | :--------
+Up      | Select item above    | Feed list, Article list
+Down    | Select item below    | Feed list, Article list
+PgUp    | Scroll up 10 items   | Feed list, Article list
+PgDown  | Scroll down 10 items | Feed list, Article list
 
 ***Other settings***
 

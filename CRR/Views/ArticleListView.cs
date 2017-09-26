@@ -46,10 +46,11 @@ namespace cFeed
 
       var items = feed.Value.FeedItems
           .OrderByDescending(x => x.PublishDate)
+          .Where(x => x.Deleted == false)
           .Select((item, index) => new ListItem<FeedItem>()
           {
             Index = index,
-            DisplayText = $"{item.DisplayText}",
+            DisplayText = item.DisplayText,
             Value = item
           });
 
@@ -109,6 +110,15 @@ namespace cFeed
         }
       }
 
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Delete))
+      {
+        if (selectedItem != null)
+        {
+          selectedItem.Value.MarkDeleted(db);
+          selectedItem.DisplayText = selectedItem.Value.DisplayText;
+        }
+      }
+
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
       {
         return false;
@@ -134,16 +144,17 @@ namespace cFeed
 
           var items = selectedFeed.Value.FeedItems
               .OrderByDescending(x => x.PublishDate)
+              .Where(x => x.Deleted == false)
               .Select((item, index) =>
-              {
-                item.Index = index + 1;
-                return new ListItem<FeedItem>()
                 {
-                  Index = index,
-                  DisplayText = item.DisplayText,
-                  Value = item
-                };
-              }
+                  item.Index = index + 1;
+                  return new ListItem<FeedItem>()
+                  {
+                    Index = index,
+                    DisplayText = item.DisplayText,
+                    Value = item
+                  };
+                }
               );
           parent.UpdateList(items);
           parent.Refresh();
@@ -153,6 +164,16 @@ namespace cFeed
             articleListHeader.DisplayText = selectedFeed.Value.TitleLine;
             articleListHeader.Refresh();
           }
+        }
+      }
+
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Download))
+      {
+        if (selectedItem != null && selectedFeed != null && selectedItem.Value.IsDownloaded == false)
+        {
+          selectedItem.DisplayText = Configuration.LoadingPrefix +  selectedItem.Value.DisplayText + Configuration.LoadingSuffix;
+          selectedItem.Value.DownloadArticleContent(selectedFeed.Value.Filters);
+          selectedItem.DisplayText = selectedItem.Value.DisplayText;
         }
       }
       return true;

@@ -19,7 +19,7 @@ namespace cFeed
     private ListItem<RssFeed> selectedFeed;
     private Picklist<FeedItem> parentArticleList;
     private LiteDatabase db;
-    private ListItem<FeedItem> _nextUnreadArticle;
+    private ListItem<FeedItem> _nextArticle;
     private string[] _filters;
     private TextArea _articleContent;
     private bool _displayNext = false;
@@ -45,14 +45,6 @@ namespace cFeed
 
     private void PrepareArticle()
     {
-
-      if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
-      {
-        _nextUnreadArticle = parentArticleList.ListItems
-            .OrderBy(x => x.Index)
-            .Where(x => x.Value.IsNew == true && x.Index > selectedArticle.Index)
-            .FirstOrDefault();
-      }
 
       if (selectedFeed != null)
       {
@@ -99,7 +91,7 @@ namespace cFeed
         article.ShowScrollbar = true;
 
         selectedArticle.Value.MarkAsRead(db);
-        selectedArticle.DisplayText = selectedArticle.Value.DisplayText;
+        //selectedArticle.DisplayText = selectedArticle.Value.DisplayText;
 
         article.Show();
       }
@@ -121,12 +113,14 @@ namespace cFeed
             new Action(() => selectedArticle.Value.LoadArticle(_filters, db)),
             new Action(() => _articleContent.Show())
             );
+
+        selectedArticle.DisplayText = selectedArticle.Value.DisplayText;
         //Given lack of inspiration and a late hour, i commit this code for next article in hope that one day I will rewrite it
         //and provide this functionality with better design.
         while (_displayNext)
         {
           _displayNext = false;
-          selectedArticle = _nextUnreadArticle;
+          selectedArticle = _nextArticle;
           PrepareArticle();
           Parallel.Invoke(
               new Action(() => selectedArticle.Value.LoadArticle(_filters, db)),
@@ -136,15 +130,84 @@ namespace cFeed
       }
     }
 
+    private bool canShowNext
+    {
+      get { return selectedFeed != null && selectedArticle != null; }
+    }
+
     private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
     {
+      //Next
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Next))
+      {
+        if (canShowNext)
+        {
+          _nextArticle = parentArticleList.ListItems
+              .OrderByDescending(x => x.Index)
+              .Where(x => x.Index < selectedArticle.Index)
+              .FirstOrDefault();
+
+          if (_nextArticle != null)
+          {
+            _displayNext = true;
+            return false;
+          }
+        }
+      }
       //Next unread
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.NextUnread))
       {
-        if (_nextUnreadArticle != null && selectedFeed != null)
+        if (canShowNext)
         {
-          _displayNext = true;
-          return false;
+          _nextArticle = parentArticleList.ListItems
+              .OrderByDescending(x => x.Index)
+              .Where(x => x.Value.IsNew == true && x.Index < selectedArticle.Index)
+              .FirstOrDefault();
+
+          if (_nextArticle != null)
+          {
+            _displayNext = true;
+            return false;
+          }
+        }
+      }
+
+      //Prev
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Prev))
+      {
+        if (canShowNext)
+        {
+          if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
+          {
+            _nextArticle = parentArticleList.ListItems
+                .OrderBy(x => x.Index)
+                .Where(x => x.Index > selectedArticle.Index)
+                .FirstOrDefault();
+          }
+          if (_nextArticle != null)
+          {
+            _displayNext = true;
+            return false;
+          }
+        }
+      }
+      //Prev unread
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.PrevUnread))
+      {
+        if (canShowNext)
+        {
+          if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
+          {
+            _nextArticle = parentArticleList.ListItems
+                .OrderBy(x => x.Index)
+                .Where(x => x.Value.IsNew == true && x.Index > selectedArticle.Index)
+                .FirstOrDefault();
+          }
+          if (_nextArticle != null)
+          {
+            _displayNext = true;
+            return false;
+          }
         }
       }
 
@@ -189,6 +252,7 @@ namespace cFeed
         return false;
       }
 
+      //Open numbered link
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenLink))
       {
         if (selectedArticle != null && selectedArticle.Value != null && selectedArticle.Value.IsLoaded)
@@ -229,6 +293,7 @@ namespace cFeed
         return true;
       }
 
+      //Open numbered image
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenImage))
       {
         if (selectedArticle != null && selectedArticle.Value != null && selectedArticle.Value.IsLoaded)
@@ -269,6 +334,15 @@ namespace cFeed
         return true;
       }
 
+      //Mark article for deletion
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Delete))
+      {
+        if (selectedArticle != null)
+        {
+          selectedArticle.Value.MarkDeleted(db);
+          selectedArticle.DisplayText = selectedArticle.Value.DisplayText;
+        }
+      }
 
       return true;
     }

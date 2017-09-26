@@ -136,7 +136,8 @@ namespace cFeed.Entities
             {
                 XmlReaderSettings settings = new XmlReaderSettings()
                 {
-                    DtdProcessing = DtdProcessing.Parse
+                    DtdProcessing = DtdProcessing.Parse,
+                    Async = true
                 };
                 XmlReader reader = XmlReader.Create(FeedUrl, settings);
                 this.Feed = SyndicationFeed.Load(reader);

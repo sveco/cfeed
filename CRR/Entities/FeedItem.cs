@@ -47,8 +47,8 @@ namespace cFeed.Entities
       get { return _isNew; }
       private set { _isNew = value; }
     }
-
-    private bool IsDownloaded
+    [BsonIgnore]
+    public bool IsDownloaded
     {
       get
       {
@@ -72,6 +72,8 @@ namespace cFeed.Entities
       }
     }
 
+    public bool Deleted { get; set; }
+
     [BsonIgnore]
     private string FormatLine(string Format)
     {
@@ -79,6 +81,7 @@ namespace cFeed.Entities
           .Replace("%i", Index.ToString().PadLeft(3))
           .Replace("%n", Configuration.GetReadState(this.IsNew))
           .Replace("%D", Configuration.GetDownloadState(this.IsDownloaded))
+          .Replace("%x", Configuration.GetDeletedState(this.Deleted)) //only shown when article is marked as deleted, afterwards filtered out
           .Replace("%d", PublishDate.ToString(dateFormat))
           .Replace("%t", Title)
           .Replace("%s", Summary)
@@ -192,30 +195,36 @@ namespace cFeed.Entities
       if (OnContentLoaded == null) throw new ArgumentNullException("onLoaded");
       if (Links.Count > 0)
       {
-        var w = new HtmlAgilityPack.HtmlWeb();
-        var doc = w.Load(Links[0].Uri.ToString());
-        HtmlToText conv = new HtmlToText() { Filters = filters.ToList() };
-        Collection<Uri> links = new Collection<Uri>();
-        Collection<Uri> images = new Collection<Uri>();
+        DownloadArticleContent(filters);
 
-        var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links, out images);
-        ExternalLinks = links;
-        ImageLinks = images;
         var items = db.GetCollection<FeedItem>("items");
-
         var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
         if (result != null)
         {
-          result.ExternalLinks = links;
-          result.ImageLinks = images;
+          result.ExternalLinks = ExternalLinks;
+          result.ImageLinks = ImageLinks;
           items.Update(result);
         }
 
-        ArticleContent = s;
-        IsLoaded = true;
-        Save();
         OnContentLoaded.Invoke(ArticleContent);
       }
+    }
+
+    public void DownloadArticleContent(string[] Filters)
+    {
+      var w = new HtmlAgilityPack.HtmlWeb();
+      var doc = w.Load(Links[0].Uri.ToString());
+      HtmlToText conv = new HtmlToText() { Filters = Filters.ToList() };
+      Collection<Uri> links = new Collection<Uri>();
+      Collection<Uri> images = new Collection<Uri>();
+
+      var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links, out images);
+      ExternalLinks = links;
+      ImageLinks = images;
+      ArticleContent = s;
+
+      IsLoaded = true;
+      Save();
     }
 
     public void LoadArticle(string[] filters, LiteDatabase db)
@@ -266,6 +275,17 @@ namespace cFeed.Entities
       if (result != null)
       {
         result.IsNew = true;
+        items.Update(result);
+      }
+    }
+    internal void MarkDeleted(LiteDatabase db)
+    {
+      Deleted = true;
+      var items = db.GetCollection<FeedItem>("items");
+      var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+      if (result != null)
+      {
+        result.Deleted = true;
         items.Update(result);
       }
     }
