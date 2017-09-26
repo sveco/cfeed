@@ -172,7 +172,7 @@ String | Meaning
 %i | Feed index
 %l | RSS/ATOM feed url
 %n | Read state flag (New/Read)
-%d | Article publish date
+%d | Article publish date / Last uppdated date (whichever is latest)
 %t | Article title
 %s | Summary
 

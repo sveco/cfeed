@@ -9,6 +9,7 @@ using System;
 using System.Reflection.Emit;
 using System.Linq.Expressions;
 using System.Diagnostics;
+using cFeed.Util;
 
 namespace cFeed.Entities
 {
@@ -140,7 +141,9 @@ namespace cFeed.Entities
                     DtdProcessing = DtdProcessing.Parse,
                     Async = true
                 };
-                XmlReader reader = XmlReader.Create(FeedUrl, settings);
+                //XmlReader reader = XmlReader.Create(FeedUrl, settings);
+                RssXmlReader reader = new RssXmlReader(FeedUrl);
+
                 this.Feed = SyndicationFeed.Load(reader);
                 Logging.Logger.Log(FeedUrl + " loaded");
                 this.Title = Feed.Title.Text;
