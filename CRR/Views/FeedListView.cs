@@ -66,6 +66,7 @@ namespace cFeed
             }
 
             var rssFeeds = feeds
+                    .Where(item => item.Hidden == false)
                     .Select((item, index) => new ListItem<RssFeed>()
                     {
                         Index = index,

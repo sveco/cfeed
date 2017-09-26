@@ -16,6 +16,7 @@ namespace cFeed.Entities
     {
         public string FeedUrl { get; set; }
         public string FeedQuery { get; set; }
+        public bool Hidden { get; set; }
 
         [BsonIgnore]
         public string[] Filters { get; set; }

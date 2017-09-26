@@ -95,14 +95,14 @@ namespace cFeed
             using (var db = new LiteDatabase(database))
             {
                 List<RssFeed> feeds = new List<RssFeed>();
-
-
+        
                 var configFeeds = Enumerable.ToList(Config.Global.Feeds);
                 int i = 0;
                 foreach (var feed in configFeeds)
                 {
                     feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title) {
-                        Filters = feed.Filters
+                        Filters = feed.Filters,
+                        Hidden = feed.Hidden
                     });
                     i++;
                 }
@@ -122,14 +122,16 @@ namespace cFeed
 
         private static void ShowHelp()
         {
-            var content = "TBD: Help. Esc to continue to app.";
-            var help = new TextArea(content);
-            help.Top = 0;
-            help.Left = 0;
-            help.Width = Console.WindowWidth;
-            help.Height = Console.WindowHeight;
-            help.WaitForInput = true;
-            help.Show();
+          var content = "TBD: Help. Esc to continue to app.";
+          var help = new TextArea(content)
+          {
+            Top = 0,
+            Left = 0,
+            Width = Console.WindowWidth,
+            Height = Console.WindowHeight,
+            WaitForInput = true
+          };
+          help.Show();
         }
     }
 }

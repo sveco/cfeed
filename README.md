@@ -57,7 +57,9 @@ Basic setting.conf can look like this:
         #Define filters for html id's and classes. Elements from those classes will be ignored when converting html to text. use '.' prefix for classes and # for id's.
         Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
         #Custom title to override default feed title
-        Title: "New Scientist - Home Custom"
+        Title: "New Scientist - Home Custom",
+        #If uncommented, feed will be hidden and only accessible via FeedQuery
+        #Hidden: true
     }
 }
 ```
@@ -94,14 +96,15 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
 
 FeedQuery string is interpreted using System.Linq.Dynamic.DynamicQueryable class. Supported entities to use in query are listed in following table:
 
-Name | Type | Meaning
-:------------- | :------------ | :------------
-FeedUrl | String | Url of parent rss feed
-PublishDate | String |Article publish date
-Summary | String | Short article summary
-Title | Strong | Article title
-IsNew | Boolean | Is article new or read
-Index | Integer | Article Index
+Name            | Type          | Meaning
+:-------------- | :------------ | :------------
+FeedUrl         | String        | Url of parent rss feed
+PublishDate     | String        | Article publish date/last updated date (whichever is latest)
+Summary         | String        | Short article summary
+Title           | Strong        | Article title
+IsNew           | Boolean       | Read/Unread flag
+Hidden          | Boolean       | Should feed be hidden in list
+Index           | Integer       | Article Index
 
 
 ***UI***
@@ -247,8 +250,8 @@ Following keys are set by default on picklists and text area. They are not confi
 
 Key     | Action   | Scope
 :------ | :------- | :--------
-Up      | Select item above    | Feed list, Article list
-Down    | Select item below    | Feed list, Article list
+Up      | Up one item          | Feed list, Article list
+Down    | Down one item        | Feed list, Article list
 PgUp    | Scroll up 10 items   | Feed list, Article list
 PgDown  | Scroll down 10 items | Feed list, Article list
 
