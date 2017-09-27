@@ -3,12 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using JsonConfig;
+using cFeed.Logging;
 
 namespace cFeed
 {
   public static class Configuration
   {
     private static Version version = Assembly.GetExecutingAssembly().GetName().Version;
+
+		private static LogLevel DefaultLogLevel = LogLevel.Info;
+		public static LogLevel ConfiguredLogLevel {
+			get {
+				if (Config.Global.Debug is NullExceptionPreventer)
+				{
+					return DefaultLogLevel;
+				}
+				else {
+					LogLevel result = DefaultLogLevel;
+					Enum.TryParse<LogLevel>(Config.Global.Debug, out result);
+					return result;
+				}
+			}
+		}
 
     public static readonly string ArticleRootPath = Config.Global.SavedFileRoot;
     public static readonly string LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;

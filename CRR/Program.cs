@@ -43,96 +43,130 @@ using cFeed.Native;
 using System.IO;
 using cFeed.Logging;
 using System.Text;
+using System.Reflection;
 
 namespace cFeed
 {
-    class Program
+  class Program
+  {
+    const int STD_OUTPUT_HANDLE = -11;
+    const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+    const uint ENABLE_EXTENDED_FLAGS = 0x0080;
+    const uint ENABLE_QUICK_EDIT = 0x0040;
+    const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
+
+    //private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
+    //{
+    //    // Put your own handler here
+    //    return true;
+    //}
+    private static FeedListView feedList;
+
+    static void Main(string[] args)
     {
-        const int STD_OUTPUT_HANDLE = -11;
-        const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-        const uint ENABLE_EXTENDED_FLAGS = 0x0080;
-        const uint ENABLE_QUICK_EDIT = 0x0040;
-        const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
+      Logging.Logger.Log(LogLevel.Info, "App started.");
 
-        //private static bool ConsoleCtrlCheck(CtrlTypes ctrlType)
-        //{
-        //    // Put your own handler here
-        //    return true;
-        //}
-        private static FeedListView feedList;
+      var arguments = new ArgumentParser(args);
 
-        static void Main(string[] args)
+      var handle = NativeMethods.GetStdHandle(STD_OUTPUT_HANDLE);
+      if (NativeMethods.GetConsoleMode(handle, out uint mode))
+      {
+        mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        mode |= DISABLE_NEWLINE_AUTO_RETURN;
+        //mode |= ENABLE_EXTENDED_FLAGS;
+        NativeMethods.SetConsoleMode(handle, mode);
+      }
+      Console.OutputEncoding = Encoding.UTF8;
+      //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
+
+      //arguments
+      var database = arguments.GetArgValue<string>("d", Config.Global.Database);
+      var refresh = arguments.GetArgValue<bool>("r", Config.Global.Refresh);
+
+      //show help?
+      if (arguments.GetArgValue<bool>("h"))
+      {
+        ShowHelp();
+      }
+
+      FileInfo conf = new FileInfo("settings.conf");
+      Config.WatchUserConfig(conf);
+      Config.OnUserConfigFileChanged += Config_OnUserConfigFileChanged;
+
+      SetAllowUnsafeHeaderParsing20();
+
+      using (var db = new LiteDatabase(database))
+      {
+        List<RssFeed> feeds = new List<RssFeed>();
+
+        var configFeeds = Enumerable.ToList(Config.Global.Feeds);
+        int i = 0;
+        foreach (var feed in configFeeds)
         {
-            Logging.Logger.Log(LogLevel.Info, "App started.");
-
-            var arguments = new ArgumentParser(args);
-
-            var handle = NativeMethods.GetStdHandle(STD_OUTPUT_HANDLE);
-            if (NativeMethods.GetConsoleMode(handle, out uint mode))
-            {
-                mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-                mode |= DISABLE_NEWLINE_AUTO_RETURN;
-                //mode |= ENABLE_EXTENDED_FLAGS;
-                NativeMethods.SetConsoleMode(handle, mode);
-            }
-            Console.OutputEncoding = Encoding.UTF8;
-            //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
-
-            //arguments
-            var database = arguments.GetArgValue<string>("d", Config.Global.Database);
-            var refresh = arguments.GetArgValue<bool>("r", Config.Global.Refresh);
-
-            //show help?
-            if (arguments.GetArgValue<bool>("h"))
-            {
-                ShowHelp();
-            }
-
-            FileInfo conf = new FileInfo("settings.conf");
-            Config.WatchUserConfig(conf);
-            Config.OnUserConfigFileChanged += Config_OnUserConfigFileChanged;
-
-            using (var db = new LiteDatabase(database))
-            {
-                List<RssFeed> feeds = new List<RssFeed>();
-        
-                var configFeeds = Enumerable.ToList(Config.Global.Feeds);
-                int i = 0;
-                foreach (var feed in configFeeds)
-                {
-                    feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title) {
-                        Filters = feed.Filters,
-                        Hidden = feed.Hidden,
-                        Tags = feed.Tags
-                    });
-                    i++;
-                }
-
-                feedList = new FeedListView(feeds, db);
-                feedList.Show(refresh);
-            }
-        }
-
-        private static void Config_OnUserConfigFileChanged()
-        {
-            if (feedList != null)
-            {
-                feedList.RefreshConfig();
-            }
-        }
-
-        private static void ShowHelp()
-        {
-          var content = "TBD: Help. Esc to continue to app.";
-          var help = new TextArea(content)
+          feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title)
           {
-            Top = 0,
-            Left = 0,
-            Width = Console.WindowWidth,
-            Height = Console.WindowHeight,
-            WaitForInput = true
-          };
-          help.Show();
+            Filters = feed.Filters,
+            Hidden = feed.Hidden,
+            Tags = feed.Tags
+          });
+          i++;
         }
+
+        feedList = new FeedListView(feeds, db);
+        feedList.Show(refresh);
+      }
     }
+
+    private static void Config_OnUserConfigFileChanged()
+    {
+      if (feedList != null)
+      {
+        feedList.RefreshConfig();
+      }
+    }
+
+    public static bool SetAllowUnsafeHeaderParsing20()
+    {
+      //Get the assembly that contains the internal class
+      Assembly aNetAssembly = Assembly.GetAssembly(typeof(System.Net.Configuration.SettingsSection));
+      if (aNetAssembly != null)
+      {
+        //Use the assembly in order to get the internal type for the internal class
+        Type aSettingsType = aNetAssembly.GetType("System.Net.Configuration.SettingsSectionInternal");
+        if (aSettingsType != null)
+        {
+          //Use the internal static property to get an instance of the internal settings class.
+          //If the static instance isn't created allready the property will create it for us.
+          object anInstance = aSettingsType.InvokeMember("Section",
+            BindingFlags.Static | BindingFlags.GetProperty | BindingFlags.NonPublic, null, null, new object[] { });
+
+          if (anInstance != null)
+          {
+            //Locate the private bool field that tells the framework is unsafe header parsing should be allowed or not
+            FieldInfo aUseUnsafeHeaderParsing = aSettingsType.GetField("useUnsafeHeaderParsing", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (aUseUnsafeHeaderParsing != null)
+            {
+              aUseUnsafeHeaderParsing.SetValue(anInstance, true);
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    private static void ShowHelp()
+    {
+      var content = "TBD: Help. Esc to continue to app.";
+      var help = new TextArea(content)
+      {
+        Top = 0,
+        Left = 0,
+        Width = Console.WindowWidth,
+        Height = Console.WindowHeight,
+        WaitForInput = true
+      };
+      help.Show();
+    }
+  }
 }

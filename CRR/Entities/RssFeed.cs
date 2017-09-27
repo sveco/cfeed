@@ -11,6 +11,7 @@ using System.Linq.Expressions;
 using System.Diagnostics;
 using cFeed.Util;
 using System.Text.RegularExpressions;
+using cFeed.Logging;
 
 namespace cFeed.Entities
 {
@@ -35,8 +36,8 @@ namespace cFeed.Entities
     public int Index { get; private set; }
     private SyndicationFeed Feed { get; set; }
 
-    public int TotalItems { get; private set; }
-    public int UnreadItems { get; set; }
+    public int TotalItems { get { return FeedItems.Count(); } }
+    public int UnreadItems { get { return FeedItems.Where(x => x.IsNew == true).Count(); } }
     public IList<FeedItem> FeedItems { get; set; }
 
     [BsonIgnore]
@@ -91,7 +92,6 @@ namespace cFeed.Entities
     private void GetFeed(bool refresh)
     {
       IsProcessing = true;
-      UnreadItems = 0;
       FeedItems.Clear();
       int index = 0;
 
@@ -108,7 +108,7 @@ namespace cFeed.Entities
           items.Find(x => x.FeedUrl == FeedUrl)
           .Where(this.FeedQuery)
           .OrderByDescending(x => x.PublishDate)
-          .Select((item, x) => { item.Index = x + 1; return item; })
+          .Select((item, x) => { item.Index = x; return item; })
           .ToList();
         }
         catch (ParseException x)
@@ -124,7 +124,7 @@ namespace cFeed.Entities
         this.FeedItems =
             items.Find(x => x.FeedUrl == FeedUrl)
             .OrderByDescending(x => x.PublishDate)
-            .Select((item, x) => { item.Index = x + 1; return item; })
+            .Select((item, x) => { item.Index = x; return item; })
             .ToList();
       }
       else if (!string.IsNullOrEmpty(FeedQuery))
@@ -134,12 +134,17 @@ namespace cFeed.Entities
         {
           this.FeedItems = items.FindAll().Where(this.FeedQuery)
               .OrderByDescending(x => x.PublishDate)
-              .Select((item, x) => { item.Index = x + 1; return item; })
+              .Select((item, x) => { item.Index = x; return item; })
               .ToList();
         }
         catch (ParseException x)
         {
-          Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+          Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
+          Logging.Logger.Log(x);
+        }
+        catch (ArgumentNullException x)
+        {
+          Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
           Logging.Logger.Log(x);
         }
       }
@@ -207,9 +212,17 @@ namespace cFeed.Entities
         }
       }
 
-      UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
-      TotalItems = this.FeedItems.Count();
+      //UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
+      //TotalItems = this.FeedItems.Count();
       IsProcessing = false;
+    }
+
+    internal void MarkAllRead(LiteDatabase db)
+    {
+      foreach (var feed in FeedItems)
+      {
+        feed.MarkAsRead(db);
+      }
     }
 
     public void Load(bool refresh)
