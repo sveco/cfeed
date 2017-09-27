@@ -20,7 +20,13 @@ namespace cFeed.Entities
     public string FeedUrl { get; set; }
     public string FeedQuery { get; set; }
     public bool Hidden { get; set; }
-
+    /// <summary>
+    /// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
+    /// </summary>
+    [BsonIgnore]
+    public bool IsDynamic {
+      get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
+    }
     [BsonIgnore]
     public string[] Filters { get; set; }
 

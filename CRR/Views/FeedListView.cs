@@ -116,13 +116,20 @@ namespace cFeed
         new Thread(() =>
         {
           Thread.CurrentThread.IsBackground = true;
-                  /* run your code here */
-          Parallel.ForEach(parent.ListItems, (item) =>
-                  {
+          /* first load online feeds */
+          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
               item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
               item.Value.Load(true);
               item.DisplayText = item.Value.DisplayLine;
             });
+
+          /* then load dynamic feeds */
+          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
+            item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+            item.Value.Load(false);
+            item.DisplayText = item.Value.DisplayLine;
+          });
+
         }).Start();
 
 
@@ -134,12 +141,28 @@ namespace cFeed
       {
         if (!selectedItem.Value.IsProcessing)
         {
-          new Thread(delegate ()
+          /* just update dynamic feed */
+          if (selectedItem.Value.IsDynamic == true)
           {
-            selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
-            selectedItem.Value.Load(true);
+            selectedItem.Value.Load(false);
             selectedItem.DisplayText = selectedItem.Value.DisplayLine;
-          }).Start();
+          }
+          else
+          {
+            /* refresh current online feed */
+            new Thread(delegate ()
+            {
+              selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
+              selectedItem.Value.Load(true);
+              selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+            }).Start();
+          }
+          /* then load dynamic feeds */
+          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
+            item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+            item.Value.Load(false);
+            item.DisplayText = item.Value.DisplayLine;
+          });
         }
       }
 
