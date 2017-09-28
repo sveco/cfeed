@@ -104,6 +104,20 @@ namespace cFeed.Util
           bool skip = false;
           switch (node.Name)
           {
+            //handle headers
+            case "h1":
+            case "h2":
+            case "h3":
+              outText.Write(Environment.NewLine);
+              outText.Write(Environment.NewLine);
+              if (node.HasChildNodes)
+              {
+                ConvertContentTo(node, outText);
+              }
+              outText.Write(Environment.NewLine);
+              skip = true;
+              break;
+
             case "p":
             case "ul":
             case "ol":
@@ -170,6 +184,7 @@ namespace cFeed.Util
               skip = true;
               break;
           }
+
           if (!skip)
           {
             if (node.HasChildNodes)

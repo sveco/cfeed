@@ -55,15 +55,15 @@ namespace cFeed
       string prefix = (refresh ? "" : Configuration.LoadingPrefix);
       string suffix = (refresh ? "" : Configuration.LoadingSuffix);
 
-      void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
-      {
-        new Thread(delegate ()
-        {
-          i.DisplayText = prefix + i.DisplayText + suffix;
-          i.Value.Load(refresh);
-          i.DisplayText = i.Value.DisplayLine;
-        }).Start();
-      }
+      //void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
+      //{
+      //  new Thread(delegate ()
+      //  {
+      //    i.DisplayText = prefix + i.DisplayText + suffix;
+      //    i.Value.Load(refresh);
+      //    i.DisplayText = i.Value.DisplayLine;
+      //  }).Start();
+      //}
 
       var rssFeeds = feeds
               .Where(item => item.Hidden == false)
@@ -86,7 +86,7 @@ namespace cFeed
         _mainView.Height = Config.Global.UI.Layout.WindowHeight;
       }
 
-      var list = new Picklist<RssFeed>(rssFeeds, processItem);
+      var list = new Picklist<RssFeed>(rssFeeds, null);
 
       list.Top = Config.Global.UI.Layout.FeedListTop;
       list.Left = Config.Global.UI.Layout.FeedListLeft;
@@ -99,11 +99,48 @@ namespace cFeed
       _mainView.Controls.Add(feedListFooter);
       _mainView.Controls.Add(list);
 
+      ReloadAll(list, refresh);
+
       _mainView.Show();
+    }
+
+    private void ReloadAll(Picklist<RssFeed> parent, bool online) {
+      new Thread(() =>
+      {
+        Thread.CurrentThread.IsBackground = true;
+        /* first load online feeds */
+        Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
+          item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+          item.Value.Load(online);
+          item.DisplayText = item.Value.DisplayLine;
+        });
+
+        /* then load dynamic feeds */
+        Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
+          item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+          item.Value.Load(false);
+          item.DisplayText = item.Value.DisplayLine;
+        });
+
+      }).Start();
     }
 
     private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
     {
+      //Open
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
+      {
+        if (selectedItem != null)
+        {
+          if (!selectedItem.Value.IsProcessing)
+          {
+            articleList.DisplayArticleList(selectedItem);
+            _mainView.Refresh();
+          }
+        }
+        return true;
+      }
+
       //Exit app
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.QuitApp))
       {
@@ -113,27 +150,9 @@ namespace cFeed
       //Reload all
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.ReloadAll))
       {
-        new Thread(() =>
-        {
-          Thread.CurrentThread.IsBackground = true;
-          /* first load online feeds */
-          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
-              item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-              item.Value.Load(true);
-              item.DisplayText = item.Value.DisplayLine;
-            });
-
-          /* then load dynamic feeds */
-          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
-            item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-            item.Value.Load(false);
-            item.DisplayText = item.Value.DisplayLine;
-          });
-
-        }).Start();
-
-
+        ReloadAll(parent, true);
         parent.Refresh();
+        return true;
       }
 
       //Reload
@@ -164,19 +183,7 @@ namespace cFeed
             item.DisplayText = item.Value.DisplayLine;
           });
         }
-      }
-
-      //Open
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
-      {
-        if (selectedItem != null)
-        {
-          if (!selectedItem.Value.IsProcessing)
-          {
-            articleList.DisplayArticleList(selectedItem);
-            _mainView.Refresh();
-          }
-        }
+        return true;
       }
 
       //Mark all read
@@ -197,6 +204,29 @@ namespace cFeed
               selectedItem.Value.MarkAllRead(db);
               selectedItem.DisplayText = selectedItem.Value.DisplayLine;
             }
+            return true;
+          }
+        }
+      }
+      //Purge deleted
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Purge))
+      {
+        if (selectedItem != null)
+        {
+          if (!selectedItem.Value.IsProcessing)
+          {
+            var input = new Input("Purge deleted articles? [Y/N]:")
+            {
+              Top = Console.WindowHeight - 2,
+              ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+              BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+            };
+            if (input.InputText == "Y")
+            {
+              selectedItem.Value.Purge(db);
+              selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+            }
+            return true;
           }
         }
       }

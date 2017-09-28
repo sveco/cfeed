@@ -42,8 +42,8 @@ namespace cFeed.Entities
     public int Index { get; private set; }
     private SyndicationFeed Feed { get; set; }
 
-    public int TotalItems { get { return FeedItems.Count(); } }
-    public int UnreadItems { get { return FeedItems.Where(x => x.IsNew == true).Count(); } }
+    public int TotalItems { get { return FeedItems.Where(x => x.Deleted == false).Count(); } }
+    public int UnreadItems { get { return FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count(); } }
     public IList<FeedItem> FeedItems { get; set; }
 
     [BsonIgnore]
@@ -179,6 +179,7 @@ namespace cFeed.Entities
             //UnreadItems += result.IsNew ? 1 : 0;
             result.Item = i;
             result.Index = index + 1;
+            result.Tags = Tags;
             items.Update(result);
           }
           else
@@ -225,15 +226,21 @@ namespace cFeed.Entities
 
     internal void MarkAllRead(LiteDatabase db)
     {
-      foreach (var feed in FeedItems)
+      foreach (var item in FeedItems)
       {
-        feed.MarkAsRead(db);
+        item.MarkAsRead(db);
       }
     }
 
     public void Load(bool refresh)
     {
       this.GetFeed(refresh);
+    }
+
+    internal void Purge(LiteDatabase db)
+    {
+      var items = _db.GetCollection<FeedItem>("items");
+      items.Delete(x => x.FeedUrl == FeedUrl && x.Deleted == true);
     }
   }
 }
