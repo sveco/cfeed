@@ -245,6 +245,7 @@ StepBack    |   { Key: ["Escape", "Backspace"]}       | Navigates back          
 SaveArticle |   { Key: ["S"] }                        | Reolads article from web and saves| Article
 Download    |   { Key: ["D"] }                        | Downloads Article                 | Article list
 MarkRead    |   { Key: ["M"] }                        | Mark selected article as read     | Article list
+MarkAllRead |   { Key: ["A"]                          | Mark all articles as read		  | Feed List (selected item)
 MarkUnread  |   { Key: ["U"] }                        | Remove read flag                  | Article list
 OpenLink    |   { Key: ["L"] }                        | Open numbered link in browser     | Article
 OpenImage   |   { Key: ["I"] }                        | Open numbered image in browser    | Article
@@ -281,12 +282,14 @@ String | Meaning
 
 ## Command Line Arguments
 ```
-cfeed [-h] [-d \<database\>] [-r \<true|false>]
+cfeed [-h] [-d <database>] [-r <true|false>] [-o <opml uri/path>]
 
  -h  Show help.
  -d  Database; Override default db location.
  -r  Refresh; Whether to refresh all feeds on first load.
+ -o  Import OPML feed list
 ```
+OPML support is limited to reading list of feeds from opml file and displaying them. They are not exported or added to .conf file, this has to be done manually.
 
 ## Acknowledgments
 Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and does not use any portion

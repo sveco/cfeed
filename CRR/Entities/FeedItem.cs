@@ -220,7 +220,7 @@ namespace cFeed.Entities
     {
       var w = new HtmlAgilityPack.HtmlWeb();
       var doc = w.Load(Links[0].Uri.ToString());
-      HtmlToText conv = new HtmlToText() { Filters = Filters.ToList() };
+      HtmlToText conv = new HtmlToText() { Filters = Filters?.ToList() };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 

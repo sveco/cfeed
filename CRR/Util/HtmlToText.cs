@@ -58,15 +58,16 @@ namespace cFeed.Util
       }
     }
 
-
-
     public void ConvertTo(HtmlNode node, TextWriter outText)
     {
-      if (Filters.Select(x => x.TrimStart('#')).Contains(node.Id.Trim()))
-        return;
-      if (node.Attributes.Contains("class") &&
-          Filters.Select(x => x.TrimStart('.')).Contains(node.Attributes["class"].Value.Trim()))
-        return;
+      if (Filters != null)
+      {
+        if (Filters.Select(x => x.TrimStart('#')).Contains(node.Id.Trim()))
+          return;
+        if (node.Attributes.Contains("class") &&
+            Filters.Select(x => x.TrimStart('.')).Contains(node.Attributes["class"].Value.Trim()))
+          return;
+      }
 
 
       string html;

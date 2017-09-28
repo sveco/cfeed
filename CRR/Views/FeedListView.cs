@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using cFeed.Entities;
+using cFeed.Logging;
 using CGui.Gui;
 using CGui.Gui.Primitives;
 using JsonConfig;
@@ -55,22 +57,12 @@ namespace cFeed
       string prefix = (refresh ? "" : Configuration.LoadingPrefix);
       string suffix = (refresh ? "" : Configuration.LoadingSuffix);
 
-      //void processItem(ListItem<RssFeed> i, CGui.Gui.Picklist<RssFeed> parent)
-      //{
-      //  new Thread(delegate ()
-      //  {
-      //    i.DisplayText = prefix + i.DisplayText + suffix;
-      //    i.Value.Load(refresh);
-      //    i.DisplayText = i.Value.DisplayLine;
-      //  }).Start();
-      //}
-
       var rssFeeds = feeds
               .Where(item => item.Hidden == false)
               .Select((item, index) => new ListItem<RssFeed>()
               {
                 Index = index,
-                DisplayText = $"{index + 1} - {prefix}{item.FeedUrl}{suffix}",
+                DisplayText = prefix + item.DisplayLine + suffix,
                 Value = item
               }).ToList();
 
@@ -111,8 +103,23 @@ namespace cFeed
         /* first load online feeds */
         Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
           item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-          item.Value.Load(online);
-          item.DisplayText = item.Value.DisplayLine;
+          try
+          {
+            item.Value.Load(online);
+            item.DisplayText = item.Value.DisplayLine;
+          }
+          catch (WebException x)
+          {
+            cFeed.Logging.Logger.Log(x);
+            item.DisplayText = item.Value.DisplayLine + " ERROR:" + x.Message;
+          }
+          catch (Exception x)
+          {
+            cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + item.Value.FeedUrl);
+            cFeed.Logging.Logger.Log(x);
+            item.DisplayText = item.Value.DisplayLine + " ERROR!";
+          }
+
         });
 
         /* then load dynamic feeds */

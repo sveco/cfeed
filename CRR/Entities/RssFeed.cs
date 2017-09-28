@@ -12,6 +12,7 @@ using System.Diagnostics;
 using cFeed.Util;
 using System.Text.RegularExpressions;
 using cFeed.Logging;
+using System.Net;
 
 namespace cFeed.Entities
 {
@@ -95,6 +96,37 @@ namespace cFeed.Entities
       CustomTitle = customTitle;
     }
 
+    /// <summary>
+    /// Supports RSS 1, 2 and ATOM 1.0 feed standards
+    /// </summary>
+    /// <param name="url"></param>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
+    static SyndicationFeed GetFeed(string url, int timeout = 10000)
+    {
+      SyndicationFeed feed;
+
+      WebRequest request = WebRequest.Create(url);
+      request.Timeout = timeout;
+      using (WebResponse response = request.GetResponse())
+      using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
+      {
+        if (Rss10FeedFormatter.CanReadFrom(reader))
+        {
+          // RSS 1.0
+          var rff = new Rss10FeedFormatter();
+          rff.ReadFrom(reader);
+          feed = rff.Feed;
+        }
+        else
+        {
+          // RSS 2.0 or Atom 1.0
+          feed = SyndicationFeed.Load(reader);
+        }
+      }
+      return feed;
+    }
+
     private void GetFeed(bool refresh)
     {
       IsProcessing = true;
@@ -164,12 +196,15 @@ namespace cFeed.Entities
           Async = true
         };
         //XmlReader reader = XmlReader.Create(FeedUrl, settings);
-        RssXmlReader reader = new RssXmlReader(FeedUrl);
+        //RssXmlReader reader = new RssXmlReader(FeedUrl);
 
-        this.Feed = SyndicationFeed.Load(reader);
+        //this.Feed = SyndicationFeed.Load(reader);
+        this.Feed = GetFeed(FeedUrl);
+
+
         Logging.Logger.Log(FeedUrl + " loaded");
         this.Title = Feed.Title.Text;
-        reader.Close();
+        //reader.Close();
         Isloaded = true;
         foreach (var i in this.Feed.Items)
         {
@@ -218,9 +253,6 @@ namespace cFeed.Entities
           index++;
         }
       }
-
-      //UnreadItems = this.FeedItems.Where(x => x.IsNew == true).Count();
-      //TotalItems = this.FeedItems.Count();
       IsProcessing = false;
     }
 

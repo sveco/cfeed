@@ -82,6 +82,7 @@ namespace cFeed
       //arguments
       var database = arguments.GetArgValue<string>("d", Config.Global.Database);
       var refresh = arguments.GetArgValue<bool>("r", Config.Global.Refresh);
+      var opml = arguments.GetArgValue<string>("o");
 
       //show help?
       if (arguments.GetArgValue<bool>("h"))
@@ -110,6 +111,19 @@ namespace cFeed
             Tags = feed.Tags
           });
           i++;
+        }
+
+        if (!string.IsNullOrEmpty(opml))
+        {
+          var importedFeeds = OpmlImport.Import(opml);
+          foreach (var feed in importedFeeds)
+          {
+            feeds.Add(new RssFeed(feed.FeedUrl, null, i, db, feed.Title)
+            {
+              Tags = feed.Tags
+            });
+            i++;
+          }
         }
 
         feedList = new FeedListView(feeds, db);

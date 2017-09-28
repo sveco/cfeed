@@ -46,6 +46,9 @@
     <ApplicationIcon>cfeed.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CGui, Version=1.0.0.8, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.0.0.8\lib\net40\CGui.dll</HintPath>
+    </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.1.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.1\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
@@ -74,10 +77,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\Outline.cs" />
     <Compile Include="Logging\LogData.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
     <Compile Include="Util\Formatter.cs" />
+    <Compile Include="Util\OpmlImport.cs" />
+    <Compile Include="Util\Rss10FeedFormatter.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />
@@ -103,12 +109,6 @@
   <ItemGroup>
     <Content Include="Todo.txt" />
     <EmbeddedResource Include="urls.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\CGui4Net\CGui\CGui.csproj">
-      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
-      <Name>CGui</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
