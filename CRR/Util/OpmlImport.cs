@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace cFeed.Util
 {
   public static class OpmlImport
   {
-    public static List<Outline> Import(string uri)
+    public static IList<Outline> Import(string uri)
     {
       var results = XDocument.Load(uri)
                            .Descendants("outline")

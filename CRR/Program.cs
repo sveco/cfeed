@@ -80,9 +80,9 @@ namespace cFeed
       //SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
 
       //arguments
-      var database = arguments.GetArgValue<string>("d", Config.Global.Database);
+      Configuration.Database = arguments.GetArgValue<string>("d", Config.Global.Database);
       var refresh = arguments.GetArgValue<bool>("r", Config.Global.Refresh);
-      var opml = arguments.GetArgValue<string>("o");
+      var opml = arguments.GetArgValue<string>("o", Config.Global.Opml);
 
       //show help?
       if (arguments.GetArgValue<bool>("h"))
@@ -96,15 +96,15 @@ namespace cFeed
 
       SetAllowUnsafeHeaderParsing20();
 
-      using (var db = new LiteDatabase(database))
-      {
+      //using (var db = new LiteDatabase(database))
+      //{
         List<RssFeed> feeds = new List<RssFeed>();
 
         var configFeeds = Enumerable.ToList(Config.Global.Feeds);
         int i = 0;
         foreach (var feed in configFeeds)
         {
-          feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, db, feed.Title)
+          feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, feed.Title)
           {
             Filters = feed.Filters,
             Hidden = feed.Hidden,
@@ -118,7 +118,7 @@ namespace cFeed
           var importedFeeds = OpmlImport.Import(opml);
           foreach (var feed in importedFeeds)
           {
-            feeds.Add(new RssFeed(feed.FeedUrl, null, i, db, feed.Title)
+            feeds.Add(new RssFeed(feed.FeedUrl, null, i, feed.Title)
             {
               Tags = feed.Tags
             });
@@ -126,9 +126,9 @@ namespace cFeed
           }
         }
 
-        feedList = new FeedListView(feeds, db);
+        feedList = new FeedListView(feeds);
         feedList.Show(refresh);
-      }
+     // }
     }
 
     private static void Config_OnUserConfigFileChanged()

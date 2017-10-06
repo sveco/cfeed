@@ -113,6 +113,8 @@ Index           | Integer       | Article Index
 
 UI section of config can be used to customize look and feel of application.
 
+TODO: In the future, I plan to change how UI is configured, by providing layout template in for each displayed UI element.
+
 ***UI.Strings***
 
 Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed. To define column width use following format:
@@ -126,7 +128,7 @@ Setting | Meaning | Default value
 **ReadStateRead** | String to show when all items in feed has been read, or article is not new. | " "
 **DownloadStateDownloaded** | String to show when article content is saved locally |  "D"
 **DownloadStatePending** | String to show when article content is not downloaded | " "
-**FeedListFormat** | Format of feed list items | "%i:3r %n [%u] %t"
+**FeedListFormat** | Format of feed list items |  "%i:3r %n [%u] %g:16l %t"
 **ArticleListFormat** | Format of list item when articles are displayed | "%i:3r [%n\|%D\|%x] %d %t""
 **ArticleTitleFormat** | Title shown when article is displayed | "%t"
 **ArticleListDateFormat** | Date format for publish date | "MMM dd"
@@ -167,6 +169,7 @@ String | Meaning
 %t | CustomTitle ?? Title ?? FeedUrl
 %V | Major.Minor version
 %v | Full version, Major.Minor.Revision.Build
+%g | Feed tags
 
 Replacement strings for *ArticleListFormat* and *ArticleTitleFormat*:
 
@@ -175,7 +178,7 @@ String | Meaning
 %i | Feed index
 %l | RSS/ATOM feed url
 %n | Read state flag (New/Read)
-%d | Article publish date / Last uppdated date (whichever is latest)
+%d | Article publish date / Last uppdated date (which one is latest)
 %t | Article title
 %s | Summary
 
@@ -262,11 +265,12 @@ PgDown  | Scroll down 10 items | Feed list, Article list
 ***Other settings***
 
 Setting | Description | Default value
-:------------ | :---------------------------------------------- | -----------------------
-SavedFileName | Format for file name of saved articles          | ".\\saved\\%d\\%t.txt"
-Database      | Name of liteDB database used to store metadata  | "cfeed.db" 
-Refresh       | Refresh feeds on load                           | true
-Browser       | Custom browser to use to open articles, links and images | \<empty\>
+:------------ | :-------------------------------------------------------------------------- | -----------------------
+SavedFileName | Format for file name of saved articles                                      | ".\\saved\\%d\\%t.txt"
+Database      | Name of liteDB database used to store metadata                              | "cfeed.db" 
+Opml          | Path to OPML file to load. Can be also set by command line param -o \<path> | \<empty> 
+Refresh       | Refresh feeds on load                                                       | true
+Browser       | Custom browser to use to open articles, links and images                    | \<empty\>
 Debug         | Debug level to write to log. Levels are None, Debug, Info, Warning, Error, Critical, in that order. Setting level to "Warning", will log Warning, Error and Critical. SEtting none turns off logging. | "Warning"
 
 

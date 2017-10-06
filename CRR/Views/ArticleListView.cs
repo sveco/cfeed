@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using cFeed.Entities;
+using cFeed.Util;
 using CGui.Gui;
 using CGui.Gui.Primitives;
 using JsonConfig;
@@ -11,7 +12,6 @@ namespace cFeed
   public class ArticleListView
   {
     private ListItem<RssFeed> selectedFeed;
-    private LiteDatabase db;
     private ArticleView article;
 
     Header articleListHeader = new Header("")
@@ -29,15 +29,13 @@ namespace cFeed
 
     private Viewport _view;
 
-    public ArticleListView(LiteDatabase Db)
+    public ArticleListView()
     {
-      db = Db;
-      article = new ArticleView(db);
+      article = new ArticleView();
 
       _view = new Viewport();
       _view.Controls.Add(articleListHeader);
       _view.Controls.Add(articleListFooter);
-
     }
 
     public void DisplayArticleList(ListItem<RssFeed> feed)
@@ -64,7 +62,7 @@ namespace cFeed
       //if (articleListFooter != null) { articleListFooter.Show(); }
 
       var articleList = new Picklist<FeedItem>(items.ToList());
-      articleList.ListItems = items.ToList();
+     // articleList.ListItems = items.ToList();
 
       if (Config.Global.UI.Layout.ArticleListHeight > 0)
       {
@@ -81,7 +79,7 @@ namespace cFeed
       articleList.Width = Console.WindowWidth - Config.Global.UI.Layout.ArticleListLeft;
       articleList.Top = Config.Global.UI.Layout.ArticleListTop;
       articleList.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
-      articleList.ShowScrollbar = true;
+      articleList.ShowScrollBar = true;
 
       _view.Show();
 
@@ -93,12 +91,45 @@ namespace cFeed
 
     private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<FeedItem> selectedItem, Picklist<FeedItem> parent)
     {
+      //Open article
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
+      {
+        article.DisplayArticle(selectedItem, selectedFeed, parent);
+        _view.Refresh();
+        parent.Refresh();
+        return true;
+      }
+      //Mark selected item as read
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkRead))
       {
         if (selectedItem != null)
         {
-          selectedItem.Value.MarkAsRead(db);
+          selectedItem.Value.MarkAsRead();
           selectedItem.DisplayText = selectedItem.Value.DisplayText;
+        }
+      }
+      //Mark all read
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkAllRead))
+      {
+        if (parent != null)
+        {
+          var input = new Input("Mark all articles as read [Y/N]:")
+          {
+            Top = Console.WindowHeight - 2,
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+          };
+          if (input.InputText == "Y")
+          {
+            foreach (var item in parent.ListItems)
+            {
+              if (item.Value.IsNew == true)
+              {
+                item.Value.MarkAsRead();
+                item.DisplayText = item.Value.DisplayText;
+              }
+            }
+          }
         }
       }
 
@@ -106,7 +137,7 @@ namespace cFeed
       {
         if (selectedItem != null)
         {
-          selectedItem.Value.MarkUnread(db);
+          selectedItem.Value.MarkUnread();
           selectedItem.DisplayText = selectedItem.Value.DisplayText;
         }
       }
@@ -115,7 +146,7 @@ namespace cFeed
       {
         if (selectedItem != null)
         {
-          selectedItem.Value.MarkDeleted(db);
+          selectedItem.Value.MarkDeleted();
           selectedItem.DisplayText = selectedItem.Value.DisplayText;
         }
       }
@@ -123,13 +154,6 @@ namespace cFeed
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
       {
         return false;
-      }
-
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
-      {
-        article.DisplayArticle(selectedItem, selectedFeed, parent);
-        _view.Refresh();
-        parent.Refresh();
       }
 
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Reload))
@@ -176,6 +200,7 @@ namespace cFeed
           selectedItem.Value.DownloadArticleContent(selectedFeed.Value.Filters);
           selectedItem.DisplayText = selectedItem.Value.DisplayText;
         }
+        return true;
       }
       return true;
     }

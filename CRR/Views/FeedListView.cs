@@ -6,20 +6,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using cFeed.Entities;
 using cFeed.Logging;
+using cFeed.Util;
 using CGui.Gui;
 using CGui.Gui.Primitives;
 using JsonConfig;
-using LiteDB;
 
 namespace cFeed
 {
   public class FeedListView
   {
     private IList<RssFeed> feeds = new List<RssFeed>();
-    private LiteDatabase db;
     private ArticleListView articleList;
-
-    private string[] _filters = new string[] { };
 
     private Viewport _mainView;
 
@@ -27,7 +24,7 @@ namespace cFeed
     {
       BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground),
       ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground),
-      PadChar = '-'
+      PadChar = '═'
     };
 
     private static string Format(string ApplicationTitle)
@@ -41,15 +38,13 @@ namespace cFeed
     {
       BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground),
       ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground),
-      PadChar = '-'
+      PadChar = '═'
     };
 
-    public FeedListView(IList<RssFeed> Feeds, LiteDatabase Db)
+    public FeedListView(IList<RssFeed> feeds)
     {
-      feeds = Feeds;
-      db = Db;
-
-      articleList = new ArticleListView(db);
+      this.feeds = feeds;
+      articleList = new ArticleListView();
     }
 
     public void Show(bool refresh)
@@ -85,7 +80,7 @@ namespace cFeed
       list.Height = Config.Global.UI.Layout.FeedMaxItems;
       list.Width = Console.WindowWidth - Config.Global.UI.Layout.FeedListLeft - 1;
       list.OnItemKeyHandler += FeedList_OnItemKeyHandler;
-      list.ShowScrollbar = true;
+      list.ShowScrollBar = true;
 
       _mainView.Controls.Add(feedListHeader);
       _mainView.Controls.Add(feedListFooter);
@@ -102,7 +97,7 @@ namespace cFeed
         Thread.CurrentThread.IsBackground = true;
         /* first load online feeds */
         Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
-          item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+        item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
           try
           {
             item.Value.Load(online);
@@ -123,7 +118,7 @@ namespace cFeed
         });
 
         /* then load dynamic feeds */
-        Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
+        Parallel.ForEach(parent.ListItems.Where(i => i?.Value?.IsDynamic == true), (item) => {
           item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
           item.Value.Load(false);
           item.DisplayText = item.Value.DisplayLine;
@@ -135,12 +130,13 @@ namespace cFeed
     private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
     {
       //Open
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenFeed))
       {
         if (selectedItem != null)
         {
           if (!selectedItem.Value.IsProcessing)
           {
+            parent.IsDisplayed = false;
             articleList.DisplayArticleList(selectedItem);
             _mainView.Refresh();
           }
@@ -200,21 +196,22 @@ namespace cFeed
         {
           if (!selectedItem.Value.IsProcessing)
           {
-            var input = new Input("Mark all articles as read [Y/N]:")
+            var input = new Input(Config.Global.UI.Strings.PromptMarkAll)
             {
               Top = Console.WindowHeight - 2,
               ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
               BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
             };
-            if(input.InputText == "Y")
+            if(input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
             {
-              selectedItem.Value.MarkAllRead(db);
+              selectedItem.Value.MarkAllRead();
               selectedItem.DisplayText = selectedItem.Value.DisplayLine;
             }
             return true;
           }
         }
       }
+      
       //Purge deleted
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Purge))
       {
@@ -222,15 +219,15 @@ namespace cFeed
         {
           if (!selectedItem.Value.IsProcessing)
           {
-            var input = new Input("Purge deleted articles? [Y/N]:")
+            var input = new Input(Config.Global.UI.Strings.PromptPurge)
             {
               Top = Console.WindowHeight - 2,
               ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
               BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
             };
-            if (input.InputText == "Y")
+            if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
             {
-              selectedItem.Value.Purge(db);
+              selectedItem.Value.Purge();
               selectedItem.DisplayText = selectedItem.Value.DisplayLine;
             }
             return true;
@@ -248,14 +245,14 @@ namespace cFeed
 
     internal void RefreshConfig()
     {
-      if (feedListHeader != null)
+      if (feedListHeader != null && feedListHeader.IsDisplayed)
       {
         feedListHeader.DisplayText = Format(Config.Global.UI.Strings.ApplicationTitleFormat);
         feedListHeader.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground);
         feedListHeader.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground);
         feedListHeader.Refresh();
       }
-      if (feedListFooter != null)
+      if (feedListFooter != null && feedListFooter.IsDisplayed)
       {
         feedListFooter.DisplayText = Config.Global.UI.Strings.FeedListFooter;
         feedListFooter.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground);

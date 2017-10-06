@@ -2,11 +2,30 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
+using JsonConfig;
 
 namespace cFeed.Logging
 {
   public sealed class Logger
   {
+    private static readonly LogLevel DefaultLogLevel = LogLevel.Info;
+    public static LogLevel ConfiguredLogLevel
+    {
+      get
+      {
+        if (Config.Global.Debug is NullExceptionPreventer)
+        {
+          return DefaultLogLevel;
+        }
+        else
+        {
+          LogLevel result = DefaultLogLevel;
+          Enum.TryParse<LogLevel>(Config.Global.Debug, out result);
+          return result;
+        }
+      }
+    }
+
     private static readonly Logger instance = new Logger();
     private static ConcurrentQueue<LogData> logQueue = new ConcurrentQueue<LogData>();
     private static int queueSize = 1;
@@ -88,7 +107,7 @@ namespace cFeed.Logging
 
     public static void Log(LogLevel level, string message)
     {
-      if (Configuration.ConfiguredLogLevel > level)
+      if (ConfiguredLogLevel > level)
         return;
 
       lock (logQueue)
@@ -105,17 +124,17 @@ namespace cFeed.Logging
 
     public static void Log(Exception ex)
     {
-      if (Configuration.ConfiguredLogLevel > LogLevel.Error)
+      if (ConfiguredLogLevel > LogLevel.Error)
         return;
 
-      Log(LogLevel.Error, ex);
+      Log(ex);
     }
 
     public static void Log(LogLevel level, Exception ex)
     {
       lock (logQueue)
       {
-        LogData logEntry = new LogData(LogLevel.Error, ex);
+        LogData logEntry = new LogData(level, ex);
         logQueue.Enqueue(logEntry);
 
         if (logQueue.Count >= queueSize || DoPeriodicFlush())

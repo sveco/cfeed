@@ -13,8 +13,8 @@ namespace cFeed.Util
     Collection<Uri> Links = new Collection<Uri>();
     Collection<Uri> Images = new Collection<Uri>();
     Uri BaseUri;
-    string linkHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.LinkHighlight);
-    string imageLinkHighlight = Configuration.TextColor.ForegroundColor(Config.Global.UI.Colors.ImageLinkHighlight);
+    string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+    string imageLinkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkHighlight);
     string resetColor = Configuration.ColorReset;
 
 

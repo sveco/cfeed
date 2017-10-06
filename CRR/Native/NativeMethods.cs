@@ -5,7 +5,7 @@ namespace cFeed.Native
 {
     public static class NativeMethods
     {
-        public enum CtrlTypes
+        public enum CtrlType
         {
             CTRL_C_EVENT = 0,
             CTRL_BREAK_EVENT,
@@ -26,6 +26,6 @@ namespace cFeed.Native
         [DllImport("Kernel32")]
         internal static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
 
-        internal delegate bool HandlerRoutine(CtrlTypes CtrlType);
+        internal delegate bool HandlerRoutine(CtrlType CtrlType);
     }
 }

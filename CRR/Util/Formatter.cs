@@ -9,8 +9,8 @@ namespace cFeed.Util
 {
   public static class Formatter
   {
-    public static string FormatLine(string Format, Dictionary<string, string> replacementTable) {
-      MatchCollection matches = Regex.Matches(Format, Configuration.ReplacementPattern);
+    public static string FormatLine(string format, Dictionary<string, string> replacementTable) {
+      MatchCollection matches = Regex.Matches(format, Configuration.ReplacementPattern);
       foreach (Match match in matches)
       {
         var token = match.Groups[1].Value;
@@ -26,21 +26,21 @@ namespace cFeed.Util
           if (direction != null)
           {
             if (direction == "r")
-            { Format = Format.Replace(match.Value, replacementTable[token].PadLeft(pad)); }
+            { format = format.Replace(match.Value, replacementTable[token].PadLeftVisible(pad)); }
             else if (direction == "l")
-            { Format = Format.Replace(match.Value, replacementTable[token].PadRight(pad)); }
+            { format = format.Replace(match.Value, replacementTable[token].PadRightVisible(pad)); }
             else
             {
-              Format = Format.Replace(match.Value, replacementTable[token]);
+              format = format.Replace(match.Value, replacementTable[token]);
             }
           }
         }
         else
         {
-          Format = Format.Replace(match.Value, replacementTable[token]);
+          format = format.Replace(match.Value, replacementTable[token]);
         }
       }
-      return Format;
+      return format;
     }
   }
 }

@@ -1,18 +1,16 @@
-﻿using JsonConfig;
-using LiteDB;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic;
-using System.ServiceModel.Syndication;
-using System.Xml;
-using System;
-using System.Reflection.Emit;
-using System.Linq.Expressions;
-using System.Diagnostics;
-using cFeed.Util;
-using System.Text.RegularExpressions;
-using cFeed.Logging;
 using System.Net;
+using System.ServiceModel.Syndication;
+using System.Text;
+using System.Xml;
+using cFeed.LiteDb;
+using cFeed.Logging;
+using cFeed.Util;
+using JsonConfig;
+using LiteDB;
 
 namespace cFeed.Entities
 {
@@ -60,7 +58,8 @@ namespace cFeed.Entities
         { "u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8) },
         { "t", CustomTitle ?? Title ?? FeedUrl },
         { "V", Configuration.MAJOR_VERSION },
-        { "v", Configuration.VERSION }
+        { "v", Configuration.VERSION },
+        { "g", ( Tags != null ? string.Join(" ", Tags) : "")}
       };
 
       return Formatter.FormatLine(Format, replacementTable);
@@ -84,14 +83,11 @@ namespace cFeed.Entities
       }
     }
 
-    private LiteDatabase _db;
-
-    public RssFeed(string url, string query, int index, LiteDatabase db, string customTitle = "")
+    public RssFeed(string url, string query, int index, string customTitle = "")
     {
       FeedUrl = url;
       FeedQuery = query;
       Index = index;
-      _db = db;
       FeedItems = new List<FeedItem>();
       CustomTitle = customTitle;
     }
@@ -104,7 +100,7 @@ namespace cFeed.Entities
     /// <returns></returns>
     static SyndicationFeed GetFeed(string url, int timeout = 10000)
     {
-      SyndicationFeed feed;
+      SyndicationFeed feed = null;
 
       WebRequest request = WebRequest.Create(url);
       request.Timeout = timeout;
@@ -121,7 +117,18 @@ namespace cFeed.Entities
         else
         {
           // RSS 2.0 or Atom 1.0
-          feed = SyndicationFeed.Load(reader);
+          try
+          {
+            feed = CustomSyndicationFeed.Load(reader);
+            //SyndicationFeed sf = SyndicationFeed.Load(reader);
+            //Rss20FeedFormatter rssFormatter = sf.GetRss20Formatter();
+            //rssFormatter.ReadFrom(reader);
+            //feed = rssFormatter.Feed;
+          }
+          catch (XmlException ex)
+          {
+            Logging.Logger.Log(ex);
+          }
         }
       }
       return feed;
@@ -134,88 +141,78 @@ namespace cFeed.Entities
       int index = 0;
 
       //load items from db
-      var items = _db.GetCollection<FeedItem>("items");
-
-      if (!string.IsNullOrEmpty(FeedUrl) &&
-          !string.IsNullOrEmpty(FeedQuery))
-      {
-        //Filtered real feed
-        try
+        if (!string.IsNullOrEmpty(FeedUrl) &&
+            !string.IsNullOrEmpty(FeedQuery))
         {
-          this.FeedItems =
-          items.Find(x => x.FeedUrl == FeedUrl)
-          .Where(this.FeedQuery)
-          .OrderByDescending(x => x.PublishDate)
-          .Select((item, x) => { item.Index = x; return item; })
-          .ToList();
-        }
-        catch (ParseException x)
-        {
-          Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-          Logging.Logger.Log(x);
-        }
-      }
-      else if (!string.IsNullOrEmpty(FeedUrl) &&
-        string.IsNullOrEmpty(FeedQuery))
-      {
-        //Only feed, no filtering
-        this.FeedItems =
-            items.Find(x => x.FeedUrl == FeedUrl)
+          //Filtered real feed
+          try
+          {
+            this.FeedItems =
+            DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
+            .Where(this.FeedQuery)
             .OrderByDescending(x => x.PublishDate)
             .Select((item, x) => { item.Index = x; return item; })
             .ToList();
-      }
-      else if (!string.IsNullOrEmpty(FeedQuery))
-      {
-        //Dynamic feed
-        try
+          }
+          catch (ParseException x)
+          {
+            Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+            Logging.Logger.Log(x);
+          }
+        }
+        else if (!string.IsNullOrEmpty(FeedUrl) &&
+          string.IsNullOrEmpty(FeedQuery))
         {
-          this.FeedItems = items.FindAll().Where(this.FeedQuery)
+          //Only feed, no filtering
+          this.FeedItems =
+              DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
               .OrderByDescending(x => x.PublishDate)
               .Select((item, x) => { item.Index = x; return item; })
               .ToList();
         }
-        catch (ParseException x)
+        else if (!string.IsNullOrEmpty(FeedQuery))
         {
-          Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
-          Logging.Logger.Log(x);
+          //Dynamic feed
+          try
+          {
+            this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
+                .OrderByDescending(x => x.PublishDate)
+                .Select((item, x) => { item.Index = x; return item; })
+                .ToList();
+          }
+          catch (ParseException x)
+          {
+            Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
+            Logging.Logger.Log(x);
+          }
+          catch (ArgumentNullException x)
+          {
+            Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
+            Logging.Logger.Log(x);
+          }
         }
-        catch (ArgumentNullException x)
-        {
-          Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
-          Logging.Logger.Log(x);
-        }
-      }
 
       //if refresh is on, get feed from web
       if (refresh && !String.IsNullOrEmpty(FeedUrl))
       {
-        XmlReaderSettings settings = new XmlReaderSettings()
-        {
-          DtdProcessing = DtdProcessing.Parse,
-          Async = true
-        };
-        //XmlReader reader = XmlReader.Create(FeedUrl, settings);
-        //RssXmlReader reader = new RssXmlReader(FeedUrl);
-
-        //this.Feed = SyndicationFeed.Load(reader);
         this.Feed = GetFeed(FeedUrl);
-
+        if (Feed == null) {
+          IsProcessing = false;
+          return;
+        }
 
         Logging.Logger.Log(FeedUrl + " loaded");
         this.Title = Feed.Title.Text;
-        //reader.Close();
         Isloaded = true;
         foreach (var i in this.Feed.Items)
         {
-          var result = items.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
+          var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
           if (result != null)
           {
-            //UnreadItems += result.IsNew ? 1 : 0;
             result.Item = i;
             result.Index = index + 1;
             result.Tags = Tags;
-            items.Update(result);
+            DbWrapper.Instance.Update(result);
           }
           else
           {
@@ -226,7 +223,7 @@ namespace cFeed.Entities
               Index = index + 1,
               Tags = Tags
             };
-            items.Insert(newItem);
+            DbWrapper.Instance.Insert(newItem);
 
             if ((!string.IsNullOrEmpty(FeedQuery)))
             {
@@ -256,11 +253,11 @@ namespace cFeed.Entities
       IsProcessing = false;
     }
 
-    internal void MarkAllRead(LiteDatabase db)
+    internal void MarkAllRead()
     {
       foreach (var item in FeedItems)
       {
-        item.MarkAsRead(db);
+        item.MarkAsRead();
       }
     }
 
@@ -269,10 +266,9 @@ namespace cFeed.Entities
       this.GetFeed(refresh);
     }
 
-    internal void Purge(LiteDatabase db)
+    internal void Purge()
     {
-      var items = _db.GetCollection<FeedItem>("items");
-      items.Delete(x => x.FeedUrl == FeedUrl && x.Deleted == true);
+      DbWrapper.Instance.Purge(FeedUrl);
     }
   }
 }

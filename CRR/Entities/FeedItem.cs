@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.ServiceModel.Syndication;
+using cFeed.LiteDb;
 using cFeed.Util;
 using JsonConfig;
 using LiteDB;
@@ -77,7 +78,7 @@ namespace cFeed.Entities
     public bool Deleted { get; set; }
 
     [BsonIgnore]
-    private string FormatLine(string Format)
+    private string FormatLine(string format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
       {
@@ -92,13 +93,13 @@ namespace cFeed.Entities
         { "V", Configuration.VERSION},
         { "v", Configuration.VERSION}
       }; 
-      return Formatter.FormatLine(Format, replacementTable);
+      return Formatter.FormatLine(format, replacementTable);
     }
 
     [BsonIgnore]
-    private string FormatFileName(string Format)
+    private string FormatFileName(string format)
     {
-      var fullPath = Format
+      var fullPath = format
           .Replace("%i", Index.ToString().PadLeft(3))
           .Replace("%n", Configuration.GetReadState(this.IsNew))
           .Replace("%d", PublishDate.ToString(dateFormat))
@@ -195,32 +196,32 @@ namespace cFeed.Entities
       Title = i.Title.Text;
     }
 
-    public void LoadOnlineArticle(string[] filters, LiteDatabase db)
+    public void LoadOnlineArticle(string[] filters)
     {
-      if (OnContentLoaded == null) throw new ArgumentNullException("onLoaded");
+      if (OnContentLoaded == null) throw new ArgumentNullException("OnContentLoaded");
+
       if (Links.Count > 0)
       {
         DownloadArticleContent(filters);
-
-        var items = db.GetCollection<FeedItem>("items");
-        var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+        //var items = db.GetCollection<FeedItem>("items");
+        var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
         if (result != null)
         {
           result.ExternalLinks = ExternalLinks;
           result.ImageLinks = ImageLinks;
           result.Tags = Tags;
-          items.Update(result);
+          DbWrapper.Instance.Update(result);
         }
 
         OnContentLoaded.Invoke(ArticleContent);
       }
     }
 
-    public void DownloadArticleContent(string[] Filters)
+    public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
       var doc = w.Load(Links[0].Uri.ToString());
-      HtmlToText conv = new HtmlToText() { Filters = Filters?.ToList() };
+      HtmlToText conv = new HtmlToText() { Filters = filters?.ToList() };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 
@@ -233,7 +234,13 @@ namespace cFeed.Entities
       Save();
     }
 
-    public void LoadArticle(string[] filters, LiteDatabase db)
+    /// <summary>
+    /// Loads article content from local storage or web. Supressing Code Analysis warning as we are handling errors by type inside catch block.
+    /// </summary>
+    /// <param name="filters"></param>
+    /// <param name="db"></param>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
+    public void LoadArticle(string[] filters)
     {
       if (this.IsDownloaded)
       {
@@ -253,46 +260,44 @@ namespace cFeed.Entities
             Logging.Logger.Log(x);
             IsLoaded = false;
           }
+          else { throw; }
         }
       }
       else
       {
-        LoadOnlineArticle(filters, db);
+        LoadOnlineArticle(filters);
       }
     }
 
-    public void MarkAsRead(LiteDatabase db)
+    public void MarkAsRead()
     {
       _isNew = false;
-      var items = db.GetCollection<FeedItem>("items");
-      var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+      var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
         result.IsNew = false;
-        items.Update(result);
+        DbWrapper.Instance.Update(result);
       }
     }
 
-    internal void MarkUnread(LiteDatabase db)
+    internal void MarkUnread()
     {
       _isNew = true;
-      var items = db.GetCollection<FeedItem>("items");
-      var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+      var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
         result.IsNew = true;
-        items.Update(result);
+        DbWrapper.Instance.Update(result);
       }
     }
-    internal void MarkDeleted(LiteDatabase db)
+    internal void MarkDeleted()
     {
       Deleted = true;
-      var items = db.GetCollection<FeedItem>("items");
-      var result = items.Find(x => x.Id == this.Id).FirstOrDefault();
+      var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
         result.Deleted = true;
-        items.Update(result);
+        DbWrapper.Instance.Update(result);
       }
     }
 
