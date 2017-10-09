@@ -18,9 +18,8 @@ namespace cFeed.Util
     public override void ReadStartElement()
     {
       if (string.Equals(base.NamespaceURI, string.Empty, StringComparison.InvariantCultureIgnoreCase) &&
-          (
-          string.Equals(base.LocalName, "lastBuildDate", StringComparison.InvariantCultureIgnoreCase) ||
-          string.Equals(base.LocalName, "pubDate", StringComparison.InvariantCultureIgnoreCase)))
+          (string.Equals(base.LocalName, "lastBuildDate", StringComparison.InvariantCultureIgnoreCase) ||
+           string.Equals(base.LocalName, "pubDate", StringComparison.InvariantCultureIgnoreCase)))
       {
         readingDate = true;
       }

@@ -14,7 +14,7 @@ using LiteDB;
 
 namespace cFeed.Entities
 {
-  public class RssFeed
+  public class RssFeed : IDisposable
   {
     public string FeedUrl { get; set; }
     public string FeedQuery { get; set; }
@@ -120,10 +120,6 @@ namespace cFeed.Entities
           try
           {
             feed = CustomSyndicationFeed.Load(reader);
-            //SyndicationFeed sf = SyndicationFeed.Load(reader);
-            //Rss20FeedFormatter rssFormatter = sf.GetRss20Formatter();
-            //rssFormatter.ReadFrom(reader);
-            //feed = rssFormatter.Feed;
           }
           catch (XmlException ex)
           {
@@ -216,36 +212,35 @@ namespace cFeed.Entities
           }
           else
           {
-            //UnreadItems++;
             var newItem = new FeedItem(FeedUrl, i)
-            {
-              FeedUrl = FeedUrl,
-              Index = index + 1,
-              Tags = Tags
-            };
-            DbWrapper.Instance.Insert(newItem);
+                  {
+                    FeedUrl = FeedUrl,
+                    Index = index + 1,
+                    Tags = Tags
+                  };
+              DbWrapper.Instance.Insert(newItem);
 
-            if ((!string.IsNullOrEmpty(FeedQuery)))
-            {
-              try
+              if ((!string.IsNullOrEmpty(FeedQuery)))
               {
-                var single = new List<FeedItem> { newItem };
-                var filtered = single.Where(this.FeedQuery).FirstOrDefault();
-                if (filtered != null)
+                try
                 {
-                  this.FeedItems.Add(newItem);
+                  var single = new List<FeedItem> { newItem };
+                  var filtered = single.Where(this.FeedQuery).FirstOrDefault();
+                  if (filtered != null)
+                  {
+                    this.FeedItems.Add(newItem);
+                  }
+                }
+                catch (ParseException x)
+                {
+                  Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+                  Logging.Logger.Log(x);
                 }
               }
-              catch (ParseException x)
+              else
               {
-                Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-                Logging.Logger.Log(x);
+                this.FeedItems.Add(newItem);
               }
-            }
-            else
-            {
-              this.FeedItems.Add(newItem);
-            }
           }
           index++;
         }
@@ -270,5 +265,47 @@ namespace cFeed.Entities
     {
       DbWrapper.Instance.Purge(FeedUrl);
     }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposedValue)
+      {
+        if (disposing)
+        {
+          // TODO: dispose managed state (managed objects).
+
+        }
+
+        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+        // TODO: set large fields to null.
+        Filters = null;
+        Tags = null;
+        Title = null;
+        Feed = null;
+        if (FeedItems != null)
+          FeedItems = null;
+
+        disposedValue = true;
+      }
+    }
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~RssFeed() {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    void IDisposable.Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      // GC.SuppressFinalize(this);
+    }
+    #endregion
   }
 }

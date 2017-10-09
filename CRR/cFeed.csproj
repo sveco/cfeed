@@ -29,7 +29,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>ExtendedCorrectnessRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -57,9 +57,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.1.0.0\lib\net40\CGui.dll</HintPath>
-    </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
@@ -94,6 +91,7 @@
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
     <Compile Include="Util\ConsoleKeyInfoExtansions.cs" />
+    <Compile Include="Util\ControlFactory.cs" />
     <Compile Include="Util\CustomSyndicationFeed.cs" />
     <Compile Include="Util\Formatter.cs" />
     <Compile Include="Util\OpmlImport.cs" />
@@ -123,6 +121,12 @@
   <ItemGroup>
     <Content Include="Todo.txt" />
     <EmbeddedResource Include="urls.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Source\Repos\CGui4Net\CGui\CGui.csproj">
+      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
+      <Name>CGui</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

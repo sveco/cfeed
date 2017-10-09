@@ -14,12 +14,12 @@ using LiteDB;
 
 namespace cFeed
 {
-  public class ArticleView
+  public class ArticleView : IDisposable
   {
     private ListItem<FeedItem> selectedArticle;
     private ListItem<RssFeed> selectedFeed;
     private Picklist<FeedItem> parentArticleList;
-    private ListItem<FeedItem> _nextArticle;
+    private ListItem<FeedItem> nextArticle;
     private string[] _filters;
     private TextArea _articleContent;
     private bool _displayNext = false;
@@ -71,6 +71,7 @@ namespace cFeed
       if (articleFooter != null) { articleFooter.Show(); }
 
       var textArea = new TextArea(sb.ToString());
+      sb = null;
       textArea.Top = 2;
       textArea.Left = 2;
       textArea.Width = Console.WindowWidth - 6;
@@ -81,7 +82,7 @@ namespace cFeed
       void onContentLoaded(string content)
       {
         var article = new TextArea(content);
-        article.Top = textArea.LinesCount + 1;
+        article.Top = 9;
         article.Left = 2;
         article.Height = Console.WindowHeight - 10;
         article.Width = Console.WindowWidth - 3;
@@ -118,7 +119,7 @@ namespace cFeed
         while (_displayNext)
         {
           _displayNext = false;
-          this.selectedArticle = _nextArticle;
+          this.selectedArticle = nextArticle;
           PrepareArticle();
           Parallel.Invoke(
               new Action(() => this.selectedArticle.Value.LoadArticle(_filters)),
@@ -128,21 +129,21 @@ namespace cFeed
       }
     }
 
-    private bool canShowNext
+    private bool CanShowNext
     {
       get { return selectedFeed != null && selectedArticle != null; }
     }
 
     private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
     {
-      _nextArticle = null;
+      nextArticle = null;
 
       //Next
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Next))
       {
-        if (canShowNext)
+        if (CanShowNext)
         {
-          _nextArticle = parentArticleList.ListItems
+          nextArticle = parentArticleList.ListItems
               .OrderByDescending(x => x.Index)
               .Where(x => x.Index < selectedArticle.Index)
               .FirstOrDefault();
@@ -151,9 +152,9 @@ namespace cFeed
       //Next unread
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.NextUnread))
       {
-        if (canShowNext)
+        if (CanShowNext)
         {
-          _nextArticle = parentArticleList.ListItems
+          nextArticle = parentArticleList.ListItems
               .OrderByDescending(x => x.Index)
               .Where(x => x.Value.IsNew == true && x.Index < selectedArticle.Index)
               .FirstOrDefault();
@@ -162,11 +163,11 @@ namespace cFeed
       //Prev
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Prev))
       {
-        if (canShowNext)
+        if (CanShowNext)
         {
           if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
           {
-            _nextArticle = parentArticleList.ListItems
+            nextArticle = parentArticleList.ListItems
                 .OrderBy(x => x.Index)
                 .Where(x => x.Index > selectedArticle.Index)
                 .FirstOrDefault();
@@ -176,18 +177,18 @@ namespace cFeed
       //Prev unread
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.PrevUnread))
       {
-        if (canShowNext)
+        if (CanShowNext)
         {
           if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
           {
-            _nextArticle = parentArticleList.ListItems
+            nextArticle = parentArticleList.ListItems
                 .OrderBy(x => x.Index)
                 .Where(x => x.Value.IsNew == true && x.Index > selectedArticle.Index)
                 .FirstOrDefault();
           }
         }
       }
-      if (_nextArticle != null)
+      if (nextArticle != null)
       {
         _displayNext = true;
         return false;
@@ -322,5 +323,49 @@ namespace cFeed
 
       return true;
     }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposedValue)
+      {
+        if (disposing)
+        {
+          // TODO: dispose managed state (managed objects).
+          if (_articleContent != null)
+          {
+            _articleContent.Dispose();
+            _articleContent = null;
+          }
+        }
+
+        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+        // TODO: set large fields to null.
+        selectedArticle = null;
+        selectedFeed = null;
+        nextArticle = null;
+        _filters = null;
+
+        disposedValue = true;
+      }
+    }
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~ArticleView() {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    void IDisposable.Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      // GC.SuppressFinalize(this);
+    }
+    #endregion
   }
 }

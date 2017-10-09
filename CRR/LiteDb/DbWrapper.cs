@@ -11,7 +11,7 @@ namespace cFeed.LiteDb
 {
   public class DbWrapper
   {
-    private static object padlock = new object();
+    private readonly object padlock;
     LiteDatabase db;
     #region Singleton implementation
     private static readonly DbWrapper instance = new DbWrapper();
@@ -24,8 +24,10 @@ namespace cFeed.LiteDb
 
     private DbWrapper()
     {
-      db = new LiteDatabase(Configuration.Database);
+      db = new LiteDatabase("Filename=" + Configuration.Database + ";Mode=Exclusive");
+      
       items = db.GetCollection<FeedItem>("items");
+      padlock = new object();
     }
 
     public static DbWrapper Instance

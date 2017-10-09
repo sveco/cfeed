@@ -126,8 +126,8 @@ namespace cFeed
           }
         }
 
-        feedList = new FeedListView(feeds);
-        feedList.Show(refresh);
+        feedList = new FeedListView(Config.Global.UI.Layout.FeedList);
+        feedList.Show(refresh, feeds);
      // }
     }
 

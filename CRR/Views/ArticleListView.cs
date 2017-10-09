@@ -9,10 +9,10 @@ using LiteDB;
 
 namespace cFeed
 {
-  public class ArticleListView
+  public class ArticleListView : IDisposable
   {
     private ListItem<RssFeed> selectedFeed;
-    private ArticleView article;
+    //private ArticleView article;
 
     Header articleListHeader = new Header("")
     {
@@ -27,15 +27,15 @@ namespace cFeed
       PadChar = '-'
     };
 
-    private Viewport _view;
+    private Viewport view;
 
     public ArticleListView()
     {
-      article = new ArticleView();
+      //article = new ArticleView();
 
-      _view = new Viewport();
-      _view.Controls.Add(articleListHeader);
-      _view.Controls.Add(articleListFooter);
+      view = new Viewport();
+      view.Controls.Add(articleListHeader);
+      view.Controls.Add(articleListFooter);
     }
 
     public void DisplayArticleList(ListItem<RssFeed> feed)
@@ -68,9 +68,9 @@ namespace cFeed
       {
         articleList.Height = Config.Global.UI.Layout.ArticleListHeight;
       }
-      else if (Config.Global.UI.Layout.ArticleListHeight < 0 && _view != null)
+      else if (Config.Global.UI.Layout.ArticleListHeight < 0 && view != null)
       {
-        articleList.Height = _view.Height + Config.Global.UI.Layout.ArticleListHeight;
+        articleList.Height = view.Height + Config.Global.UI.Layout.ArticleListHeight;
       }
       else
       {
@@ -81,12 +81,11 @@ namespace cFeed
       articleList.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
       articleList.ShowScrollBar = true;
 
-      _view.Show();
+      view.Show();
 
       articleList.Show();
 
       selectedFeed.DisplayText = selectedFeed.Value.DisplayLine;
-      //Console.Clear();
     }
 
     private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<FeedItem> selectedItem, Picklist<FeedItem> parent)
@@ -94,8 +93,11 @@ namespace cFeed
       //Open article
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
       {
-        article.DisplayArticle(selectedItem, selectedFeed, parent);
-        _view.Refresh();
+        using (ArticleView article = new ArticleView())
+        {
+          article.DisplayArticle(selectedItem, selectedFeed, parent);
+        }
+        view.Refresh();
         parent.Refresh();
         return true;
       }
@@ -204,5 +206,55 @@ namespace cFeed
       }
       return true;
     }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposedValue)
+      {
+        if (disposing)
+        {
+          if (articleListHeader != null)
+          {
+            articleListHeader.Dispose();
+            articleListHeader = null;
+          }
+          if (articleListFooter != null)
+          {
+            articleListFooter.Dispose();
+            articleListFooter = null;
+          }
+          if (view != null)
+          {
+            view.Dispose();
+            view = null;
+          }
+        }
+
+        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+        // TODO: set large fields to null.
+        selectedFeed = null;
+
+        disposedValue = true;
+      }
+    }
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~ArticleListView() {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    void IDisposable.Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      // GC.SuppressFinalize(this);
+    }
+    #endregion
   }
 }

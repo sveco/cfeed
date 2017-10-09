@@ -15,17 +15,10 @@ namespace cFeed
 {
   public class FeedListView
   {
-    private IList<RssFeed> feeds = new List<RssFeed>();
-    private ArticleListView articleList;
+    //private IList<RssFeed> feeds = new List<RssFeed>();
+    //private ArticleListView articleList;
 
     private Viewport _mainView;
-
-    Header feedListHeader = new Header(Format(Config.Global.UI.Strings.ApplicationTitleFormat))
-    {
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground),
-      PadChar = '═'
-    };
 
     private static string Format(string ApplicationTitle)
     {
@@ -34,20 +27,21 @@ namespace cFeed
           .Replace("%V", Configuration.MAJOR_VERSION);
     }
 
-    Footer feedListFooter = new Footer(Config.Global.UI.Strings.FeedListFooter)
+    public FeedListView(dynamic feedListLayout)
     {
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground),
-      PadChar = '═'
-    };
+      //region controls
+      _mainView = new Viewport();
+      _mainView.Width = feedListLayout.Width;
+      _mainView.Height = feedListLayout.Height;
 
-    public FeedListView(IList<RssFeed> feeds)
-    {
-      this.feeds = feeds;
-      articleList = new ArticleListView();
+      foreach (var control in feedListLayout.Controls)
+      {
+        var guiElement = ControlFactory.Get(control);
+        if (guiElement != null) { _mainView.Controls.Add(guiElement); }
+      }
     }
 
-    public void Show(bool refresh)
+    public void Show(bool refresh, IList<RssFeed> feeds)
     {
       string prefix = (refresh ? "" : Configuration.LoadingPrefix);
       string suffix = (refresh ? "" : Configuration.LoadingSuffix);
@@ -61,32 +55,15 @@ namespace cFeed
                 Value = item
               }).ToList();
 
+      var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<RssFeed>)).FirstOrDefault() as Picklist<RssFeed>;
+      
+      if (list == null) { throw new InvalidOperationException("Missing list config."); }
+      list.UpdateList(rssFeeds);
 
-      //Initialize mainview
-      _mainView = new Viewport();
-      if (!(Config.Global.UI.Layout.WindowWidth is NullExceptionPreventer))
-      {
-        _mainView.Width = Config.Global.UI.Layout.WindowWidth;
-      }
-      if (!(Config.Global.UI.Layout.WindowHeight is NullExceptionPreventer))
-      {
-        _mainView.Height = Config.Global.UI.Layout.WindowHeight;
-      }
-
-      var list = new Picklist<RssFeed>(rssFeeds, null);
-
-      list.Top = Config.Global.UI.Layout.FeedListTop;
-      list.Left = Config.Global.UI.Layout.FeedListLeft;
-      list.Height = Config.Global.UI.Layout.FeedMaxItems;
-      list.Width = Console.WindowWidth - Config.Global.UI.Layout.FeedListLeft - 1;
       list.OnItemKeyHandler += FeedList_OnItemKeyHandler;
-      list.ShowScrollBar = true;
-
-      _mainView.Controls.Add(feedListHeader);
-      _mainView.Controls.Add(feedListFooter);
-      _mainView.Controls.Add(list);
 
       ReloadAll(list, refresh);
+      rssFeeds = null;
 
       _mainView.Show();
     }
@@ -126,7 +103,6 @@ namespace cFeed
 
       }).Start();
     }
-
     private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
     {
       //Open
@@ -137,7 +113,8 @@ namespace cFeed
           if (!selectedItem.Value.IsProcessing)
           {
             parent.IsDisplayed = false;
-            articleList.DisplayArticleList(selectedItem);
+            using (ArticleListView articleList = new ArticleListView())
+            { articleList.DisplayArticleList(selectedItem); }
             _mainView.Refresh();
           }
         }
@@ -245,20 +222,20 @@ namespace cFeed
 
     internal void RefreshConfig()
     {
-      if (feedListHeader != null && feedListHeader.IsDisplayed)
-      {
-        feedListHeader.DisplayText = Format(Config.Global.UI.Strings.ApplicationTitleFormat);
-        feedListHeader.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground);
-        feedListHeader.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground);
-        feedListHeader.Refresh();
-      }
-      if (feedListFooter != null && feedListFooter.IsDisplayed)
-      {
-        feedListFooter.DisplayText = Config.Global.UI.Strings.FeedListFooter;
-        feedListFooter.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground);
-        feedListFooter.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground);
-        feedListFooter.Refresh();
-      }
+      //if (feedListHeader != null && feedListHeader.IsDisplayed)
+      //{
+      //  feedListHeader.DisplayText = Format(Config.Global.UI.Strings.ApplicationTitleFormat);
+      //  feedListHeader.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground);
+      //  feedListHeader.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground);
+      //  feedListHeader.Refresh();
+      //}
+      //if (feedListFooter != null && feedListFooter.IsDisplayed)
+      //{
+      //  feedListFooter.DisplayText = Config.Global.UI.Strings.FeedListFooter;
+      //  feedListFooter.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground);
+      //  feedListFooter.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground);
+      //  feedListFooter.Refresh();
+      //}
     }
   }
 }

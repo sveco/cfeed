@@ -11,7 +11,7 @@ using LiteDB;
 
 namespace cFeed.Entities
 {
-  public class FeedItem
+  public class FeedItem : IDisposable
   {
     //private IList<Uri> externalLinks;
     //public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
@@ -220,7 +220,7 @@ namespace cFeed.Entities
     public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
-      var doc = w.Load(Links[0].Uri.ToString());
+      var doc = w.Load(Links[0].Uri);
       HtmlToText conv = new HtmlToText() { Filters = filters?.ToList() };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
@@ -317,5 +317,48 @@ namespace cFeed.Entities
         sw.Write(ArticleContent);
       }
     }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposedValue)
+      {
+        if (disposing)
+        {
+          // TODO: dispose managed state (managed objects).
+        }
+
+        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+        // TODO: set large fields to null.
+        Summary = null;
+        FeedUrl = null;
+        Tags = null;
+        Links = null;
+        Authors = null;
+        ExternalLinks = null;
+        ImageLinks = null;
+
+        disposedValue = true;
+      }
+    }
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~FeedItem()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    void IDisposable.Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      // GC.SuppressFinalize(this);
+    }
+    #endregion
   }
 }
