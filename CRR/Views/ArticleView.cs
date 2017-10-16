@@ -16,10 +16,10 @@ namespace cFeed
 {
   public class ArticleView : IDisposable
   {
-    private ListItem<FeedItem> selectedArticle;
-    private ListItem<RssFeed> selectedFeed;
+    private FeedItem selectedArticle;
+    private RssFeed selectedFeed;
     private Picklist<FeedItem> parentArticleList;
-    private ListItem<FeedItem> nextArticle;
+    private FeedItem nextArticle;
     private string[] _filters;
     private TextArea _articleContent;
     private bool _displayNext = false;
@@ -47,25 +47,24 @@ namespace cFeed
 
       if (selectedFeed != null)
       {
-        //selectedFeed.Value.UnreadItems--;
-        if (selectedFeed.Value.Filters != null)
+        if (selectedFeed.Filters != null)
         {
-          _filters = selectedFeed.Value.Filters;
+          _filters = selectedFeed.Filters;
         }
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.Value.FeedUrl);
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Value.Title);
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Value.Authors.Select(x => x.Name).ToArray()));
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextLinkLabel + Configuration.ColorReset + selectedArticle.Value.Links?[0].Uri.GetLeftPart(UriPartial.Path));
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.Value.PublishDate.ToString());
+      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
+      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
+      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
+      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextLinkLabel + Configuration.ColorReset + selectedArticle.Links?[0].Uri.GetLeftPart(UriPartial.Path));
+      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
       sb.AppendLine();
 
       Console.Clear();
       if (articleHeader != null)
       {
-        articleHeader.DisplayText = selectedArticle.Value.DisplayTitle;
+        articleHeader.DisplayText = selectedArticle.TitleLine;
         articleHeader.Refresh();
       }
       if (articleFooter != null) { articleFooter.Show(); }
@@ -90,15 +89,15 @@ namespace cFeed
         article.OnItemKeyHandler += Article_OnItemKeyHandler;
         article.ShowScrollbar = true;
 
-        selectedArticle.Value.MarkAsRead();
+        selectedArticle.MarkAsRead();
 
         article.Show();
       }
 
-      selectedArticle.Value.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
+      selectedArticle.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
     }
 
-    public void DisplayArticle(ListItem<FeedItem> article, ListItem<RssFeed> feed, Picklist<FeedItem> parent)
+    public void DisplayArticle(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)
     {
       if (article != null)
       {
@@ -109,11 +108,11 @@ namespace cFeed
         PrepareArticle();
 
         Parallel.Invoke(
-            new Action(() => this.selectedArticle.Value.LoadArticle(_filters)),
+            new Action(() => this.selectedArticle.LoadArticle(_filters)),
             new Action(() => _articleContent.Show())
             );
 
-        this.selectedArticle.DisplayText = this.selectedArticle.Value.DisplayText;
+        this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
         //Given lack of inspiration and a late hour, i commit this code for next article in hope that one day I will rewrite it
         //and provide this functionality with better design.
         while (_displayNext)
@@ -122,7 +121,7 @@ namespace cFeed
           this.selectedArticle = nextArticle;
           PrepareArticle();
           Parallel.Invoke(
-              new Action(() => this.selectedArticle.Value.LoadArticle(_filters)),
+              new Action(() => this.selectedArticle.LoadArticle(_filters)),
               new Action(() => _articleContent.Show())
               );
         }
@@ -143,7 +142,7 @@ namespace cFeed
       {
         if (CanShowNext)
         {
-          nextArticle = parentArticleList.ListItems
+          nextArticle = (FeedItem)parentArticleList.ListItems
               .OrderByDescending(x => x.Index)
               .Where(x => x.Index < selectedArticle.Index)
               .FirstOrDefault();
@@ -154,9 +153,9 @@ namespace cFeed
       {
         if (CanShowNext)
         {
-          nextArticle = parentArticleList.ListItems
+          nextArticle = (FeedItem)parentArticleList.ListItems
               .OrderByDescending(x => x.Index)
-              .Where(x => x.Value.IsNew == true && x.Index < selectedArticle.Index)
+              .Where(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index)
               .FirstOrDefault();
         }
       }
@@ -165,9 +164,9 @@ namespace cFeed
       {
         if (CanShowNext)
         {
-          if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
+          if (selectedArticle.Index < selectedFeed.TotalItems - 1)
           {
-            nextArticle = parentArticleList.ListItems
+            nextArticle = (FeedItem)parentArticleList.ListItems
                 .OrderBy(x => x.Index)
                 .Where(x => x.Index > selectedArticle.Index)
                 .FirstOrDefault();
@@ -179,11 +178,11 @@ namespace cFeed
       {
         if (CanShowNext)
         {
-          if (selectedArticle.Index < selectedFeed.Value.TotalItems - 1)
+          if (selectedArticle.Index < selectedFeed.TotalItems - 1)
           {
-            nextArticle = parentArticleList.ListItems
+            nextArticle = (FeedItem)parentArticleList.ListItems
                 .OrderBy(x => x.Index)
-                .Where(x => x.Value.IsNew == true && x.Index > selectedArticle.Index)
+                .Where(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index)
                 .FirstOrDefault();
           }
         }
@@ -204,18 +203,18 @@ namespace cFeed
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
       {
         if (selectedArticle != null &&
-            selectedArticle.Value.Links.Count > 0)
+            selectedArticle.Links.Count > 0)
         {
           if (!string.IsNullOrEmpty(Config.Global.Browser)
               && File.Exists(Config.Global.Browser))
           {
             //Open article url with configured browser
-            Process.Start(Config.Global.Browser, selectedArticle.Value.Links[0].Uri.ToString());
+            Process.Start(Config.Global.Browser, selectedArticle.Links[0].Uri.ToString());
           }
           else
           {
             //Open article url with default system browser
-            Process.Start(selectedArticle.Value.Links[0].Uri.ToString());
+            Process.Start(selectedArticle.Links[0].Uri.ToString());
           }
         }
       }
@@ -227,7 +226,7 @@ namespace cFeed
         {
           //selectedArticle.Value.LoadOnlineArticle(_filters, _db);
           Parallel.Invoke(
-              new Action(() => selectedArticle.Value.LoadOnlineArticle(_filters)),
+              new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
               new Action(() => _articleContent.Show())
               );
         }
@@ -236,7 +235,7 @@ namespace cFeed
       //Open numbered link
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenLink))
       {
-        if (selectedArticle != null && selectedArticle.Value != null && selectedArticle.Value.IsLoaded)
+        if (selectedArticle != null && selectedArticle!= null && selectedArticle.IsLoaded)
         {
           var input = new Input("Link #:")
           {
@@ -248,19 +247,19 @@ namespace cFeed
           int linkNumber;
           if (int.TryParse(input.InputText, out linkNumber))
           {
-            if (selectedArticle.Value.ExternalLinks != null
-                && selectedArticle.Value.ExternalLinks.Count >= linkNumber
+            if (selectedArticle.ExternalLinks != null
+                && selectedArticle.ExternalLinks.Count >= linkNumber
                 && linkNumber > 0)
             {
               try
               {
                 if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
                 {
-                  Process.Start(Config.Global.Browser, selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                  Process.Start(Config.Global.Browser, selectedArticle.ExternalLinks[linkNumber - 1].ToString());
                 }
                 else
                 {
-                  Process.Start(selectedArticle.Value.ExternalLinks[linkNumber - 1].ToString());
+                  Process.Start(selectedArticle.ExternalLinks[linkNumber - 1].ToString());
                 }
               }
               catch (Win32Exception ex)
@@ -275,7 +274,7 @@ namespace cFeed
       //Open numbered image
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenImage))
       {
-        if (selectedArticle != null && selectedArticle.Value != null && selectedArticle.Value.IsLoaded)
+        if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
         {
           var input = new Input("Image #:")
           {
@@ -287,19 +286,19 @@ namespace cFeed
           int linkNumber;
           if (int.TryParse(input.InputText, out linkNumber))
           {
-            if (selectedArticle.Value.ImageLinks != null
-                && selectedArticle.Value.ImageLinks.Count >= linkNumber
+            if (selectedArticle.ImageLinks != null
+                && selectedArticle.ImageLinks.Count >= linkNumber
                 && linkNumber > 0)
             {
               try
               {
                 if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
                 {
-                  Process.Start(Config.Global.Browser, selectedArticle.Value.ImageLinks[linkNumber - 1].ToString());
+                  Process.Start(Config.Global.Browser, selectedArticle.ImageLinks[linkNumber - 1].ToString());
                 }
                 else
                 {
-                  Process.Start(selectedArticle.Value.ImageLinks[linkNumber - 1].ToString());
+                  Process.Start(selectedArticle.ImageLinks[linkNumber - 1].ToString());
                 }
               }
               catch (Win32Exception ex)
@@ -316,8 +315,8 @@ namespace cFeed
       {
         if (selectedArticle != null)
         {
-          selectedArticle.Value.MarkDeleted();
-          selectedArticle.DisplayText = selectedArticle.Value.DisplayText;
+          selectedArticle.MarkDeleted();
+          selectedArticle.DisplayText = selectedArticle.DisplayText;
         }
       }
 

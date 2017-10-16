@@ -104,11 +104,11 @@ namespace cFeed
         int i = 0;
         foreach (var feed in configFeeds)
         {
-          feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, feed.Title)
+          feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, feed.Title, feed.AutoReload, feed.ReloadInterval)
           {
             Filters = feed.Filters,
             Hidden = feed.Hidden,
-            Tags = feed.Tags
+            Tags = feed.Tags,
           });
           i++;
         }

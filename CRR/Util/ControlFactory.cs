@@ -58,7 +58,7 @@ namespace cFeed.Util
 
       if (!(control.FeedList is NullExceptionPreventer))
       {
-        guiElement = new Picklist<RssFeed>(new List<ListItem<RssFeed>>())
+        guiElement = new Picklist<RssFeed>(new List<RssFeed>())
         {
           ForegroundColor = Configuration.GetColor(control.FeedList.Foreground),
           BackgroundColor = Configuration.GetColor(control.FeedList.Background),
@@ -67,6 +67,20 @@ namespace cFeed.Util
           Width = AbsWidth(control.FeedList.Width),
           Height = AbsHeight(control.FeedList.Height),
           ShowScrollBar = control.FeedList.ShowScrollBar
+        };
+      }
+
+      if (!(control.ArticleList is NullExceptionPreventer))
+      {
+        guiElement = new Picklist<FeedItem>(new List<FeedItem>())
+        {
+          ForegroundColor = Configuration.GetColor(control.ArticleList.Foreground),
+          BackgroundColor = Configuration.GetColor(control.ArticleList.Background),
+          Top = control.ArticleList.Top,
+          Left = control.ArticleList.Left,
+          Width = AbsWidth(control.ArticleList.Width),
+          Height = AbsHeight(control.ArticleList.Height),
+          ShowScrollBar = control.ArticleList.ShowScrollBar
         };
       }
       return guiElement;

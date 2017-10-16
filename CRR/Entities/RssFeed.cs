@@ -11,41 +11,88 @@ using cFeed.Logging;
 using cFeed.Util;
 using JsonConfig;
 using LiteDB;
+using System.Threading;
+using System.ComponentModel;
+using CGui.Gui.Primitives;
 
 namespace cFeed.Entities
 {
-  public class RssFeed : IDisposable
+  public class RssFeed : ListItem, IDisposable
   {
-    public string FeedUrl { get; set; }
+    //public event PropertyChangedEventHandler InstancePropertyChanged;
+
+    private string _feedUrl;
+    public string FeedUrl {
+      get { return _feedUrl; }
+      set {
+        if(_feedUrl != value)
+        {
+          _feedUrl = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
     public string FeedQuery { get; set; }
     public bool Hidden { get; set; }
+    public bool AutoReload { get; set; }
+    public int ReloadInterval { get; set; }
+
+    private DateTime lastLoadtime;
+    private Timer timer;
+
     /// <summary>
     /// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
     /// </summary>
-    [BsonIgnore]
     public bool IsDynamic {
       get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
     }
-    [BsonIgnore]
     public string[] Filters { get; set; }
 
     public string[] Tags { get; set; }
 
-    public string Title { get; private set; }
+    private string _title;
+    public string Title {
+      get { return _title; }
+      private set {
+        if (_title != value)
+        {
+          _title = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
 
-    public string CustomTitle { get; set; }
+    private string _customTitle;
+    public string CustomTitle {
+      get { return _customTitle; }
+      set {
+        if (_customTitle != value)
+        {
+          _customTitle = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
 
-    [BsonIgnore]
     public bool Isloaded { get; private set; } = false;
-    public bool IsProcessing { get; private set; } = false;
-    public int Index { get; private set; }
+    bool _isProcessing = false;
+    public bool IsProcessing {
+      get { return _isProcessing; }
+      private set {
+        if (_isProcessing != value)
+        {
+          _isProcessing = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
+
     private SyndicationFeed Feed { get; set; }
 
-    public int TotalItems { get { return FeedItems.Where(x => x.Deleted == false).Count(); } }
-    public int UnreadItems { get { return FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count(); } }
+    public int TotalItems { get { return FeedItems != null ? FeedItems.Where(x => x.Deleted == false).Count() : 0; } }
+    public int UnreadItems { get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; } }
     public IList<FeedItem> FeedItems { get; set; }
 
-    [BsonIgnore]
     private string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
@@ -62,10 +109,18 @@ namespace cFeed.Entities
         { "g", ( Tags != null ? string.Join(" ", Tags) : "")}
       };
 
-      return Formatter.FormatLine(Format, replacementTable);
+      var line = Formatter.FormatLine(Format, replacementTable);
+
+      if (this.IsProcessing)
+      {
+        return Configuration.LoadingPrefix + line + Configuration.LoadingSuffix;
+      }
+      else
+      {
+        return line;
+      }
     }
 
-    [BsonIgnore]
     public string DisplayLine
     {
       get
@@ -74,7 +129,6 @@ namespace cFeed.Entities
       }
     }
 
-    [BsonIgnore]
     public string TitleLine
     {
       get
@@ -83,13 +137,28 @@ namespace cFeed.Entities
       }
     }
 
-    public RssFeed(string url, string query, int index, string customTitle = "")
+    public RssFeed(string url, string query, int index, string customTitle = "", bool autoReload = false, int reloadInterval = 30)
     {
       FeedUrl = url;
       FeedQuery = query;
       Index = index;
       FeedItems = new List<FeedItem>();
       CustomTitle = customTitle;
+      AutoReload = autoReload;
+      ReloadInterval = reloadInterval;
+
+      if (this.AutoReload)
+      {
+        if (timer == null)
+        {
+          timer = new Timer(OnTimer, null, 0, this.ReloadInterval * 1000);
+        }
+      }
+    }
+
+    private void OnTimer(object state)
+    {
+      GetFeed(true);
     }
 
     /// <summary>
@@ -104,28 +173,35 @@ namespace cFeed.Entities
 
       WebRequest request = WebRequest.Create(url);
       request.Timeout = timeout;
-      using (WebResponse response = request.GetResponse())
-      using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
+      try
       {
-        if (Rss10FeedFormatter.CanReadFrom(reader))
+        using (WebResponse response = request.GetResponse())
+        using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
         {
-          // RSS 1.0
-          var rff = new Rss10FeedFormatter();
-          rff.ReadFrom(reader);
-          feed = rff.Feed;
-        }
-        else
-        {
-          // RSS 2.0 or Atom 1.0
-          try
+          if (Rss10FeedFormatter.CanReadFrom(reader))
           {
-            feed = CustomSyndicationFeed.Load(reader);
+            // RSS 1.0
+            var rff = new Rss10FeedFormatter();
+            rff.ReadFrom(reader);
+            feed = rff.Feed;
           }
-          catch (XmlException ex)
+          else
           {
-            Logging.Logger.Log(ex);
+            // RSS 2.0 or Atom 1.0
+            try
+            {
+              feed = CustomSyndicationFeed.Load(reader);
+            }
+            catch (XmlException ex)
+            {
+              Logging.Logger.Log(ex);
+            }
           }
         }
+      }
+      catch (WebException ex)
+      {
+        Logging.Logger.Log(ex);
       }
       return feed;
     }
@@ -191,7 +267,18 @@ namespace cFeed.Entities
       //if refresh is on, get feed from web
       if (refresh && !String.IsNullOrEmpty(FeedUrl))
       {
-        this.Feed = GetFeed(FeedUrl);
+        try
+        {
+          this.Feed = GetFeed(FeedUrl);
+        }
+        catch (WebException ex)
+        {
+          Logging.Logger.Log(ex);
+          this.Title += " - " + ex.Message;
+        }
+
+        this.lastLoadtime = DateTime.Now;
+
         if (Feed == null) {
           IsProcessing = false;
           return;
@@ -265,7 +352,7 @@ namespace cFeed.Entities
     {
       DbWrapper.Instance.Purge(FeedUrl);
     }
-
+ 
     #region IDisposable Support
     private bool disposedValue = false; // To detect redundant calls
 
@@ -292,11 +379,11 @@ namespace cFeed.Entities
       }
     }
 
-    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    ~RssFeed() {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
-    }
+    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    //~RssFeed() {
+    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+    //  Dispose(false);
+    //}
 
     // This code added to correctly implement the disposable pattern.
     void IDisposable.Dispose()

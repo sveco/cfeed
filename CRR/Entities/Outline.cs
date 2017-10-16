@@ -1,5 +1,8 @@
 ﻿namespace cFeed.Entities
 {
+  /// <summary>
+  /// Used to import OPML xml as feed list
+  /// </summary>
   public class Outline
   {
     private string[] _tags = new string[] { };

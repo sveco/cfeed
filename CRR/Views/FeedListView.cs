@@ -15,17 +15,7 @@ namespace cFeed
 {
   public class FeedListView
   {
-    //private IList<RssFeed> feeds = new List<RssFeed>();
-    //private ArticleListView articleList;
-
     private Viewport _mainView;
-
-    private static string Format(string ApplicationTitle)
-    {
-      return ApplicationTitle
-          .Replace("%v", Configuration.VERSION)
-          .Replace("%V", Configuration.MAJOR_VERSION);
-    }
 
     public FeedListView(dynamic feedListLayout)
     {
@@ -43,23 +33,17 @@ namespace cFeed
 
     public void Show(bool refresh, IList<RssFeed> feeds)
     {
-      string prefix = (refresh ? "" : Configuration.LoadingPrefix);
-      string suffix = (refresh ? "" : Configuration.LoadingSuffix);
-
       var rssFeeds = feeds
               .Where(item => item.Hidden == false)
-              .Select((item, index) => new ListItem<RssFeed>()
-              {
-                Index = index,
-                DisplayText = prefix + item.DisplayLine + suffix,
-                Value = item
+              .Select((item, index) => {
+                item.Index = index;
+                item.DisplayText = item.DisplayLine;
+                return item;
               }).ToList();
 
       var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<RssFeed>)).FirstOrDefault() as Picklist<RssFeed>;
-      
       if (list == null) { throw new InvalidOperationException("Missing list config."); }
       list.UpdateList(rssFeeds);
-
       list.OnItemKeyHandler += FeedList_OnItemKeyHandler;
 
       ReloadAll(list, refresh);
@@ -73,48 +57,50 @@ namespace cFeed
       {
         Thread.CurrentThread.IsBackground = true;
         /* first load online feeds */
-        Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == false), (item) => {
-        item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == false), (item) => {
+        //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
           try
           {
-            item.Value.Load(online);
-            item.DisplayText = item.Value.DisplayLine;
+            ((RssFeed)item).Load(online);
+            //item.DisplayText = ((RssFeed)item).DisplayLine;
           }
           catch (WebException x)
           {
             cFeed.Logging.Logger.Log(x);
-            item.DisplayText = item.Value.DisplayLine + " ERROR:" + x.Message;
+            item.DisplayText = ((RssFeed)item).DisplayLine + " ERROR:" + x.Message;
           }
           catch (Exception x)
           {
-            cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + item.Value.FeedUrl);
+            cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + ((RssFeed)item).FeedUrl);
             cFeed.Logging.Logger.Log(x);
-            item.DisplayText = item.Value.DisplayLine + " ERROR!";
+            item.DisplayText = ((RssFeed)item).DisplayLine + " ERROR!";
           }
 
         });
 
         /* then load dynamic feeds */
-        Parallel.ForEach(parent.ListItems.Where(i => i?.Value?.IsDynamic == true), (item) => {
-          item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-          item.Value.Load(false);
-          item.DisplayText = item.Value.DisplayLine;
+        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i)?.IsDynamic == true), (item) => {
+          //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+          ((RssFeed)item).Load(false);
+          //item.DisplayText = ((RssFeed)item).DisplayLine;
         });
 
       }).Start();
     }
-    private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<RssFeed> selectedItem, Picklist<RssFeed> parent)
+    private bool FeedList_OnItemKeyHandler(ConsoleKeyInfo key, RssFeed selectedItem, Picklist<RssFeed> parent)
     {
       //Open
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenFeed))
       {
         if (selectedItem != null)
         {
-          if (!selectedItem.Value.IsProcessing)
+          if (!selectedItem.IsProcessing)
           {
             parent.IsDisplayed = false;
-            using (ArticleListView articleList = new ArticleListView())
-            { articleList.DisplayArticleList(selectedItem); }
+            using (ArticleListView articleList = new ArticleListView(Config.Global.UI.Layout.ArticleList))
+            {
+              articleList.Show(selectedItem);
+            }
             _mainView.Refresh();
           }
         }
@@ -138,29 +124,29 @@ namespace cFeed
       //Reload
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Reload))
       {
-        if (!selectedItem.Value.IsProcessing)
+        if (!selectedItem.IsProcessing)
         {
           /* just update dynamic feed */
-          if (selectedItem.Value.IsDynamic == true)
+          if (selectedItem.IsDynamic == true)
           {
-            selectedItem.Value.Load(false);
-            selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+            selectedItem.Load(false);
+            //selectedItem.DisplayText = selectedItem.DisplayLine;
           }
           else
           {
             /* refresh current online feed */
             new Thread(delegate ()
             {
-              selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
-              selectedItem.Value.Load(true);
-              selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+              //selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
+              selectedItem.Load(true);
+              //selectedItem.DisplayText = selectedItem.DisplayLine;
             }).Start();
           }
           /* then load dynamic feeds */
-          Parallel.ForEach(parent.ListItems.Where(i => i.Value.IsDynamic == true), (item) => {
-            item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-            item.Value.Load(false);
-            item.DisplayText = item.Value.DisplayLine;
+          Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == true), (item) => {
+            //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
+            ((RssFeed)item).Load(false);
+            //item.DisplayText = ((RssFeed)item).DisplayLine;
           });
         }
         return true;
@@ -171,7 +157,7 @@ namespace cFeed
       {
         if (selectedItem != null)
         {
-          if (!selectedItem.Value.IsProcessing)
+          if (!selectedItem.IsProcessing)
           {
             var input = new Input(Config.Global.UI.Strings.PromptMarkAll)
             {
@@ -181,8 +167,8 @@ namespace cFeed
             };
             if(input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
             {
-              selectedItem.Value.MarkAllRead();
-              selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+              selectedItem.MarkAllRead();
+              selectedItem.DisplayText = selectedItem.DisplayLine;
             }
             return true;
           }
@@ -194,7 +180,7 @@ namespace cFeed
       {
         if (selectedItem != null)
         {
-          if (!selectedItem.Value.IsProcessing)
+          if (!selectedItem.IsProcessing)
           {
             var input = new Input(Config.Global.UI.Strings.PromptPurge)
             {
@@ -204,8 +190,8 @@ namespace cFeed
             };
             if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
             {
-              selectedItem.Value.Purge();
-              selectedItem.DisplayText = selectedItem.Value.DisplayLine;
+              selectedItem.Purge();
+              selectedItem.DisplayText = selectedItem.DisplayLine;
             }
             return true;
           }

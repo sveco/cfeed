@@ -11,94 +11,64 @@ namespace cFeed
 {
   public class ArticleListView : IDisposable
   {
-    private ListItem<RssFeed> selectedFeed;
-    //private ArticleView article;
+    private RssFeed selectedFeed;
+    private Viewport _mainView;
 
-    Header articleListHeader = new Header("")
+    public ArticleListView(dynamic articleListLayout)
     {
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListHeaderBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListHeaderForeground),
-      PadChar = '-'
-    };
-    Footer articleListFooter = new Footer(Config.Global.UI.Strings.ArticleListFooter)
-    {
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleListFooterForeground),
-      PadChar = '-'
-    };
+      //region controls
+      _mainView = new Viewport();
+      _mainView.Width = articleListLayout.Width;
+      _mainView.Height = articleListLayout.Height;
 
-    private Viewport view;
-
-    public ArticleListView()
-    {
-      //article = new ArticleView();
-
-      view = new Viewport();
-      view.Controls.Add(articleListHeader);
-      view.Controls.Add(articleListFooter);
+      foreach (var control in articleListLayout.Controls)
+      {
+        var guiElement = ControlFactory.Get(control);
+        if (guiElement != null) { _mainView.Controls.Add(guiElement); }
+      }
     }
 
-    public void DisplayArticleList(ListItem<RssFeed> feed)
+    public void Show(RssFeed feed)
     {
       selectedFeed = feed;
 
-      var items = feed.Value.FeedItems
+      var items = feed.FeedItems
           .OrderByDescending(x => x.PublishDate)
           .Where(x => x.Deleted == false)
-          .Select((item, index) => new ListItem<FeedItem>()
-          {
-            Index = index,
-            DisplayText = item.DisplayText,
-            Value = item
-          });
+          .Select((item, index) => {
+            item.Index = index;
+            item.DisplayText = item.DisplayLine;
+            return item;
+          }).ToList();
 
-      //Console.Clear();
-
+      var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
       if (articleListHeader != null)
       {
-        articleListHeader.DisplayText = feed.Value.TitleLine;
-        //articleListHeader.Show();
+        articleListHeader.DisplayText = feed.TitleLine;
       }
-      //if (articleListFooter != null) { articleListFooter.Show(); }
 
-      var articleList = new Picklist<FeedItem>(items.ToList());
-     // articleList.ListItems = items.ToList();
+      var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<FeedItem>)).FirstOrDefault() as Picklist<FeedItem>;
+      if (list == null) { throw new InvalidOperationException("Missing list config."); }
+      list.UpdateList(items);
+      list.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
 
-      if (Config.Global.UI.Layout.ArticleListHeight > 0)
-      {
-        articleList.Height = Config.Global.UI.Layout.ArticleListHeight;
-      }
-      else if (Config.Global.UI.Layout.ArticleListHeight < 0 && view != null)
-      {
-        articleList.Height = view.Height + Config.Global.UI.Layout.ArticleListHeight;
-      }
-      else
-      {
-        articleList.Height = 10;
-      }
-      articleList.Width = Console.WindowWidth - Config.Global.UI.Layout.ArticleListLeft;
-      articleList.Top = Config.Global.UI.Layout.ArticleListTop;
-      articleList.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
-      articleList.ShowScrollBar = true;
+      _mainView.Show();
 
-      view.Show();
-
-      articleList.Show();
-
-      selectedFeed.DisplayText = selectedFeed.Value.DisplayLine;
+      selectedFeed.DisplayText = selectedFeed.DisplayLine;
     }
 
-    private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, ListItem<FeedItem> selectedItem, Picklist<FeedItem> parent)
+    private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, FeedItem selectedItem, Picklist<FeedItem> parent)
     {
       //Open article
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
       {
+        parent.IsDisplayed = false;
         using (ArticleView article = new ArticleView())
         {
           article.DisplayArticle(selectedItem, selectedFeed, parent);
         }
-        view.Refresh();
-        parent.Refresh();
+        _mainView.Refresh();
+        //parent.Refresh();
         return true;
       }
       //Mark selected item as read
@@ -106,8 +76,8 @@ namespace cFeed
       {
         if (selectedItem != null)
         {
-          selectedItem.Value.MarkAsRead();
-          selectedItem.DisplayText = selectedItem.Value.DisplayText;
+          selectedItem.MarkAsRead();
+          selectedItem.DisplayText = selectedItem.DisplayLine;
         }
       }
       //Mark all read
@@ -125,31 +95,31 @@ namespace cFeed
           {
             foreach (var item in parent.ListItems)
             {
-              if (item.Value.IsNew == true)
+              if (((FeedItem)item).IsNew == true)
               {
-                item.Value.MarkAsRead();
-                item.DisplayText = item.Value.DisplayText;
+                ((FeedItem)item).MarkAsRead();
+                item.DisplayText = item.DisplayLine;
               }
             }
           }
         }
       }
-
+      //Mark selected item as unread
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkUnread))
       {
-        if (selectedItem != null)
+        if (selectedItem != null && !selectedItem.IsNew)
         {
-          selectedItem.Value.MarkUnread();
-          selectedItem.DisplayText = selectedItem.Value.DisplayText;
+          selectedItem.MarkUnread();
+          selectedItem.DisplayText = selectedItem.DisplayLine;
         }
       }
-
+      //Mark current item for deletion
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Delete))
       {
         if (selectedItem != null)
         {
-          selectedItem.Value.MarkDeleted();
-          selectedItem.DisplayText = selectedItem.Value.DisplayText;
+          selectedItem.MarkDeleted();
+          selectedItem.DisplayText = selectedItem.DisplayLine;
         }
       }
 
@@ -162,25 +132,23 @@ namespace cFeed
       {
         if (selectedFeed != null)
         {
+          selectedFeed.Load(true);
+
+          var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
           if (articleListHeader != null)
           {
-            articleListHeader.DisplayText = Configuration.LoadingPrefix + articleListHeader.DisplayText + Configuration.LoadingSuffix;
+            articleListHeader.DisplayText = selectedFeed.TitleLine;
             articleListHeader.Refresh();
           }
-          selectedFeed.Value.Load(true);
 
-          var items = selectedFeed.Value.FeedItems
+          var items = selectedFeed.FeedItems
               .OrderByDescending(x => x.PublishDate)
               .Where(x => x.Deleted == false)
               .Select((item, index) =>
                 {
-                  item.Index = index + 1;
-                  return new ListItem<FeedItem>()
-                  {
-                    Index = index,
-                    DisplayText = item.DisplayText,
-                    Value = item
-                  };
+                  item.Index = index;
+                  item.DisplayText = item.DisplayLine;
+                  return item;
                 }
               );
           parent.UpdateList(items);
@@ -188,19 +156,19 @@ namespace cFeed
 
           if (articleListHeader != null)
           {
-            articleListHeader.DisplayText = selectedFeed.Value.TitleLine;
+            articleListHeader.DisplayText = selectedFeed.TitleLine;
             articleListHeader.Refresh();
           }
         }
       }
-
+      //Download selected item content to lcoal storage
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Download))
       {
-        if (selectedItem != null && selectedFeed != null && selectedItem.Value.IsDownloaded == false)
+        if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)
         {
-          selectedItem.DisplayText = Configuration.LoadingPrefix +  selectedItem.Value.DisplayText + Configuration.LoadingSuffix;
-          selectedItem.Value.DownloadArticleContent(selectedFeed.Value.Filters);
-          selectedItem.DisplayText = selectedItem.Value.DisplayText;
+          selectedItem.DisplayText = Configuration.LoadingPrefix +  selectedItem.DisplayText + Configuration.LoadingSuffix;
+          selectedItem.DownloadArticleContent(selectedFeed.Filters);
+          selectedItem.DisplayText = selectedItem.DisplayLine;
         }
         return true;
       }
@@ -216,21 +184,7 @@ namespace cFeed
       {
         if (disposing)
         {
-          if (articleListHeader != null)
-          {
-            articleListHeader.Dispose();
-            articleListHeader = null;
-          }
-          if (articleListFooter != null)
-          {
-            articleListFooter.Dispose();
-            articleListFooter = null;
-          }
-          if (view != null)
-          {
-            view.Dispose();
-            view = null;
-          }
+
         }
 
         // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -241,11 +195,11 @@ namespace cFeed
       }
     }
 
-    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    ~ArticleListView() {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
-    }
+    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    //~ArticleListView() {
+    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+    //  Dispose(false);
+    //}
 
     // This code added to correctly implement the disposable pattern.
     void IDisposable.Dispose()

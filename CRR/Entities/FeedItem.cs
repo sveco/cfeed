@@ -6,12 +6,13 @@ using System.Linq;
 using System.ServiceModel.Syndication;
 using cFeed.LiteDb;
 using cFeed.Util;
+using CGui.Gui.Primitives;
 using JsonConfig;
 using LiteDB;
 
 namespace cFeed.Entities
 {
-  public class FeedItem : IDisposable
+  public class FeedItem : ListItem, IDisposable
   {
     //private IList<Uri> externalLinks;
     //public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
@@ -25,30 +26,87 @@ namespace cFeed.Entities
 
     public Guid Id { get; set; }
     public string SyndicationItemId { get; set; }
-    public string FeedUrl { get; set; }
+    private string _feedUrl;
+    public string FeedUrl {
+      get { return _feedUrl; }
+      set {
+        if(_feedUrl != value)
+        {
+          _feedUrl = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
     public string[] Tags { get; set; }
-    public DateTime PublishDate { get; set; }
-    public string Summary { get; set; }
+    private DateTime _publishDate;
+    public DateTime PublishDate {
+      get { return _publishDate; }
+      set {
+        if (_publishDate != value)
+        {
+          _publishDate = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
+    private string _summary;
+    public string Summary {
+      get { return _summary; }
+      set {
+        if (_summary != value)
+        {
+          _summary = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
     public Collection<SyndicationLink> Links { get; set; }
     public Collection<SyndicationPerson> Authors { get; set; }
 
     public Collection<Uri> ExternalLinks { get; set; }
     public Collection<Uri> ImageLinks { get; set; }
 
-    public string Title { get; set; }
+    private string _title;
+    public string Title {
+      get { return _title; }
+      set {
+        if (_title != value)
+        {
+          _title = value;
+          this.DisplayText = DisplayLine;
+        }
+      }
+    }
+    private bool _isProcessing;
+    [BsonIgnore]
+    public bool IsProcessing
+    {
+      get { return _isProcessing; }
+      private set
+      {
+        if (_isProcessing != value)
+        {
+          _isProcessing = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
 
     [BsonIgnore]
     public Action<string> OnContentLoaded;
-    public bool Matched { get; set; }
-
-    [BsonIgnore]
-    public int Index { get; set; }
+    //public bool Matched { get; set; }
 
     private bool _isNew = true;
     public bool IsNew
     {
       get { return _isNew; }
-      private set { _isNew = value; }
+      private set {
+        if (_isNew != value)
+        {
+          _isNew = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
     }
     [BsonIgnore]
     public bool IsDownloaded
@@ -77,8 +135,7 @@ namespace cFeed.Entities
 
     public bool Deleted { get; set; }
 
-    [BsonIgnore]
-    private string FormatLine(string format)
+    private string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
       {
@@ -92,8 +149,16 @@ namespace cFeed.Entities
         { "l", FeedUrl},
         { "V", Configuration.VERSION},
         { "v", Configuration.VERSION}
-      }; 
-      return Formatter.FormatLine(format, replacementTable);
+      };
+      var line = Formatter.FormatLine(Format, replacementTable);
+      if (this.IsProcessing)
+      {
+        return Configuration.LoadingPrefix + line + Configuration.LoadingSuffix;
+      }
+      else
+      {
+        return line;
+      }
     }
 
     [BsonIgnore]
@@ -128,7 +193,7 @@ namespace cFeed.Entities
     }
 
     [BsonIgnore]
-    public string DisplayText
+    public string DisplayLine
     {
       get
       {
@@ -137,7 +202,7 @@ namespace cFeed.Entities
     }
 
     [BsonIgnore]
-    public string DisplayTitle
+    public string TitleLine
     {
       get
       {
@@ -170,20 +235,24 @@ namespace cFeed.Entities
     /// <summary>
     /// Only for serialization. DO NOT USE!
     /// </summary>
-    public FeedItem()
-    {
-
-    }
+    public FeedItem() {}
 
     public FeedItem(string feedUrl)
     {
       FeedUrl = feedUrl;
+      this.PropertyChanged += FeedItem_PropertyChanged;
+    }
+
+    private void FeedItem_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+      this.DisplayText = this.DisplayLine;
     }
 
     public FeedItem(string feedUrl, SyndicationItem i)
     {
       FeedUrl = feedUrl;
       Item = i;
+      this.PropertyChanged += FeedItem_PropertyChanged;
     }
 
     private void SetValues(SyndicationItem i)
@@ -194,6 +263,7 @@ namespace cFeed.Entities
       Links = i.Links;
       Authors = i.Authors;
       Title = i.Title.Text;
+      this.PropertyChanged += FeedItem_PropertyChanged;
     }
 
     public void LoadOnlineArticle(string[] filters)
@@ -202,6 +272,7 @@ namespace cFeed.Entities
 
       if (Links.Count > 0)
       {
+        this.IsProcessing = true;
         DownloadArticleContent(filters);
         //var items = db.GetCollection<FeedItem>("items");
         var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
@@ -212,7 +283,7 @@ namespace cFeed.Entities
           result.Tags = Tags;
           DbWrapper.Instance.Update(result);
         }
-
+        this.IsProcessing = false;
         OnContentLoaded.Invoke(ArticleContent);
       }
     }
@@ -271,7 +342,7 @@ namespace cFeed.Entities
 
     public void MarkAsRead()
     {
-      _isNew = false;
+      IsNew  = false;
       var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
@@ -282,7 +353,7 @@ namespace cFeed.Entities
 
     internal void MarkUnread()
     {
-      _isNew = true;
+      IsNew = true;
       var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
@@ -344,12 +415,12 @@ namespace cFeed.Entities
       }
     }
 
-    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    ~FeedItem()
-    {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
-    }
+    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    //~FeedItem()
+    //{
+    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+    //  Dispose(false);
+    //}
 
     // This code added to correctly implement the disposable pattern.
     void IDisposable.Dispose()
