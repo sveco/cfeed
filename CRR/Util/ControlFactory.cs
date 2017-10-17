@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using cFeed.Entities;
@@ -12,77 +13,49 @@ namespace cFeed.Util
 {
   public static class ControlFactory
   {
-    private static string FormatFeedView(string format)
-    {
-      return format
-        .Replace("%v", Configuration.VERSION)
-        .Replace("%V", Configuration.MAJOR_VERSION);
-    }
-
-    private static int AbsWidth (int width) {
-      if (width < 0) { return Console.WindowWidth + width; }
-      return width;
-    }
-
-    private static int AbsHeight(int height)
-    {
-      if (height < 0) { return Console.WindowHeight + height; }
-      return height;
-    }
-
     public static GuiElement Get(dynamic control)
     {
       if (control is NullExceptionPreventer) { return null; }
 
       GuiElement guiElement = null;
 
-      if (!(control.Header is NullExceptionPreventer))
+      if (control.Type is NullExceptionPreventer)
       {
-        guiElement = new Header(FormatFeedView(control.Header.Text))
-        {
-          ForegroundColor = Configuration.GetColor(control.Header.Foreground),
-          BackgroundColor = Configuration.GetColor(control.Header.Background),
-          PadChar = Convert.ToChar(control.Header.Padchar)
-        };
+        throw new ArgumentException("Type of control is not defined in control Layout");
       }
+      
+      Type T = Assembly.Load("CGui").GetTypes().First(t => t.Name == control.Type);
+      if (typeof(GuiElement).IsAssignableFrom(T))
+      {
+        if (T.ContainsGenericParameters)
+        {
+          Type X = Assembly.GetCallingAssembly().GetTypes().First(t => t.Name == control.ItemType);
+          Type Y = T.MakeGenericType(X);
+          guiElement = Activator.CreateInstance(Y, new object[] { }) as GuiElement;
+        }
+        else
+        {
+          guiElement = Activator.CreateInstance(T, new object[] { }) as GuiElement;
+        }
 
-      if (!(control.Footer is NullExceptionPreventer))
-      {
-        guiElement = new Footer(FormatFeedView(control.Footer.Text))
+        foreach (var propertyName in control.Keys)
         {
-          ForegroundColor = Configuration.GetColor(control.Footer.Foreground),
-          BackgroundColor = Configuration.GetColor(control.Footer.Background),
-          PadChar = Convert.ToChar(control.Footer.Padchar)
-        };
+          if (propertyName == "Type") continue;
+          PropertyInfo prop = guiElement.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+          if (null != prop && prop.CanWrite)
+          {
+            if (prop.PropertyType == typeof(ConsoleColor))
+            {
+              prop.SetValue(guiElement, Configuration.GetColor(control[propertyName]), null);
+            }
+            else
+            {
+              prop.SetValue(guiElement, Convert.ChangeType(control[propertyName], prop.PropertyType), null);
+            }
+          }
+        }
       }
-
-      if (!(control.FeedList is NullExceptionPreventer))
-      {
-        guiElement = new Picklist<RssFeed>(new List<RssFeed>())
-        {
-          ForegroundColor = Configuration.GetColor(control.FeedList.Foreground),
-          BackgroundColor = Configuration.GetColor(control.FeedList.Background),
-          Top = control.FeedList.Top,
-          Left = control.FeedList.Left,
-          Width = AbsWidth(control.FeedList.Width),
-          Height = AbsHeight(control.FeedList.Height),
-          ShowScrollBar = control.FeedList.ShowScrollBar
-        };
-      }
-
-      if (!(control.ArticleList is NullExceptionPreventer))
-      {
-        guiElement = new Picklist<FeedItem>(new List<FeedItem>())
-        {
-          ForegroundColor = Configuration.GetColor(control.ArticleList.Foreground),
-          BackgroundColor = Configuration.GetColor(control.ArticleList.Background),
-          Top = control.ArticleList.Top,
-          Left = control.ArticleList.Left,
-          Width = AbsWidth(control.ArticleList.Width),
-          Height = AbsHeight(control.ArticleList.Height),
-          ShowScrollBar = control.ArticleList.ShowScrollBar
-        };
-      }
+      
       return guiElement;
     }
   }

@@ -1,4 +1,4 @@
-# Console Feed Reader
+﻿# Console Feed Reader
 Readme file
 
 ## About
@@ -61,7 +61,11 @@ Basic setting.conf can look like this:
         #Tags can be used to categorize feeds and articles. Thas can be used in query to filter on
         Tags: ["Science"],
         #If uncommented, feed will be hidden and only accessible via FeedQuery
-        #Hidden: true
+        #Hidden: true,
+        #If set to true, reloads feed automatically
+        AutoReload: true,
+        #If AutoReload is set to true, this defines number of seconds after which feed will be automatically reloaded
+        ReloadInterval: 30
     }
 }
 ```
@@ -124,27 +128,31 @@ Following tables defines identifiers for each UI.String element
 
 Setting | Meaning | Default value
 :------------ | :------------- | :------------
-**ReadStateNew** | String to show when feed contains unread items, or article is new. | "N"
-**ReadStateRead** | String to show when all items in feed has been read, or article is not new. | " "
-**DownloadStateDownloaded** | String to show when article content is saved locally |  "D"
-**DownloadStatePending** | String to show when article content is not downloaded | " "
-**FeedListFormat** | Format of feed list items |  "%i:3r %n [%u] %g:16l %t"
-**ArticleListFormat** | Format of list item when articles are displayed | "%i:3r [%n\|%D\|%x] %d %t""
-**ArticleTitleFormat** | Title shown when article is displayed | "%t"
-**ArticleListDateFormat** | Date format for publish date | "MMM dd"
-**FeedTitleFormat** Title shown in header when list of feeds is displayed | "cFeed v%V - Articles in \'%t\' %u "
-**ArticleTitleFormat** | Title shown in header when single article is displayed | "cFeed v%V - Article:%t "
-**ApplicationTitleFormat** | Title shown in header when sfeed list is displayed | " cfeed v%V - console feed reader "
-**LoadingSuffix** | Suffix shown when feed or article are being loaded | " - Loading..."
-**LoadingPrefix** | Prefix shown when feed or article are being loaded | ""
-**FeedListFooter** | Footer of feed list | " Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all "
-**ArticleListFooter** | Footer of article list | " ESC/Backspace:Back M:Mark read U:Mark Unread R:Reload "
-**ArticleFooter** | Footer of article | ESC/Backspace:Back O:Open N:Next L:Link I:Image "
-**ArticleTextFeedUrlLabel** | Label shown in article summary | "Feed: "
-**ArticleTextTitleLabel** | Label shown in article summary | "Title: "
-**ArticleTextAuthorsLabel** | Label shown in article summary |"Author(s): "
-**ArticleTextLinkLabel** | Label shown in article summary | "Link: ,
-**ArticleTextPublishDatelLabel** | Label shown in article summary | "Date: "
+ReadStateNew                | String to show when feed contains unread items, or article is new. | "N"
+ReadStateRead               | String to show when all items in feed has been read, or article is not new. | " "
+DownloadStateDownloaded     | String to show when article content is saved locally |  "D"
+DownloadStatePending        | String to show when article content is not downloaded | " "
+DeleteStateDeleted          | String to show when article has been marked for deletion | "X",
+DeleteStateNotDeleted       | String to show when article has not been marked for deletion | " ",
+LoadingSuffix               | Suffix shown when feed or article are being loaded | " - Loading..."
+LoadingPrefix               | Prefix shown when feed or article are being loaded | ""
+FeedListHeaderFormat        | Title shown in header when list of feeds is displayed | "╗ cfeed v%V - console feed reader ╔",
+FeedListItemFormat          | Format of feed list items | "%i:3r %n [%u] %g:16l %t",
+FeedListFooterFormat        | Format for feed list footer | " Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all ",
+ArticleListHeaderFormat     | Format of article list titlw | "╗ cFeed v%V - Articles in \'%t\' %u ╔",
+ArticleListItemFormat       | Format of article list item | "%i:3r [%n\|%D\|%x] %d %t",
+ArticleListDateFormat       | Date format for dates shown in article list | "MMM dd",
+ArticleListFooterFormat     | Format for article list footer | " ESC/Backspace:Back M:Mark read U:Mark Unread R:Reload ",
+ArticleTitleFormat          | Format of article title | "cFeed v%V - Article:%t ",
+ArticleFooter               | Format for article footer | " ESC/Backspace:Back O:Open N:Next L:Link I:Image",
+ArticleTextFeedUrlLabel     | Label for feed url in article header | "Feed: ",
+ArticleTextTitleLabel       | Label for article title in article header | "Title: ",
+ArticleTextAuthorsLabel     | Label for authors article header | "Author(s): ",
+ArticleTextLinkLabel        | Label for article url in article header | "Link: ",
+ArticleTextPublishDateLabel | Label for publish date in article header | "Date: ",
+PromptMarkAll               | Prompt to confirm to mark all article in feed as read | "Mark all articles as read [Y/n]:",
+PromptPurge                 | Propmt to confirm purging of articles marked for deletion | "Purge deleted articles? [Y/n]:",
+PromptAnswerYes             | Enter this letter for prompt to return true | "Y"
 
 
 Replacement strings for *ApplicationTitleFormat*:
@@ -185,42 +193,32 @@ String | Meaning
 
 ***UI.Colors***
 
-Colors section can be used to define custom color "theme" for the app. List of available UI elements to customize color is in following table.
+Colors section can be used to define custom color "theme" for the app. Colors for UI elements are defined in Layout section.
 For a valid list of color names see this [list on MSDN](https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx).
 
 Setting | Default value
 :------------ | :-------------
-DefaultForeground | "White"
-DefaultBackground | "Black"
-DefaultSelectedForeground | "Black"
-DefaultSelectedBackground | "DarkYellow"
-FeedListHeaderBackground | "DarkCyan"
-FeedListHeaderForeground | "Yellow"
-FeedListFooterBackground | "DarkCyan"
-FeedListFooterForeground | "Yellow"
-ArticleListFooterBackground | "DarkCyan"
-ArticleListFooterForeground | "Yellow"
-ArticleListHeaderBackground | "DarkCyan"
-ArticleListHeaderForeground | "Yellow"
-ArticleHeaderBackground | "DarkCyan"
-ArticleHeaderForeground | "Yellow"
-ArticleFooterBackground | "DarkCyan"
-ArticleFooterForeground | "Yellow"
-ArticleTextHighlight | "Yellow"
-LinkHighlight | "DarkCyan
+ArticleHeaderBackground | "DarkCyan",
+ArticleHeaderForeground | "Yellow",
+ArticleFooterBackground | "DarkCyan",
+ArticleFooterForeground | "Yellow",
+ArticleTextHighlight    | "Yellow",
+LinkHighlight           | "DarkCyan",
+ImageLinkHighlight      | "Yellow",
+LinkInputForeground     | "Black",
+LinkInputBackground     | "DarkYellow"
 
 ***UI.Layout***
 
-Defines general layout of the application.
+Defines general layout of the application. Layout must containg following items:
 
-Setting | Default value
-:------------ | :-------------
-FeedListLeft | 2
-FeedListTop | 1
-FeedMaxItems | 20
-ArticleListLeft | 2
-ArticleListTop | 1
-ArticleListHeight | -3 (this means bottom of article list is 3 rows above console last line)
+Element         | Description
+:------------   | :-------------
+FeedList        | Defines layout of Feed List view 
+ArticleList     | Defines layout of Article List view 
+Article         | Defines layout of Article view 
+
+Each elemant can contain Width, Height, and list of controls that will be generated for view. See [default.conf](https://github.com/sveco/CRR/blob/master/CRR/default.conf) for example.
 
 ***Shortcuts***
 
@@ -272,9 +270,10 @@ Opml          | Path to OPML file to load. Can be also set by command line param
 Refresh       | Refresh feeds on load                                                       | true
 Browser       | Custom browser to use to open articles, links and images                    | \<empty\>
 Debug         | Debug level to write to log. Levels are None, Debug, Info, Warning, Error, Critical, in that order. Setting level to "Warning", will log Warning, Error and Critical. SEtting none turns off logging. | "Warning"
+ReloadInterval| Default reload interval for feeds set to auto update                        | 30
 
 
-Replacement strings for *SavedFileName*. File name will be sanitized. Absolute, relative and network locations are supported, just make sure you have access right to write do defined location.
+Replacement strings for *SavedFileName*. File name will be sanitized. Absolute, relative and network locations are supported, just make sure you have write access to defined location.
 
 String | Meaning
 ------------ | -------------
@@ -293,7 +292,7 @@ cfeed [-h] [-d <database>] [-r <true|false>] [-o <opml uri/path>]
  -r  Refresh; Whether to refresh all feeds on first load.
  -o  Import OPML feed list
 ```
-OPML support is limited to reading list of feeds from opml file and displaying them. They are not exported or added to .conf file, this has to be done manually.
+OPML support is limited to reading list of feeds from opml file and displaying them. They are not exported or added to .conf file, this has to be done manually. However read state is tracked for articles in those feeds, and they can also be selected using dynamic query.
 
 ## Acknowledgments
 Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and does not use any portion

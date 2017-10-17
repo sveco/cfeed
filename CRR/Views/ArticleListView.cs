@@ -13,6 +13,8 @@ namespace cFeed
   {
     private RssFeed selectedFeed;
     private Viewport _mainView;
+    dynamic headerFormat;
+    dynamic footerFormat;
 
     public ArticleListView(dynamic articleListLayout)
     {
@@ -26,6 +28,9 @@ namespace cFeed
         var guiElement = ControlFactory.Get(control);
         if (guiElement != null) { _mainView.Controls.Add(guiElement); }
       }
+
+      headerFormat = Config.Global.UI.Strings.ArticleListHeaderFormat;
+      footerFormat = Config.Global.UI.Strings.ArticleListFooterFormat;
     }
 
     public void Show(RssFeed feed)
@@ -44,7 +49,13 @@ namespace cFeed
       var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
       if (articleListHeader != null)
       {
-        articleListHeader.DisplayText = feed.TitleLine;
+        articleListHeader.DisplayText = feed.FormatLine(headerFormat);
+      }
+
+      var articleListFooter= _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
+      if (articleListFooter != null)
+      {
+        articleListFooter.DisplayText = feed.FormatLine(footerFormat);
       }
 
       var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<FeedItem>)).FirstOrDefault() as Picklist<FeedItem>;
@@ -63,9 +74,10 @@ namespace cFeed
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
       {
         parent.IsDisplayed = false;
-        using (ArticleView article = new ArticleView())
+        parent.Clear();
+        using (ArticleView article = new ArticleView(Config.Global.UI.Layout.Article))
         {
-          article.DisplayArticle(selectedItem, selectedFeed, parent);
+          article.Show(selectedItem, selectedFeed, parent);
         }
         _mainView.Refresh();
         //parent.Refresh();
@@ -137,7 +149,7 @@ namespace cFeed
           var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
           if (articleListHeader != null)
           {
-            articleListHeader.DisplayText = selectedFeed.TitleLine;
+            articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
             articleListHeader.Refresh();
           }
 
@@ -156,12 +168,12 @@ namespace cFeed
 
           if (articleListHeader != null)
           {
-            articleListHeader.DisplayText = selectedFeed.TitleLine;
+            articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
             articleListHeader.Refresh();
           }
         }
       }
-      //Download selected item content to lcoal storage
+      //Download selected item content to local storage
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Download))
       {
         if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)

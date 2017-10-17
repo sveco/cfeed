@@ -16,6 +16,10 @@ namespace cFeed
 {
   public class ArticleView : IDisposable
   {
+    private Viewport _mainView;
+    dynamic headerFormat;
+    dynamic footerFormat;
+
     private FeedItem selectedArticle;
     private RssFeed selectedFeed;
     private Picklist<FeedItem> parentArticleList;
@@ -24,22 +28,21 @@ namespace cFeed
     private TextArea _articleContent;
     private bool _displayNext = false;
 
-    Header articleHeader = new Header("")
+    public ArticleView(dynamic articleLayout)
     {
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleHeaderBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleHeaderForeground),
-      PadChar = '-'
-    };
-    Footer articleFooter = new Footer(Config.Global.UI.Strings.ArticleFooter)
-    {
-      AutoRefresh = false,
-      BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterBackground),
-      ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.ArticleFooterForeground),
-      PadChar = '-'
-    };
+      //region controls
+      _mainView = new Viewport();
+      _mainView.Width = articleLayout.Width;
+      _mainView.Height = articleLayout.Height;
 
-    public ArticleView()
-    {
+      foreach (var control in articleLayout.Controls)
+      {
+        var guiElement = ControlFactory.Get(control);
+        if (guiElement != null) { _mainView.Controls.Add(guiElement); }
+      }
+
+      headerFormat = Config.Global.UI.Strings.ArticleHeaderFormat;
+      footerFormat = Config.Global.UI.Strings.ArticleFooterFormat;
     }
 
     private void PrepareArticle()
@@ -61,20 +64,24 @@ namespace cFeed
       sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
       sb.AppendLine();
 
-      Console.Clear();
+      var articleHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
       if (articleHeader != null)
       {
         articleHeader.DisplayText = selectedArticle.TitleLine;
-        articleHeader.Refresh();
       }
-      if (articleFooter != null) { articleFooter.Show(); }
+
+      var articleFooter = _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
+      if (articleFooter != null)
+      {
+        articleFooter.DisplayText = selectedArticle.FormatLine(footerFormat);
+      }
 
       var textArea = new TextArea(sb.ToString());
       sb = null;
       textArea.Top = 2;
       textArea.Left = 2;
       textArea.Width = Console.WindowWidth - 6;
-      textArea.Height = textArea.LinesCount + 1;
+      textArea.Height = textArea.TotalItems + 1;
       textArea.WaitForInput = false;
       _articleContent = textArea;
 
@@ -87,7 +94,7 @@ namespace cFeed
         article.Width = Console.WindowWidth - 3;
         article.WaitForInput = true;
         article.OnItemKeyHandler += Article_OnItemKeyHandler;
-        article.ShowScrollbar = true;
+        article.ShowScrollBar = true;
 
         selectedArticle.MarkAsRead();
 
@@ -95,9 +102,11 @@ namespace cFeed
       }
 
       selectedArticle.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
+
+      _mainView.Show();
     }
 
-    public void DisplayArticle(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)
+    public void Show(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)
     {
       if (article != null)
       {

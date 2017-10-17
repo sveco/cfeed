@@ -19,8 +19,8 @@ namespace cFeed.Entities
     [BsonIgnore]
     public bool IsLoaded { get; private set; }
 
-    private static string displayFormat = Config.Global.UI.Strings.ArticleListFormat as string;
-    private static string titleFormat = Config.Global.UI.Strings.ArticleTitleFormat as string;
+    private static string displayFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
+    private static string titleFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
     private static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
     private static string fileNameFormat = Config.Global.SavedFileName;
 
@@ -135,7 +135,7 @@ namespace cFeed.Entities
 
     public bool Deleted { get; set; }
 
-    private string FormatLine(string Format)
+    public string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
       {

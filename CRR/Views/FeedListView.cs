@@ -16,7 +16,15 @@ namespace cFeed
   public class FeedListView
   {
     private Viewport _mainView;
+    dynamic headerFormat;
+    dynamic footerFormat;
 
+    private static string FormatFeedView(string format)
+    {
+      return format
+        .Replace("%v", Configuration.VERSION)
+        .Replace("%V", Configuration.MAJOR_VERSION);
+    }
     public FeedListView(dynamic feedListLayout)
     {
       //region controls
@@ -29,6 +37,9 @@ namespace cFeed
         var guiElement = ControlFactory.Get(control);
         if (guiElement != null) { _mainView.Controls.Add(guiElement); }
       }
+
+      headerFormat = Config.Global.UI.Strings.FeedListHeaderFormat;
+      footerFormat = Config.Global.UI.Strings.FeedListFooterFormat;
     }
 
     public void Show(bool refresh, IList<RssFeed> feeds)
@@ -41,6 +52,18 @@ namespace cFeed
                 return item;
               }).ToList();
 
+      var feedListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
+      if (feedListHeader != null)
+      {
+        feedListHeader.DisplayText = FormatFeedView(headerFormat);
+      }
+
+      var feedListFooter = _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
+      if (feedListFooter != null)
+      {
+        feedListFooter.DisplayText = FormatFeedView(footerFormat);
+      }
+
       var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<RssFeed>)).FirstOrDefault() as Picklist<RssFeed>;
       if (list == null) { throw new InvalidOperationException("Missing list config."); }
       list.UpdateList(rssFeeds);
@@ -52,37 +75,45 @@ namespace cFeed
       _mainView.Show();
     }
 
+    private void ReloadOne(RssFeed Feed, bool Refresh)
+    {
+      try
+      {
+        if (Feed.IsDynamic)
+        {
+          Feed.Load(false);
+        }
+        else
+        {
+          Feed.Load(Refresh);
+        }
+
+      }
+      catch (WebException x)
+      {
+        cFeed.Logging.Logger.Log(x);
+        Feed.DisplayText = Feed.DisplayLine + " ERROR:" + x.Message;
+      }
+      catch (Exception x)
+      {
+        cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + Feed.FeedUrl);
+        cFeed.Logging.Logger.Log(x);
+        Feed.DisplayText = Feed.DisplayLine + " ERROR!";
+      }
+    }
+
     private void ReloadAll(Picklist<RssFeed> parent, bool online) {
       new Thread(() =>
       {
         Thread.CurrentThread.IsBackground = true;
         /* first load online feeds */
         Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == false), (item) => {
-        //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
-          try
-          {
-            ((RssFeed)item).Load(online);
-            //item.DisplayText = ((RssFeed)item).DisplayLine;
-          }
-          catch (WebException x)
-          {
-            cFeed.Logging.Logger.Log(x);
-            item.DisplayText = ((RssFeed)item).DisplayLine + " ERROR:" + x.Message;
-          }
-          catch (Exception x)
-          {
-            cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + ((RssFeed)item).FeedUrl);
-            cFeed.Logging.Logger.Log(x);
-            item.DisplayText = ((RssFeed)item).DisplayLine + " ERROR!";
-          }
-
+          ReloadOne(item, online);
         });
 
         /* then load dynamic feeds */
         Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i)?.IsDynamic == true), (item) => {
-          //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
           ((RssFeed)item).Load(false);
-          //item.DisplayText = ((RssFeed)item).DisplayLine;
         });
 
       }).Start();
@@ -97,6 +128,7 @@ namespace cFeed
           if (!selectedItem.IsProcessing)
           {
             parent.IsDisplayed = false;
+
             using (ArticleListView articleList = new ArticleListView(Config.Global.UI.Layout.ArticleList))
             {
               articleList.Show(selectedItem);
@@ -126,27 +158,10 @@ namespace cFeed
       {
         if (!selectedItem.IsProcessing)
         {
-          /* just update dynamic feed */
-          if (selectedItem.IsDynamic == true)
-          {
-            selectedItem.Load(false);
-            //selectedItem.DisplayText = selectedItem.DisplayLine;
-          }
-          else
-          {
-            /* refresh current online feed */
-            new Thread(delegate ()
-            {
-              //selectedItem.DisplayText = Configuration.LoadingPrefix + selectedItem.DisplayText + Configuration.LoadingSuffix;
-              selectedItem.Load(true);
-              //selectedItem.DisplayText = selectedItem.DisplayLine;
-            }).Start();
-          }
-          /* then load dynamic feeds */
+          ReloadOne(selectedItem, true);
+
           Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == true), (item) => {
-            //item.DisplayText = Configuration.LoadingPrefix + item.DisplayText + Configuration.LoadingSuffix;
             ((RssFeed)item).Load(false);
-            //item.DisplayText = ((RssFeed)item).DisplayLine;
           });
         }
         return true;
@@ -208,20 +223,7 @@ namespace cFeed
 
     internal void RefreshConfig()
     {
-      //if (feedListHeader != null && feedListHeader.IsDisplayed)
-      //{
-      //  feedListHeader.DisplayText = Format(Config.Global.UI.Strings.ApplicationTitleFormat);
-      //  feedListHeader.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderBackground);
-      //  feedListHeader.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListHeaderForeground);
-      //  feedListHeader.Refresh();
-      //}
-      //if (feedListFooter != null && feedListFooter.IsDisplayed)
-      //{
-      //  feedListFooter.DisplayText = Config.Global.UI.Strings.FeedListFooter;
-      //  feedListFooter.BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterBackground);
-      //  feedListFooter.ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.FeedListFooterForeground);
-      //  feedListFooter.Refresh();
-      //}
+      //TODO: implement configuration refresh without restarting app.
     }
   }
 }

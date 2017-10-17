@@ -14,6 +14,7 @@ using LiteDB;
 using System.Threading;
 using System.ComponentModel;
 using CGui.Gui.Primitives;
+using System.Net.Sockets;
 
 namespace cFeed.Entities
 {
@@ -93,7 +94,7 @@ namespace cFeed.Entities
     public int UnreadItems { get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; } }
     public IList<FeedItem> FeedItems { get; set; }
 
-    private string FormatLine(string Format)
+    public string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
       {
@@ -125,15 +126,7 @@ namespace cFeed.Entities
     {
       get
       {
-        return FormatLine(Config.Global.UI.Strings.FeedListFormat);
-      }
-    }
-
-    public string TitleLine
-    {
-      get
-      {
-        return FormatLine(Config.Global.UI.Strings.FeedTitleFormat);
+        return FormatLine(Config.Global.UI.Strings.FeedListItemFormat);
       }
     }
 
@@ -200,6 +193,10 @@ namespace cFeed.Entities
         }
       }
       catch (WebException ex)
+      {
+        Logging.Logger.Log(ex);
+      }
+      catch (SocketException ex)
       {
         Logging.Logger.Log(ex);
       }
