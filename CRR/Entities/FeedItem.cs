@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using cFeed.LiteDb;
 using cFeed.Util;
 using CGui.Gui.Primitives;
@@ -296,10 +297,13 @@ namespace cFeed.Entities
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 
-      var s = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links, out images);
+      var resultString = conv.ConvertHtml(doc.DocumentNode.OuterHtml, Links[0].Uri, out links, out images);
+      //remove multiple lines from article content. It makes text more condensed.
+      var cleanedContent = Regex.Replace(resultString, @"^\s+$[\r\n]*", "\r\n", RegexOptions.Multiline);
+
       ExternalLinks = links;
       ImageLinks = images;
-      ArticleContent = s;
+      ArticleContent = cleanedContent;
 
       IsLoaded = true;
       Save();
