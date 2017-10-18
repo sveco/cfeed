@@ -3,26 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic;
 using System.Net;
+using System.Net.Sockets;
 using System.ServiceModel.Syndication;
-using System.Text;
+using System.Threading;
 using System.Xml;
 using cFeed.LiteDb;
 using cFeed.Logging;
 using cFeed.Util;
-using JsonConfig;
-using LiteDB;
-using System.Threading;
-using System.ComponentModel;
 using CGui.Gui.Primitives;
-using System.Net.Sockets;
+using JsonConfig;
 
 namespace cFeed.Entities
 {
   public class RssFeed : ListItem, IDisposable
   {
-    //public event PropertyChangedEventHandler InstancePropertyChanged;
-
     private string _feedUrl;
+    /// <summary>
+    /// Url of the RSS/Atom feed.
+    /// </summary>
     public string FeedUrl {
       get { return _feedUrl; }
       set {
@@ -33,9 +31,21 @@ namespace cFeed.Entities
         }
       }
     }
+    /// <summary>
+    /// Query for dynamic feeds.
+    /// </summary>
     public string FeedQuery { get; set; }
+    /// <summary>
+    /// Whether feed should be hidden on list of feeds and only available via dynamic query.
+    /// </summary>
     public bool Hidden { get; set; }
+    /// <summary>
+    /// Auto reload feed
+    /// </summary>
     public bool AutoReload { get; set; }
+    /// <summary>
+    /// Interval, in seconds after which the feed will be reloaded if AutoReload is set to true.
+    /// </summary>
     public int ReloadInterval { get; set; }
 
     private DateTime lastLoadtime;
@@ -47,11 +57,21 @@ namespace cFeed.Entities
     public bool IsDynamic {
       get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
     }
+
+    /// <summary>
+    /// Marks classes and id's from html that will be ignored when converting html article content to plain text
+    /// </summary>
     public string[] Filters { get; set; }
 
+    /// <summary>
+    /// Tags can be used to filter feeds via FeedQuery
+    /// </summary>
     public string[] Tags { get; set; }
 
     private string _title;
+    /// <summary>
+    /// Feed title.
+    /// </summary>
     public string Title {
       get { return _title; }
       private set {
@@ -64,6 +84,9 @@ namespace cFeed.Entities
     }
 
     private string _customTitle;
+    /// <summary>
+    /// Custom title to override title defined by feed xml
+    /// </summary>
     public string CustomTitle {
       get { return _customTitle; }
       set {
@@ -74,9 +97,14 @@ namespace cFeed.Entities
         }
       }
     }
-
+    /// <summary>
+    /// Is feed loaded or not
+    /// </summary>
     public bool Isloaded { get; private set; } = false;
     bool _isProcessing = false;
+    /// <summary>
+    /// Whether feed is loading
+    /// </summary>
     public bool IsProcessing {
       get { return _isProcessing; }
       private set {
@@ -89,11 +117,23 @@ namespace cFeed.Entities
     }
 
     private SyndicationFeed Feed { get; set; }
-
+    /// <summary>
+    /// Total number of feed items (articles) not marked for deletion.
+    /// </summary>
     public int TotalItems { get { return FeedItems != null ? FeedItems.Where(x => x.Deleted == false).Count() : 0; } }
+    /// <summary>
+    /// Total number of items not marked read.
+    /// </summary>
     public int UnreadItems { get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; } }
+    /// <summary>
+    /// List of articles in current feed.
+    /// </summary>
     public IList<FeedItem> FeedItems { get; set; }
-
+    /// <summary>
+    /// Formats string and replaces placeholders with actual values
+    /// </summary>
+    /// <param name="Format"></param>
+    /// <returns></returns>
     public string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
@@ -121,7 +161,9 @@ namespace cFeed.Entities
         return line;
       }
     }
-
+    /// <summary>
+    /// Formats string using FeedListItemFormat string.
+    /// </summary>
     public string DisplayLine
     {
       get
