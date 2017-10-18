@@ -69,7 +69,6 @@ namespace cFeed.Util
           return;
       }
 
-
       string html;
       switch (node.NodeType)
       {
@@ -97,13 +96,18 @@ namespace cFeed.Util
           // check the text is meaningful and not a bunch of whitespaces
           if (html.Trim().Length > 0)
           {
+            foreach (var c in trimChars)
+            {
+              html = html.Replace(c, ' ');
+            }
+
             outText.Write(HtmlEntity.DeEntitize(html).Trim(trimChars));
           }
           break;
 
         case HtmlNodeType.Element:
           bool skip = false;
-          switch (node.Name)
+          switch (node.Name.ToLower())
           {
             //handle headers
             case "h1":
@@ -122,6 +126,8 @@ namespace cFeed.Util
             case "p":
             case "ul":
             case "ol":
+            case "div":
+            case "br":
               // treat paragraphs as crlf
               outText.Write(Environment.NewLine);
               break;
