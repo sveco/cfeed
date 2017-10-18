@@ -46,10 +46,10 @@ namespace cFeed.LiteDb
 
     internal IEnumerable<FeedItem> Find(Expression<Func<FeedItem, bool>> predicate)
     {
-      lock (padlock)
-      {
+      //lock (padlock)
+      //{
         return items.Find(predicate);
-      }
+      //}
     }
 
     internal void Update(FeedItem result)
@@ -62,10 +62,10 @@ namespace cFeed.LiteDb
 
     internal IEnumerable<FeedItem> FindAll()
     {
-      lock (padlock)
-      {
+      //lock (padlock)
+      //{
         return this.Items.FindAll();
-      }
+      //}
     }
 
     internal void Insert(FeedItem newItem)
