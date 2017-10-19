@@ -178,6 +178,15 @@ namespace cFeed.Entities
       {
         var pathOnly = fullPath.Substring(0, pathEndsAt).SanitizePath();
         var fileNameOnly = fullPath.Substring(pathEndsAt, fullPath.Length - pathEndsAt).SanitizeFileName();
+
+        //Limit full path length to 260 chars to avoid System.IO.PathTooLongException
+        if (System.IO.Path.GetFullPath(pathOnly).Length + fileNameOnly.Length > 260)
+        {
+          int dotPosition = fileNameOnly.LastIndexOf(".");
+          string fileName = fileNameOnly.Substring(0, dotPosition);
+          string extension = fileNameOnly.Substring(dotPosition, fileNameOnly.Length - dotPosition);
+          fileNameOnly = fileName.Substring(0, fileName.Length - System.IO.Path.GetFullPath(pathOnly).Length - extension.Length) + extension;
+        }
         result = pathOnly + "\\" + fileNameOnly;
       }
       else
