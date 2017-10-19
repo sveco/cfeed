@@ -1,48 +1,98 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.ServiceModel.Syndication;
-using System.Text.RegularExpressions;
-using cFeed.LiteDb;
-using cFeed.Util;
-using CGui.Gui.Primitives;
-using JsonConfig;
-using LiteDB;
-
-namespace cFeed.Entities
+﻿namespace cFeed.Entities
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Collections.ObjectModel;
+  using System.IO;
+  using System.Linq;
+  using System.ServiceModel.Syndication;
+  using System.Text.RegularExpressions;
+  using cFeed.LiteDb;
+  using cFeed.Util;
+  using CGui.Gui.Primitives;
+  using JsonConfig;
+  using LiteDB;
+
+  /// <summary>
+  /// Defines the <see cref="FeedItem" />
+  /// </summary>
   public class FeedItem : ListItem, IDisposable
   {
-    //private IList<Uri> externalLinks;
-    //public IList<Uri> ExternalLinks { get => externalLinks; set => externalLinks = value; }
+    /// <summary>
+    /// Gets or sets a value indicating whether feed item is loaded
+    /// </summary>
     [BsonIgnore]
     public bool IsLoaded { get; private set; }
 
+    /// <summary>
+    /// Defines the displayFormat
+    /// </summary>
     private static string displayFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
+
+    /// <summary>
+    /// Defines the titleFormat
+    /// </summary>
     private static string titleFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
+
+    /// <summary>
+    /// Defines the dateFormat
+    /// </summary>
     private static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
+
+    /// <summary>
+    /// Defines the fileNameFormat
+    /// </summary>
     private static string fileNameFormat = Config.Global.SavedFileName;
 
+    /// <summary>
+    /// Gets or sets the Id
+    /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the SyndicationItemId
+    /// </summary>
     public string SyndicationItemId { get; set; }
+
+    /// <summary>
+    /// Defines the _feedUrl
+    /// </summary>
     private string _feedUrl;
-    public string FeedUrl {
+
+    /// <summary>
+    /// Gets or sets the FeedUrl
+    /// </summary>
+    public string FeedUrl
+    {
       get { return _feedUrl; }
-      set {
-        if(_feedUrl != value)
+      set
+      {
+        if (_feedUrl != value)
         {
           _feedUrl = value;
           this.DisplayText = this.DisplayLine;
         }
       }
     }
+
+    /// <summary>
+    /// Gets or sets the Tags
+    /// </summary>
     public string[] Tags { get; set; }
+
+    /// <summary>
+    /// Defines the _publishDate
+    /// </summary>
     private DateTime _publishDate;
-    public DateTime PublishDate {
+
+    /// <summary>
+    /// Gets or sets the PublishDate
+    /// </summary>
+    public DateTime PublishDate
+    {
       get { return _publishDate; }
-      set {
+      set
+      {
         if (_publishDate != value)
         {
           _publishDate = value;
@@ -50,10 +100,20 @@ namespace cFeed.Entities
         }
       }
     }
+
+    /// <summary>
+    /// Defines the _summary
+    /// </summary>
     private string _summary;
-    public string Summary {
+
+    /// <summary>
+    /// Gets or sets the Summary
+    /// </summary>
+    public string Summary
+    {
       get { return _summary; }
-      set {
+      set
+      {
         if (_summary != value)
         {
           _summary = value;
@@ -61,16 +121,40 @@ namespace cFeed.Entities
         }
       }
     }
+
+    /// <summary>
+    /// Gets or sets the Links
+    /// </summary>
     public Collection<SyndicationLink> Links { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Authors
+    /// </summary>
     public Collection<SyndicationPerson> Authors { get; set; }
 
+    /// <summary>
+    /// Gets or sets the ExternalLinks
+    /// </summary>
     public Collection<Uri> ExternalLinks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ImageLinks
+    /// </summary>
     public Collection<Uri> ImageLinks { get; set; }
 
+    /// <summary>
+    /// Defines the _title
+    /// </summary>
     private string _title;
-    public string Title {
+
+    /// <summary>
+    /// Gets or sets the Title
+    /// </summary>
+    public string Title
+    {
       get { return _title; }
-      set {
+      set
+      {
         if (_title != value)
         {
           _title = value;
@@ -78,7 +162,15 @@ namespace cFeed.Entities
         }
       }
     }
+
+    /// <summary>
+    /// Defines the _isProcessing
+    /// </summary>
     private bool _isProcessing;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether IsProcessing
+    /// </summary>
     [BsonIgnore]
     public bool IsProcessing
     {
@@ -93,15 +185,26 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// Defines the OnContentLoaded
+    /// </summary>
     [BsonIgnore]
     public Action<string> OnContentLoaded;
-    //public bool Matched { get; set; }
 
+    //public bool Matched { get; set; }
+    //public bool Matched { get; set; }        /// <summary>
+    /// Defines the _isNew
+    /// </summary>
     private bool _isNew = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether IsNew
+    /// </summary>
     public bool IsNew
     {
       get { return _isNew; }
-      private set {
+      private set
+      {
         if (_isNew != value)
         {
           _isNew = value;
@@ -109,6 +212,10 @@ namespace cFeed.Entities
         }
       }
     }
+
+    /// <summary>
+    /// Gets a value indicating whether IsDownloaded
+    /// </summary>
     [BsonIgnore]
     public bool IsDownloaded
     {
@@ -134,8 +241,16 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether Deleted
+    /// </summary>
     public bool Deleted { get; set; }
 
+    /// <summary>
+    /// The FormatLine
+    /// </summary>
+    /// <param name="Format">The <see cref="string"/></param>
+    /// <returns>The <see cref="string"/></returns>
     public string FormatLine(string Format)
     {
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
@@ -162,6 +277,11 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// The FormatFileName
+    /// </summary>
+    /// <param name="format">The <see cref="string"/></param>
+    /// <returns>The <see cref="string"/></returns>
     [BsonIgnore]
     private string FormatFileName(string format)
     {
@@ -202,6 +322,9 @@ namespace cFeed.Entities
       return result;
     }
 
+    /// <summary>
+    /// Gets the DisplayLine
+    /// </summary>
     [BsonIgnore]
     public string DisplayLine
     {
@@ -211,6 +334,9 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// Gets the TitleLine
+    /// </summary>
     [BsonIgnore]
     public string TitleLine
     {
@@ -220,6 +346,9 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// Gets the ArticleFileName
+    /// </summary>
     [BsonIgnore]
     public string ArticleFileName
     {
@@ -229,9 +358,15 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// Gets or sets the ArticleContent
+    /// </summary>
     [BsonIgnore]
     public string ArticleContent { get; private set; }
 
+    /// <summary>
+    /// Sets the Item
+    /// </summary>
     [BsonIgnore]
     public SyndicationItem Item
     {
@@ -241,23 +376,38 @@ namespace cFeed.Entities
       }
     }
 
-
     /// <summary>
     /// Only for serialization. DO NOT USE!
     /// </summary>
-    public FeedItem() {}
+    public FeedItem()
+    {
+    }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeedItem"/> class.
+    /// </summary>
+    /// <param name="feedUrl">The <see cref="string"/></param>
     public FeedItem(string feedUrl)
     {
       FeedUrl = feedUrl;
       this.PropertyChanged += FeedItem_PropertyChanged;
     }
 
+    /// <summary>
+    /// The FeedItem_PropertyChanged
+    /// </summary>
+    /// <param name="sender">The <see cref="object"/></param>
+    /// <param name="e">The <see cref="System.ComponentModel.PropertyChangedEventArgs"/></param>
     private void FeedItem_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
       this.DisplayText = this.DisplayLine;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeedItem"/> class.
+    /// </summary>
+    /// <param name="feedUrl">The <see cref="string"/></param>
+    /// <param name="i">The <see cref="SyndicationItem"/></param>
     public FeedItem(string feedUrl, SyndicationItem i)
     {
       FeedUrl = feedUrl;
@@ -265,6 +415,10 @@ namespace cFeed.Entities
       this.PropertyChanged += FeedItem_PropertyChanged;
     }
 
+    /// <summary>
+    /// The SetValues
+    /// </summary>
+    /// <param name="i">The <see cref="SyndicationItem"/></param>
     private void SetValues(SyndicationItem i)
     {
       SyndicationItemId = i.Id;
@@ -276,6 +430,10 @@ namespace cFeed.Entities
       this.PropertyChanged += FeedItem_PropertyChanged;
     }
 
+    /// <summary>
+    /// The LoadOnlineArticle
+    /// </summary>
+    /// <param name="filters">The <see cref="string[]"/></param>
     public void LoadOnlineArticle(string[] filters)
     {
       if (OnContentLoaded == null) throw new ArgumentNullException("OnContentLoaded");
@@ -298,6 +456,10 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// The DownloadArticleContent
+    /// </summary>
+    /// <param name="filters">The <see cref="string[]"/></param>
     public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
@@ -353,9 +515,12 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// The MarkAsRead
+    /// </summary>
     public void MarkAsRead()
     {
-      IsNew  = false;
+      IsNew = false;
       var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
@@ -364,6 +529,9 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// The MarkUnread
+    /// </summary>
     internal void MarkUnread()
     {
       IsNew = true;
@@ -374,6 +542,10 @@ namespace cFeed.Entities
         DbWrapper.Instance.Update(result);
       }
     }
+
+    /// <summary>
+    /// The MarkDeleted
+    /// </summary>
     internal void MarkDeleted()
     {
       Deleted = true;
@@ -385,6 +557,9 @@ namespace cFeed.Entities
       }
     }
 
+    /// <summary>
+    /// The Save
+    /// </summary>
     internal void Save()
     {
       var filename = ArticleFileName;
@@ -402,9 +577,15 @@ namespace cFeed.Entities
       }
     }
 
-    #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
+    /// <summary>
+    /// Defines the disposedValue
+    /// </summary>
+    private bool disposedValue = false;// To detect redundant calls
 
+    /// <summary>
+    /// The Dispose
+    /// </summary>
+    /// <param name="disposing">The <see cref="bool"/></param>
     protected virtual void Dispose(bool disposing)
     {
       if (!disposedValue)
@@ -436,13 +617,13 @@ namespace cFeed.Entities
     //}
 
     // This code added to correctly implement the disposable pattern.
+    /// <summary>
+    /// The Dispose
+    /// </summary>
     void IDisposable.Dispose()
     {
       // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
       Dispose(true);
-      // TODO: uncomment the following line if the finalizer is overridden above.
-      // GC.SuppressFinalize(this);
     }
-    #endregion
   }
 }
