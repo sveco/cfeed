@@ -14,7 +14,9 @@ namespace cFeed.Util
     Collection<Uri> Images = new Collection<Uri>();
     Uri BaseUri;
     string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+    string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
     string imageLinkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkHighlight);
+    string imageLinkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkTextHighlight);
     string resetColor = Configuration.ColorReset;
 
 
@@ -135,7 +137,7 @@ namespace cFeed.Util
               outText.Write(Environment.NewLine + "* ");
               break;
             case "img":
-              outText.Write(Environment.NewLine + "[img:" + node.Attributes["alt"]?.Value + "]");
+              outText.Write(Environment.NewLine + imageLinkTextHighlight + "[img:" + node.Attributes["alt"]?.Value + "]" + resetColor);
               if (node.Attributes.Contains("src"))
               {
                 var uriName = node.Attributes["src"].Value;
@@ -155,12 +157,12 @@ namespace cFeed.Util
               }
               break;
             case "a":
-              outText.Write(" [Link:");
+              outText.Write(linkTextHighlight + " [Link:");
               if (node.HasChildNodes)
               {
                 ConvertContentTo(node, outText);
               }
-              outText.Write("]");
+              outText.Write("]" + resetColor);
               if (node.Attributes.Contains("href"))
               {
                 var uriName = node.Attributes["href"].Value;
