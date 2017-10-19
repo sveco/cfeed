@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Dynamic;
 using System.Net;
@@ -239,6 +240,10 @@ namespace cFeed.Entities
         Logging.Logger.Log(ex);
       }
       catch (SocketException ex)
+      {
+        Logging.Logger.Log(ex);
+      }
+      catch (IOException ex)
       {
         Logging.Logger.Log(ex);
       }
