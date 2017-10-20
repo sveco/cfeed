@@ -129,7 +129,6 @@
         {
           Feed.Load(Refresh);
         }
-
       }
       catch (WebException x)
       {
@@ -165,7 +164,6 @@
         {
           ((RssFeed)item).Load(false);
         });
-
       }).Start();
     }
 
@@ -181,20 +179,7 @@
       //Open
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenFeed))
       {
-        if (selectedItem != null)
-        {
-          if (!selectedItem.IsProcessing)
-          {
-            parent.IsDisplayed = false;
-
-            using (ArticleListView articleList = new ArticleListView(Config.Global.UI.Layout.ArticleList))
-            {
-              articleList.Show(selectedItem);
-            }
-            _mainView.Refresh();
-          }
-        }
-        return true;
+        return OpenSelectedFeed(selectedItem, parent);
       }
 
       //Exit app
@@ -229,53 +214,97 @@
       //Mark all read
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkAllRead))
       {
-        if (selectedItem != null)
-        {
-          if (!selectedItem.IsProcessing)
-          {
-            var input = new Input(Config.Global.UI.Strings.PromptMarkAll)
-            {
-              Top = Console.WindowHeight - 2,
-              ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-              BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-            };
-            if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
-            {
-              selectedItem.MarkAllRead();
-              selectedItem.DisplayText = selectedItem.DisplayLine;
-            }
-            return true;
-          }
-        }
+        return MarkAllArticlesRead(selectedItem);
       }
 
       //Purge deleted
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Purge))
       {
-        if (selectedItem != null)
-        {
-          if (!selectedItem.IsProcessing)
-          {
-            var input = new Input(Config.Global.UI.Strings.PromptPurge)
-            {
-              Top = Console.WindowHeight - 2,
-              ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-              BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-            };
-            if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
-            {
-              selectedItem.Purge();
-              selectedItem.DisplayText = selectedItem.DisplayLine;
-            }
-            return true;
-          }
-        }
+        return PurgeDeletedArticles(selectedItem);
       }
 
       //Redraw view
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.RefreshView))
       {
         _mainView.Refresh();
+      }
+      return true;
+    }
+
+    /// <summary>
+    /// Purges articles marked for deletion in selected <see cref="RssFeed"/>.
+    /// </summary>
+    /// <param name="selectedItem"></param>
+    /// <returns></returns>
+    private bool PurgeDeletedArticles(RssFeed selectedItem)
+    {
+      if (selectedItem != null)
+      {
+        if (!selectedItem.IsProcessing)
+        {
+          var input = new Input(Config.Global.UI.Strings.PromptPurge)
+          {
+            Top = Console.WindowHeight - 2,
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+          };
+          if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
+          {
+            selectedItem.Purge();
+            selectedItem.DisplayText = selectedItem.DisplayLine;
+          }
+        }
+      }
+      return true;
+    }
+
+    /// <summary>
+    /// Marks all articles in <see cref="RssFeed"/> as read.
+    /// </summary>
+    /// <param name="selectedItem"></param>
+    /// <returns></returns>
+    private bool MarkAllArticlesRead(RssFeed selectedItem)
+    {
+      if (selectedItem != null)
+      {
+        if (!selectedItem.IsProcessing)
+        {
+          var input = new Input(Config.Global.UI.Strings.PromptMarkAll)
+          {
+            Top = Console.WindowHeight - 2,
+            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+          };
+          if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
+          {
+            selectedItem.MarkAllRead();
+            selectedItem.DisplayText = selectedItem.DisplayLine;
+          }
+        }
+      }
+      return true;
+    }
+
+    /// <summary>
+    /// Shows selected feed articles
+    /// </summary>
+    /// <param name="selectedItem">Selected <see cref="RssFeed"/> item</param>
+    /// <param name="parent">Parent <see cref="Picklist<RssFeed>"/></param>
+    /// <returns></returns>
+    private bool OpenSelectedFeed(RssFeed selectedItem, Picklist<RssFeed> parent)
+    {
+      if (selectedItem != null)
+      {
+        if (!selectedItem.IsProcessing)
+        {
+          parent.IsDisplayed = false;
+
+          using (ArticleListView articleList = new ArticleListView(Config.Global.UI.Layout.ArticleList))
+          {
+            articleList.Show(selectedItem);
+          }
+          _mainView.Refresh();
+        }
       }
       return true;
     }
