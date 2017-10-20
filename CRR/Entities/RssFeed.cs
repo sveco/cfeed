@@ -24,7 +24,6 @@
     internal bool _isProcessing = false;
     private string _customTitle;
     private string _feedUrl;
-    private string _title;
     private bool disposedValue = false;
 
     /// <summary>
@@ -172,15 +171,12 @@
     /// </summary>
     public string Title
     {
-      get { return _title; }
-      private set
-      {
-        if (_title != value)
-        {
-          _title = value;
-          this.DisplayText = this.DisplayLine;
-        }
-      }
+      get { return CustomTitle ?? FeedTitle ?? FeedUrl; }
+    }
+
+    public string FeedTitle
+    {
+      get { return this.Feed?.Title.Text; }
     }
 
     /// <summary>
@@ -229,7 +225,7 @@
         { "U", UnreadItems.ToString() },
         { "T", TotalItems.ToString() },
         { "u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8) },
-        { "t", CustomTitle ?? Title ?? FeedUrl },
+        { "t", Title },
         { "V", Configuration.MAJOR_VERSION },
         { "v", Configuration.VERSION },
         { "g", ( Tags != null ? string.Join(" ", Tags) : "")}
@@ -289,7 +285,6 @@
             }
             catch (XmlException ex)
             {
-              Logging.Logger.Log(LogLevel.Error, "Error loading " + url);
               Logging.Logger.Log(ex);
               throw;
             }
@@ -323,7 +318,7 @@
     }
 
     /// <summary>
-    /// The Purge
+    /// Purges all articles marked for deletion
     /// </summary>
     internal void Purge()
     {
@@ -340,7 +335,6 @@
       {
         Filters = null;
         Tags = null;
-        Title = null;
         Feed = null;
         if (FeedItems != null)
           FeedItems = null;
@@ -439,7 +433,7 @@
       catch (Exception ex)
       {
         Logging.Logger.Log(ex);
-        this.Title += " - " + ex.Message;
+        this.CustomTitle = Configuration.GetForegroundColor("Red") + this.Title + " - ERROR" + Configuration.ColorReset;
       }
 
       this.lastLoadtime = DateTime.Now;
@@ -451,7 +445,6 @@
       }
 
       Logging.Logger.Log(FeedUrl + " loaded");
-      this.Title = Feed.Title.Text;
 
       JoinReindexFeed();
     }
