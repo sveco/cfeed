@@ -14,10 +14,14 @@
   using LiteDB;
 
   /// <summary>
-  /// Defines the <see cref="FeedItem" />
+  /// Refresents single item in feed, wraps feed article
   /// </summary>
   public class FeedItem : ListItem, IDisposable
   {
+    private string _feedUrl;
+    private DateTime _publishDate;
+    private string _summary;
+
     /// <summary>
     /// Gets or sets a value indicating whether feed item is loaded
     /// </summary>
@@ -55,12 +59,7 @@
     public string SyndicationItemId { get; set; }
 
     /// <summary>
-    /// Defines the _feedUrl
-    /// </summary>
-    private string _feedUrl;
-
-    /// <summary>
-    /// Gets or sets the FeedUrl
+    /// Url of the parent feed
     /// </summary>
     public string FeedUrl
     {
@@ -81,11 +80,6 @@
     public string[] Tags { get; set; }
 
     /// <summary>
-    /// Defines the _publishDate
-    /// </summary>
-    private DateTime _publishDate;
-
-    /// <summary>
     /// Gets or sets the PublishDate
     /// </summary>
     public DateTime PublishDate
@@ -100,11 +94,6 @@
         }
       }
     }
-
-    /// <summary>
-    /// Defines the _summary
-    /// </summary>
-    private string _summary;
 
     /// <summary>
     /// Gets or sets the Summary
@@ -198,7 +187,7 @@
     private bool _isNew = true;
 
     /// <summary>
-    /// Gets or sets a value indicating whether IsNew
+    /// Gets or sets a value indicating whether article is new
     /// </summary>
     public bool IsNew
     {
@@ -214,7 +203,7 @@
     }
 
     /// <summary>
-    /// Gets a value indicating whether IsDownloaded
+    /// Gets a value indicating whether artice content was downloaded and saved
     /// </summary>
     [BsonIgnore]
     public bool IsDownloaded
@@ -242,12 +231,12 @@
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether Deleted
+    /// Gets or sets a value indicating whether article was marked for deletion
     /// </summary>
     public bool Deleted { get; set; }
 
     /// <summary>
-    /// The FormatLine
+    /// Formats string for display by replacing placeholder strings with actual values.
     /// </summary>
     /// <param name="Format">The <see cref="string"/></param>
     /// <returns>The <see cref="string"/></returns>
@@ -278,7 +267,7 @@
     }
 
     /// <summary>
-    /// The FormatFileName
+    /// The Formats file name for saved article content.
     /// </summary>
     /// <param name="format">The <see cref="string"/></param>
     /// <returns>The <see cref="string"/></returns>
@@ -365,7 +354,7 @@
     public string ArticleContent { get; private set; }
 
     /// <summary>
-    /// Sets the Item
+    /// <see cref="SyndicationItem"/>
     /// </summary>
     [BsonIgnore]
     public SyndicationItem Item
@@ -577,11 +566,7 @@
       }
     }
 
-    /// <summary>
-    /// Defines the disposedValue
-    /// </summary>
     private bool disposedValue = false;// To detect redundant calls
-
     /// <summary>
     /// The Dispose
     /// </summary>
@@ -590,13 +575,6 @@
     {
       if (!disposedValue)
       {
-        if (disposing)
-        {
-          // TODO: dispose managed state (managed objects).
-        }
-
-        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-        // TODO: set large fields to null.
         Summary = null;
         FeedUrl = null;
         Tags = null;
@@ -608,18 +586,6 @@
         disposedValue = true;
       }
     }
-
-    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    //~FeedItem()
-    //{
-    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-    //  Dispose(false);
-    //}
-
-    // This code added to correctly implement the disposable pattern.
-    /// <summary>
-    /// The Dispose
-    /// </summary>
     void IDisposable.Dispose()
     {
       // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
