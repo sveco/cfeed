@@ -256,9 +256,9 @@
       Dictionary<string, string> replacementTable = new Dictionary<string, string>
       {
         { "i", (Index + 1).ToString()},
-        { "n", Configuration.GetReadState(this.IsNew)},
-        { "D", Configuration.GetDownloadState(this.IsDownloaded)},
-        { "x", Configuration.GetDeletedState(this.Deleted)},  //only shown when article is marked as deleted, afterwards filtered out
+        { "n", Configuration.Instance.GetReadState(this.IsNew)},
+        { "D", Configuration.Instance.GetDownloadState(this.IsDownloaded)},
+        { "x", Configuration.Instance.GetDeletedState(this.Deleted)},  //only shown when article is marked as deleted, afterwards filtered out
         { "d", PublishDate.ToString(dateFormat)},
         { "t", Title},
         { "s", Summary},
@@ -269,7 +269,7 @@
       var line = Formatter.FormatLine(Format, replacementTable);
       if (this.IsProcessing)
       {
-        return Configuration.LoadingPrefix + line + Configuration.LoadingSuffix;
+        return Configuration.Instance.LoadingPrefix + line + Configuration.Instance.LoadingSuffix;
       }
       else
       {
@@ -287,7 +287,7 @@
     {
       var fullPath = format
           .Replace("%i", Index.ToString().PadLeft(3))
-          .Replace("%n", Configuration.GetReadState(this.IsNew))
+          .Replace("%n", Configuration.Instance.GetReadState(this.IsNew))
           .Replace("%d", PublishDate.ToString(dateFormat))
           .Replace("%t", Title)
           .Replace("%l", FeedUrl);

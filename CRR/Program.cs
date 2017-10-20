@@ -158,7 +158,7 @@ namespace cFeed
     /// </summary>
     private static void Config_OnUserConfigFileChanged()
     {
-
+      Configuration.Instance.RefreshConfig();
     }
 
     /// <summary>

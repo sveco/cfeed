@@ -178,7 +178,7 @@ namespace cFeed
       {
         if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)
         {
-          selectedItem.DisplayText = Configuration.LoadingPrefix +  selectedItem.DisplayText + Configuration.LoadingSuffix;
+          selectedItem.DisplayText = Configuration.Instance.LoadingPrefix +  selectedItem.DisplayText + Configuration.Instance.LoadingSuffix;
           selectedItem.DownloadArticleContent(selectedFeed.Filters);
           selectedItem.DisplayText = selectedItem.DisplayLine;
         }

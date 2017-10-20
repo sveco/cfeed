@@ -1,34 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
+using CGui.Gui.Primitives;
 using JsonConfig;
-using cFeed.Logging;
-using System.Collections.ObjectModel;
 
 namespace cFeed
 {
-  public static class Configuration
+  public class Configuration
   {
+    #region Singleton implementation
+    private static readonly Configuration instance = new Configuration();
+
+    // Explicit static constructor to tell C# compiler
+    // not to mark type as beforefieldinit
+    static Configuration()
+    {
+    }
+
+    private Configuration()
+    {
+      LoadConfig();
+    }
+
+    public static Configuration Instance
+    {
+      get { return instance; }
+    }
+    #endregion
+
+    public delegate void OnConfigurationChanged();
+    public event OnConfigurationChanged OnConfigurationChangedHandler;
+
     private static Version version = Assembly.GetExecutingAssembly().GetName().Version;
 
-    public static readonly string ArticleRootPath = Config.Global.SavedFileRoot;
-    public static readonly string LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
-    public static readonly string LoadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
-    public static readonly string ArticleTextHighlight = GetForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
+    public string ArticleRootPath { get; private set; }
+    public string LoadingSuffix { get; private set; }
+    public string LoadingPrefix { get; private set; }
+    public string ArticleTextHighlight { get; private set; }
 
-    public static readonly string ArticleTextFeedUrlLabel = Config.Global.UI.Strings.ArticleTextFeedUrlLabel;
-    public static readonly string ArticleTextTitleLabel = Config.Global.UI.Strings.ArticleTextTitleLabel;
-    public static readonly string ArticleTextAuthorsLabel = Config.Global.UI.Strings.ArticleTextAuthorsLabel;
-    public static readonly string ArticleTextLinkLabel = Config.Global.UI.Strings.ArticleTextLinkLabel;
-    public static readonly string ArticleTextPublishDateLabel = Config.Global.UI.Strings.ArticleTextPublishDateLabel;
+    public string ArticleTextFeedUrlLabel { get; private set; }
+    public string ArticleTextTitleLabel { get; private set; }
+    public string ArticleTextAuthorsLabel { get; private set; }
+    public string ArticleTextLinkLabel { get; private set; }
+    public string ArticleTextPublishDateLabel { get; private set; }
 
-    private static readonly string readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
-    private static readonly string readStateNew = Config.Global.UI.Strings.ReadStateNew as string;
-    private static readonly string downloadStateDownloaded = Config.Global.UI.Strings.DownloadStateDownloaded as string;
-    private static readonly string downloadStatePending = Config.Global.UI.Strings.DownloadStatePending as string;
-    private static readonly string deletedState = Config.Global.UI.Strings.DeleteStateDeleted as string;
-    private static readonly string notDeletedState = Config.Global.UI.Strings.DeleteStateNotDeleted as string;
+    private string readStateRead { get; set; }
+    private string readStateNew { get; set; }
+    private string downloadStateDownloaded { get; set; }
+    private string downloadStatePending { get; set; }
+    private string deletedState { get; set; }
+    private string notDeletedState { get; set; }
 
     public static readonly string ReplacementPattern = @"\%([a-zA-Z]):?([\d]*)?([rl]?)?";
 
@@ -42,6 +62,27 @@ namespace cFeed
     public static readonly string VERSION = version.ToString();
     public static readonly string MAJOR_VERSION = version.Major.ToString() + "." + version.Minor.ToString();
 
+    private void LoadConfig()
+    {
+      ArticleRootPath = Config.Global.SavedFileRoot;
+      LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
+      LoadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
+      ArticleTextHighlight = GetForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
+
+      ArticleTextFeedUrlLabel = Config.Global.UI.Strings.ArticleTextFeedUrlLabel;
+      ArticleTextTitleLabel = Config.Global.UI.Strings.ArticleTextTitleLabel;
+      ArticleTextAuthorsLabel = Config.Global.UI.Strings.ArticleTextAuthorsLabel;
+      ArticleTextLinkLabel = Config.Global.UI.Strings.ArticleTextLinkLabel;
+      ArticleTextPublishDateLabel = Config.Global.UI.Strings.ArticleTextPublishDateLabel;
+
+      readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
+      readStateNew = Config.Global.UI.Strings.ReadStateNew as string;
+      downloadStateDownloaded = Config.Global.UI.Strings.DownloadStateDownloaded as string;
+      downloadStatePending = Config.Global.UI.Strings.DownloadStatePending as string;
+      deletedState = Config.Global.UI.Strings.DeleteStateDeleted as string;
+      notDeletedState = Config.Global.UI.Strings.DeleteStateNotDeleted as string;
+    }
+
     public static string GetForegroundColor(string colorName)
     {
       return "\x1b[f:" + colorName + "]";
@@ -51,21 +92,21 @@ namespace cFeed
       return "\x1b[b:" + colorName + "]";
     }
     
-    internal static string GetDeletedState(bool deleted)
+    internal string GetDeletedState(bool deleted)
     {
       var width = Math.Max(deletedState.Length, notDeletedState.Length);
       var result = deleted ? deletedState : notDeletedState;
       return result.PadRightVisible(width);
     }
 
-    public static string GetReadState(bool isNew)
+    public string GetReadState(bool isNew)
     {
       var width = Math.Max(readStateRead.Length, readStateNew.Length);
       var result = isNew ? readStateNew : readStateRead;
       return result.PadRightVisible(width);
     }
 
-    public static string GetDownloadState(bool isDownloaded)
+    public string GetDownloadState(bool isDownloaded)
     {
       var width = Math.Max(downloadStateDownloaded.Length, downloadStatePending.Length);
       var result = isDownloaded ? downloadStateDownloaded : downloadStatePending;
@@ -84,6 +125,12 @@ namespace cFeed
         throw new ArgumentException("Unknow color name, see https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx for valid color names.");
       }
 
+    }
+
+    internal void RefreshConfig()
+    {
+      LoadConfig();
+      OnConfigurationChangedHandler?.Invoke();
     }
   }
 }

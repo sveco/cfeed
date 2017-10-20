@@ -63,6 +63,16 @@
 
       headerFormat = Config.Global.UI.Strings.FeedListHeaderFormat;
       footerFormat = Config.Global.UI.Strings.FeedListFooterFormat;
+
+      Configuration.Instance.OnConfigurationChangedHandler += Instance_OnConfigurationChangedHandler;
+    }
+
+    private void Instance_OnConfigurationChangedHandler()
+    {
+      if (_mainView != null && _mainView.IsDisplayed)
+      {
+        _mainView.Refresh();
+      }
     }
 
     /// <summary>

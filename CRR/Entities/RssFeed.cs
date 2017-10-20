@@ -141,7 +141,7 @@ namespace cFeed.Entities
       {
         { "i", (Index + 1).ToString() },
         { "l", FeedUrl },
-        { "n", Configuration.GetReadState(UnreadItems > 0) },
+        { "n", Configuration.Instance.GetReadState(UnreadItems > 0) },
         { "U", UnreadItems.ToString() },
         { "T", TotalItems.ToString() },
         { "u", (UnreadItems.ToString() + "/" + TotalItems.ToString()).PadLeft(8) },
@@ -155,7 +155,7 @@ namespace cFeed.Entities
 
       if (this.IsProcessing)
       {
-        return Configuration.LoadingPrefix + line + Configuration.LoadingSuffix;
+        return Configuration.Instance.LoadingPrefix + line + Configuration.Instance.LoadingSuffix;
       }
       else
       {

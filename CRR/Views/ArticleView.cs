@@ -57,11 +57,11 @@ namespace cFeed
       }
 
       StringBuilder sb = new StringBuilder();
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextLinkLabel + Configuration.ColorReset + selectedArticle.Links?[0].Uri.GetLeftPart(UriPartial.Path));
-      sb.AppendLine(Configuration.ArticleTextHighlight + Configuration.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset + selectedArticle.Links?[0].Uri.GetLeftPart(UriPartial.Path));
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
       sb.AppendLine();
 
       var articleHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
