@@ -1,62 +1,126 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Dynamic;
-using System.Net;
-using System.Net.Sockets;
-using System.ServiceModel.Syndication;
-using System.Threading;
-using System.Xml;
-using cFeed.LiteDb;
-using cFeed.Logging;
-using cFeed.Util;
-using CGui.Gui.Primitives;
-using JsonConfig;
-
-namespace cFeed.Entities
+﻿namespace cFeed.Entities
 {
+  using System;
+  using System.Collections.Generic;
+  using System.IO;
+  using System.Linq;
+  using System.Linq.Dynamic;
+  using System.Net;
+  using System.Net.Sockets;
+  using System.ServiceModel.Syndication;
+  using System.Threading;
+  using System.Xml;
+  using cFeed.LiteDb;
+  using cFeed.Logging;
+  using cFeed.Util;
+  using CGui.Gui.Primitives;
+  using JsonConfig;
+
+  /// <summary>
+  /// Defines the <see cref="RssFeed" />
+  /// </summary>
   public class RssFeed : ListItem, IDisposable
   {
+    internal bool _isProcessing = false;
+    private string _customTitle;
     private string _feedUrl;
+    private string _title;
+    private bool disposedValue = false;
+
+    /// <summary>
+    /// Time when feed was loaded.
+    /// </summary>
+    private DateTime lastLoadtime;
+
+    /// <summary>
+    /// Timer used to automatically reload feed.
+    /// </summary>
+    private Timer timer;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RssFeed"/> class.
+    /// </summary>
+    /// <param name="url">The <see cref="string"/></param>
+    /// <param name="query">The <see cref="string"/></param>
+    /// <param name="index">The <see cref="int"/></param>
+    /// <param name="customTitle">The <see cref="string"/></param>
+    /// <param name="autoReload">The <see cref="bool"/></param>
+    /// <param name="reloadInterval">The <see cref="int"/></param>
+    public RssFeed(string url, string query, int index, string customTitle = "", bool autoReload = false, int reloadInterval = 30)
+    {
+      FeedUrl = url;
+      FeedQuery = query;
+      Index = index;
+      FeedItems = new List<FeedItem>();
+      CustomTitle = customTitle;
+      AutoReload = autoReload;
+      ReloadInterval = reloadInterval;
+
+      if (this.AutoReload)
+      {
+        if (timer == null)
+        {
+          timer = new Timer(OnTimer, null, 0, this.ReloadInterval * 1000);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Auto reload feed
+    /// </summary>
+    public bool AutoReload { get; set; }
+
+    /// <summary>
+    /// Custom title to override title defined by feed xml
+    /// </summary>
+    public string CustomTitle
+    {
+      get { return _customTitle; }
+      set
+      {
+        if (_customTitle != value)
+        {
+          _customTitle = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Formats string using FeedListItemFormat string.
+    /// </summary>
+    public string DisplayLine
+    {
+      get
+      {
+        return FormatLine(Config.Global.UI.Strings.FeedListItemFormat);
+      }
+    }
+
+    /// <summary>
+    /// List of articles in current feed.
+    /// </summary>
+    public IList<FeedItem> FeedItems { get; set; }
+
+    /// <summary>
+    /// Query for dynamic feeds.
+    /// </summary>
+    public string FeedQuery { get; set; }
+
     /// <summary>
     /// Url of the RSS/Atom feed.
     /// </summary>
-    public string FeedUrl {
+    public string FeedUrl
+    {
       get { return _feedUrl; }
-      set {
-        if(_feedUrl != value)
+      set
+      {
+        if (_feedUrl != value)
         {
           _feedUrl = value;
           this.DisplayText = this.DisplayLine;
         }
       }
-    }
-    /// <summary>
-    /// Query for dynamic feeds.
-    /// </summary>
-    public string FeedQuery { get; set; }
-    /// <summary>
-    /// Whether feed should be hidden on list of feeds and only available via dynamic query.
-    /// </summary>
-    public bool Hidden { get; set; }
-    /// <summary>
-    /// Auto reload feed
-    /// </summary>
-    public bool AutoReload { get; set; }
-    /// <summary>
-    /// Interval, in seconds after which the feed will be reloaded if AutoReload is set to true.
-    /// </summary>
-    public int ReloadInterval { get; set; }
-
-    private DateTime lastLoadtime;
-    private Timer timer;
-
-    /// <summary>
-    /// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
-    /// </summary>
-    public bool IsDynamic {
-      get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
     }
 
     /// <summary>
@@ -65,50 +129,26 @@ namespace cFeed.Entities
     public string[] Filters { get; set; }
 
     /// <summary>
-    /// Tags can be used to filter feeds via FeedQuery
+    /// Whether feed should be hidden on list of feeds and only available via dynamic query.
     /// </summary>
-    public string[] Tags { get; set; }
+    public bool Hidden { get; set; }
 
-    private string _title;
     /// <summary>
-    /// Feed title.
+    /// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
     /// </summary>
-    public string Title {
-      get { return _title; }
-      private set {
-        if (_title != value)
-        {
-          _title = value;
-          this.DisplayText = this.DisplayLine;
-        }
-      }
+    public bool IsDynamic
+    {
+      get { return string.IsNullOrEmpty(FeedUrl) && !string.IsNullOrEmpty(FeedQuery); }
     }
 
-    private string _customTitle;
-    /// <summary>
-    /// Custom title to override title defined by feed xml
-    /// </summary>
-    public string CustomTitle {
-      get { return _customTitle; }
-      set {
-        if (_customTitle != value)
-        {
-          _customTitle = value;
-          this.DisplayText = this.DisplayLine;
-        }
-      }
-    }
-    /// <summary>
-    /// Is feed loaded or not
-    /// </summary>
-    public bool Isloaded { get; private set; } = false;
-    bool _isProcessing = false;
     /// <summary>
     /// Whether feed is loading
     /// </summary>
-    public bool IsProcessing {
+    public bool IsProcessing
+    {
       get { return _isProcessing; }
-      private set {
+      private set
+      {
         if (_isProcessing != value)
         {
           _isProcessing = value;
@@ -117,19 +157,63 @@ namespace cFeed.Entities
       }
     }
 
-    private SyndicationFeed Feed { get; set; }
+    /// <summary>
+    /// Interval, in seconds after which the feed will be reloaded if AutoReload is set to true.
+    /// </summary>
+    public int ReloadInterval { get; set; }
+
+    /// <summary>
+    /// Tags can be used to filter feeds via FeedQuery
+    /// </summary>
+    public string[] Tags { get; set; }
+
+    /// <summary>
+    /// Feed title.
+    /// </summary>
+    public string Title
+    {
+      get { return _title; }
+      private set
+      {
+        if (_title != value)
+        {
+          _title = value;
+          this.DisplayText = this.DisplayLine;
+        }
+      }
+    }
+
     /// <summary>
     /// Total number of feed items (articles) not marked for deletion.
     /// </summary>
-    public int TotalItems { get { return FeedItems != null ? FeedItems.Where(x => x.Deleted == false).Count() : 0; } }
+    public int TotalItems
+    {
+      get { return FeedItems != null ? FeedItems.Where(x => x.Deleted == false).Count() : 0; }
+    }
+
     /// <summary>
     /// Total number of items not marked read.
     /// </summary>
-    public int UnreadItems { get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; } }
+    public int UnreadItems
+    {
+      get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; }
+    }
+
     /// <summary>
-    /// List of articles in current feed.
+    /// Gets or sets the Feed
     /// </summary>
-    public IList<FeedItem> FeedItems { get; set; }
+    private SyndicationFeed Feed { get; set; }
+
+    // This code added to correctly implement the disposable pattern.
+    /// <summary>
+    /// The Dispose
+    /// </summary>
+    void IDisposable.Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+    }
+
     /// <summary>
     /// Formats string and replaces placeholders with actual values
     /// </summary>
@@ -162,39 +246,14 @@ namespace cFeed.Entities
         return line;
       }
     }
+
     /// <summary>
-    /// Formats string using FeedListItemFormat string.
+    /// The Load
     /// </summary>
-    public string DisplayLine
+    /// <param name="refresh">The <see cref="bool"/></param>
+    public void Load(bool refresh)
     {
-      get
-      {
-        return FormatLine(Config.Global.UI.Strings.FeedListItemFormat);
-      }
-    }
-
-    public RssFeed(string url, string query, int index, string customTitle = "", bool autoReload = false, int reloadInterval = 30)
-    {
-      FeedUrl = url;
-      FeedQuery = query;
-      Index = index;
-      FeedItems = new List<FeedItem>();
-      CustomTitle = customTitle;
-      AutoReload = autoReload;
-      ReloadInterval = reloadInterval;
-
-      if (this.AutoReload)
-      {
-        if (timer == null)
-        {
-          timer = new Timer(OnTimer, null, 0, this.ReloadInterval * 1000);
-        }
-      }
-    }
-
-    private void OnTimer(object state)
-    {
-      GetFeed(true);
+      this.GetFeed(refresh);
     }
 
     /// <summary>
@@ -203,7 +262,7 @@ namespace cFeed.Entities
     /// <param name="url"></param>
     /// <param name="timeout"></param>
     /// <returns></returns>
-    static SyndicationFeed GetFeed(string url, int timeout = 10000)
+    internal static SyndicationFeed GetFeed(string url, int timeout = 10000)
     {
       SyndicationFeed feed = null;
 
@@ -230,7 +289,9 @@ namespace cFeed.Entities
             }
             catch (XmlException ex)
             {
+              Logging.Logger.Log(LogLevel.Error, "Error loading " + url);
               Logging.Logger.Log(ex);
+              throw;
             }
           }
         }
@@ -250,135 +311,9 @@ namespace cFeed.Entities
       return feed;
     }
 
-    private void GetFeed(bool refresh)
-    {
-      IsProcessing = true;
-      FeedItems.Clear();
-      int index = 0;
-
-      //load items from db
-        if (!string.IsNullOrEmpty(FeedUrl) &&
-            !string.IsNullOrEmpty(FeedQuery))
-        {
-          //Filtered real feed
-          try
-          {
-            this.FeedItems =
-            DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
-            .Where(this.FeedQuery)
-            .OrderByDescending(x => x.PublishDate)
-            .Select((item, x) => { item.Index = x; return item; })
-            .ToList();
-          }
-          catch (ParseException x)
-          {
-            Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-            Logging.Logger.Log(x);
-          }
-        }
-        else if (!string.IsNullOrEmpty(FeedUrl) &&
-          string.IsNullOrEmpty(FeedQuery))
-        {
-          //Only feed, no filtering
-          this.FeedItems =
-              DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
-              .OrderByDescending(x => x.PublishDate)
-              .Select((item, x) => { item.Index = x; return item; })
-              .ToList();
-        }
-        else if (!string.IsNullOrEmpty(FeedQuery))
-        {
-          //Dynamic feed
-          try
-          {
-            this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
-                .OrderByDescending(x => x.PublishDate)
-                .Select((item, x) => { item.Index = x; return item; })
-                .ToList();
-          }
-          catch (ParseException x)
-          {
-            Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
-            Logging.Logger.Log(x);
-          }
-          catch (ArgumentNullException x)
-          {
-            Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
-            Logging.Logger.Log(x);
-          }
-        }
-
-      //if refresh is on, get feed from web
-      if (refresh && !String.IsNullOrEmpty(FeedUrl))
-      {
-        try
-        {
-          this.Feed = GetFeed(FeedUrl);
-        }
-        catch (WebException ex)
-        {
-          Logging.Logger.Log(ex);
-          this.Title += " - " + ex.Message;
-        }
-
-        this.lastLoadtime = DateTime.Now;
-
-        if (Feed == null) {
-          IsProcessing = false;
-          return;
-        }
-
-        Logging.Logger.Log(FeedUrl + " loaded");
-        this.Title = Feed.Title.Text;
-        Isloaded = true;
-        foreach (var i in this.Feed.Items)
-        {
-          var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
-          if (result != null)
-          {
-            result.Item = i;
-            result.Index = index + 1;
-            result.Tags = Tags;
-            DbWrapper.Instance.Update(result);
-          }
-          else
-          {
-            var newItem = new FeedItem(FeedUrl, i)
-                  {
-                    FeedUrl = FeedUrl,
-                    Index = index + 1,
-                    Tags = Tags
-                  };
-              DbWrapper.Instance.Insert(newItem);
-
-              if ((!string.IsNullOrEmpty(FeedQuery)))
-              {
-                try
-                {
-                  var single = new List<FeedItem> { newItem };
-                  var filtered = single.Where(this.FeedQuery).FirstOrDefault();
-                  if (filtered != null)
-                  {
-                    this.FeedItems.Add(newItem);
-                  }
-                }
-                catch (ParseException x)
-                {
-                  Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-                  Logging.Logger.Log(x);
-                }
-              }
-              else
-              {
-                this.FeedItems.Add(newItem);
-              }
-          }
-          index++;
-        }
-      }
-      IsProcessing = false;
-    }
-
+    /// <summary>
+    /// The MarkAllRead
+    /// </summary>
     internal void MarkAllRead()
     {
       foreach (var item in FeedItems)
@@ -387,31 +322,22 @@ namespace cFeed.Entities
       }
     }
 
-    public void Load(bool refresh)
-    {
-      this.GetFeed(refresh);
-    }
-
+    /// <summary>
+    /// The Purge
+    /// </summary>
     internal void Purge()
     {
       DbWrapper.Instance.Purge(FeedUrl);
     }
- 
-    #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
 
+    /// <summary>
+    /// The Dispose
+    /// </summary>
+    /// <param name="disposing">The <see cref="bool"/></param>
     protected virtual void Dispose(bool disposing)
     {
       if (!disposedValue)
       {
-        if (disposing)
-        {
-          // TODO: dispose managed state (managed objects).
-
-        }
-
-        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-        // TODO: set large fields to null.
         Filters = null;
         Tags = null;
         Title = null;
@@ -423,20 +349,172 @@ namespace cFeed.Entities
       }
     }
 
-    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    //~RssFeed() {
-    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-    //  Dispose(false);
-    //}
-
-    // This code added to correctly implement the disposable pattern.
-    void IDisposable.Dispose()
+    /// <summary>
+    /// The GetFeed
+    /// </summary>
+    /// <param name="refresh">The <see cref="bool"/></param>
+    private void GetFeed(bool refresh)
     {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(true);
-      // TODO: uncomment the following line if the finalizer is overridden above.
-      // GC.SuppressFinalize(this);
+      IsProcessing = true;
+      FeedItems.Clear();
+
+      LoadFeedFromStore();
+
+      //if refresh is on, get feed from web
+      if (refresh && !String.IsNullOrEmpty(FeedUrl))
+      {
+        LoadFeedFromWeb();
+      }
+      IsProcessing = false;
     }
-    #endregion
+
+    /// <summary>
+    /// Loads feed from local store (LiteDB)
+    /// </summary>
+    private void LoadFeedFromStore()
+    {
+      //load items from db
+      if (!string.IsNullOrEmpty(FeedUrl) &&
+          !string.IsNullOrEmpty(FeedQuery))
+      {
+        //Filtered real feed
+        try
+        {
+          this.FeedItems =
+          DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
+          .Where(this.FeedQuery)
+          .OrderByDescending(x => x.PublishDate)
+          .Select((item, x) => { item.Index = x; return item; })
+          .ToList();
+        }
+        catch (ParseException x)
+        {
+          Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+          Logging.Logger.Log(x);
+        }
+      }
+      else if (!string.IsNullOrEmpty(FeedUrl) &&
+        string.IsNullOrEmpty(FeedQuery))
+      {
+        //Only feed, no filtering
+        this.FeedItems =
+            DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
+            .OrderByDescending(x => x.PublishDate)
+            .Select((item, x) => { item.Index = x; return item; })
+            .ToList();
+      }
+      else if (!string.IsNullOrEmpty(FeedQuery))
+      {
+        //Dynamic feed
+        try
+        {
+          this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
+              .OrderByDescending(x => x.PublishDate)
+              .Select((item, x) => { item.Index = x; return item; })
+              .ToList();
+        }
+        catch (ParseException x)
+        {
+          Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
+          Logging.Logger.Log(x);
+        }
+        catch (ArgumentNullException x)
+        {
+          Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
+          Logging.Logger.Log(x);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Downloads feed contents from web
+    /// </summary>
+    private void LoadFeedFromWeb()
+    {
+
+      try
+      {
+        this.Feed = GetFeed(FeedUrl);
+      }
+      catch (Exception ex)
+      {
+        Logging.Logger.Log(ex);
+        this.Title += " - " + ex.Message;
+      }
+
+      this.lastLoadtime = DateTime.Now;
+
+      if (Feed == null)
+      {
+        IsProcessing = false;
+        return;
+      }
+
+      Logging.Logger.Log(FeedUrl + " loaded");
+      this.Title = Feed.Title.Text;
+
+      JoinReindexFeed();
+    }
+
+    /// <summary>
+    /// Joins downloaded feed items to FeedList and reindexes them
+    /// </summary>
+    private void JoinReindexFeed()
+    {
+      int index = 0;
+      foreach (var i in this.Feed.Items)
+      {
+        var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
+        if (result != null)
+        {
+          result.Item = i;
+          result.Index = index + 1;
+          result.Tags = Tags;
+          DbWrapper.Instance.Update(result);
+        }
+        else
+        {
+          var newItem = new FeedItem(FeedUrl, i)
+          {
+            FeedUrl = FeedUrl,
+            Index = index + 1,
+            Tags = Tags
+          };
+          DbWrapper.Instance.Insert(newItem);
+
+          if ((!string.IsNullOrEmpty(FeedQuery)))
+          {
+            try
+            {
+              var single = new List<FeedItem> { newItem };
+              var filtered = single.Where(this.FeedQuery).FirstOrDefault();
+              if (filtered != null)
+              {
+                this.FeedItems.Add(newItem);
+              }
+            }
+            catch (ParseException x)
+            {
+              Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
+              Logging.Logger.Log(x);
+            }
+          }
+          else
+          {
+            this.FeedItems.Add(newItem);
+          }
+        }
+        index++;
+      }
+    }
+
+    /// <summary>
+    /// The OnTimer
+    /// </summary>
+    /// <param name="state">The <see cref="object"/></param>
+    private void OnTimer(object state)
+    {
+      GetFeed(true);
+    }
   }
 }
