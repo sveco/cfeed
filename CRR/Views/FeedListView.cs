@@ -17,19 +17,8 @@
   /// </summary>
   public class FeedListView
   {
-    /// <summary>
-    /// Defines the _mainView
-    /// </summary>
     private Viewport _mainView;
-
-    /// <summary>
-    /// Defines the headerFormat
-    /// </summary>
     internal dynamic headerFormat;
-
-    /// <summary>
-    /// Defines the footerFormat
-    /// </summary>
     internal dynamic footerFormat;
 
     /// <summary>
