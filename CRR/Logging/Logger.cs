@@ -127,7 +127,7 @@ namespace cFeed.Logging
       if (ConfiguredLogLevel > LogLevel.Error)
         return;
 
-      Log(ex);
+      Log(LogLevel.Error, ex);
     }
 
     public static void Log(LogLevel level, Exception ex)
