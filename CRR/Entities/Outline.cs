@@ -5,10 +5,10 @@
   /// </summary>
   public class Outline
   {
-    private string[] _tags = new string[] { };
+    private string[] _tags = { };
 
-    public string Title { get; set; }
     public string FeedUrl { get; set; }
     public string[] Tags { get => _tags; set => _tags = value; }
+    public string Title { get; set; }
   }
 }

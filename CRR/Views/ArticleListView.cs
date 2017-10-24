@@ -1,24 +1,25 @@
-﻿using System;
-using System.Linq;
-using cFeed.Entities;
-using cFeed.Util;
-using CGui.Gui;
-using CGui.Gui.Primitives;
-using JsonConfig;
-using LiteDB;
-
-namespace cFeed
+﻿namespace cFeed
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using cFeed.Entities;
+  using cFeed.Util;
+  using CGui.Gui;
+  using JsonConfig;
+
+  /// <summary>
+  /// Displays list of articles for selected feed
+  /// </summary>
   public class ArticleListView : IDisposable
   {
-    private RssFeed selectedFeed;
     private Viewport _mainView;
-    dynamic headerFormat;
-    dynamic footerFormat;
+    private dynamic footerFormat;
+    private dynamic headerFormat;
+    private RssFeed selectedFeed;
 
     public ArticleListView(dynamic articleListLayout)
     {
-      //region controls
       _mainView = new Viewport();
       _mainView.Width = articleListLayout.Width;
       _mainView.Height = articleListLayout.Height;
@@ -40,7 +41,8 @@ namespace cFeed
       var items = feed.FeedItems
           .OrderByDescending(x => x.PublishDate)
           .Where(x => x.Deleted == false)
-          .Select((item, index) => {
+          .Select((item, index) =>
+          {
             item.Index = index;
             item.DisplayText = item.DisplayLine;
             return item;
@@ -52,7 +54,7 @@ namespace cFeed
         articleListHeader.DisplayText = feed.FormatLine(headerFormat);
       }
 
-      var articleListFooter= _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
+      var articleListFooter = _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
       if (articleListFooter != null)
       {
         articleListFooter.DisplayText = feed.FormatLine(footerFormat);
@@ -73,15 +75,7 @@ namespace cFeed
       //Open article
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenArticle))
       {
-        parent.IsDisplayed = false;
-        parent.Clear();
-        using (ArticleView article = new ArticleView(Config.Global.UI.Layout.Article))
-        {
-          article.Show(selectedItem, selectedFeed, parent);
-        }
-        _mainView.Refresh();
-        //parent.Refresh();
-        return true;
+        return OpenArticle(selectedItem, parent);
       }
       //Mark selected item as read
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkRead))
@@ -95,26 +89,7 @@ namespace cFeed
       //Mark all read
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkAllRead))
       {
-        if (parent != null)
-        {
-          var input = new Input("Mark all articles as read [Y/N]:")
-          {
-            Top = Console.WindowHeight - 2,
-            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-          };
-          if (input.InputText == "Y")
-          {
-            foreach (var item in parent.ListItems)
-            {
-              if (((FeedItem)item).IsNew == true)
-              {
-                ((FeedItem)item).MarkAsRead();
-                item.DisplayText = item.DisplayLine;
-              }
-            }
-          }
-        }
+        return MarkAllRead();
       }
       //Mark selected item as unread
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.MarkUnread))
@@ -142,85 +117,128 @@ namespace cFeed
 
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Reload))
       {
-        if (selectedFeed != null)
-        {
-          selectedFeed.Load(true);
-
-          var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
-          if (articleListHeader != null)
-          {
-            articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
-            articleListHeader.Refresh();
-          }
-
-          var items = selectedFeed.FeedItems
-              .OrderByDescending(x => x.PublishDate)
-              .Where(x => x.Deleted == false)
-              .Select((item, index) =>
-                {
-                  item.Index = index;
-                  item.DisplayText = item.DisplayLine;
-                  return item;
-                }
-              );
-          parent.UpdateList(items);
-          parent.Refresh();
-
-          if (articleListHeader != null)
-          {
-            articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
-            articleListHeader.Refresh();
-          }
-        }
+        return Reload(parent);
       }
       //Download selected item content to local storage
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Download))
       {
-        if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)
-        {
-          selectedItem.DisplayText = Configuration.Instance.LoadingPrefix +  selectedItem.DisplayText + Configuration.Instance.LoadingSuffix;
-          selectedItem.DownloadArticleContent(selectedFeed.Filters);
-          selectedItem.DisplayText = selectedItem.DisplayLine;
-        }
-        return true;
+        return Download(selectedItem);
       }
       return true;
     }
 
-    #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
-
-    protected virtual void Dispose(bool disposing)
+    private bool Download(FeedItem selectedItem)
     {
-      if (!disposedValue)
+      if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)
       {
-        if (disposing)
-        {
-
-        }
-
-        // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-        // TODO: set large fields to null.
-        selectedFeed = null;
-
-        disposedValue = true;
+        selectedItem.DisplayText = Configuration.Instance.LoadingPrefix + selectedItem.DisplayText + Configuration.Instance.LoadingSuffix;
+        selectedItem.DownloadArticleContent(selectedFeed.Filters);
+        selectedItem.DisplayText = selectedItem.DisplayLine;
       }
+      return true;
     }
 
-    //// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    //~ArticleListView() {
-    //  // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-    //  Dispose(false);
-    //}
+    private bool Reload(Picklist<FeedItem> parent)
+    {
+      if (selectedFeed != null)
+      {
+        selectedFeed.Load(true);
+
+        var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
+        if (articleListHeader != null)
+        {
+          articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
+          articleListHeader.Refresh();
+        }
+
+        var items = selectedFeed.FeedItems
+            .OrderByDescending(x => x.PublishDate)
+            .Where(x => x.Deleted == false)
+            .Select((item, index) =>
+            {
+              item.Index = index;
+              item.DisplayText = item.DisplayLine;
+              return item;
+            }
+            );
+        parent.UpdateList(items);
+        parent.Refresh();
+
+        if (articleListHeader != null)
+        {
+          articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
+          articleListHeader.Refresh();
+        }
+      }
+      return true;
+    }
+
+    private bool MarkAllRead()
+    {
+      Dictionary<string, object> choices = new Dictionary<string, object>();
+      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 1);
+      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 2);
+
+      var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
+      dialog.ItemSelected += MarkAllDialog_ItemSelected;
+      dialog.Show();
+      return true;
+    }
+
+    private bool OpenArticle(FeedItem selectedItem, Picklist<FeedItem> parent)
+    {
+      parent.IsDisplayed = false;
+      parent.Clear();
+      using (ArticleView article = new ArticleView(Config.Global.UI.Layout.Article))
+      {
+        article.Show(selectedItem, selectedFeed, parent);
+      }
+      _mainView.Refresh();
+      return true;
+    }
+
+    private void MarkAllDialog_ItemSelected(object sender, DialogChoice e)
+    {
+      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
+      {
+        selectedFeed?.MarkAllRead();
+      }
+      _mainView?.Refresh();
+    }
+
+    private bool disposedValue = false; // To detect redundant calls
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~ArticleListView()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
 
     // This code added to correctly implement the disposable pattern.
-    void IDisposable.Dispose()
+    public void Dispose()
     {
       // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
       Dispose(true);
       // TODO: uncomment the following line if the finalizer is overridden above.
-      // GC.SuppressFinalize(this);
+      GC.SuppressFinalize(this);
     }
-    #endregion
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (disposedValue)
+        return;
+
+      if (disposing)
+      {
+        if (_mainView != null)
+        {
+          _mainView.Dispose();
+          _mainView = null;
+        }
+      }
+
+      disposedValue = true;
+    }
   }
 }

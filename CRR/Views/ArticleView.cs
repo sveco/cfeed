@@ -347,6 +347,11 @@ namespace cFeed
             _articleContent.Dispose();
             _articleContent = null;
           }
+          if(_mainView != null)
+          {
+            _mainView.Dispose();
+            _mainView = null;
+          }
         }
 
         // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -367,12 +372,12 @@ namespace cFeed
     }
 
     // This code added to correctly implement the disposable pattern.
-    void IDisposable.Dispose()
+    public void Dispose()
     {
       // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
       Dispose(true);
       // TODO: uncomment the following line if the finalizer is overridden above.
-      // GC.SuppressFinalize(this);
+      GC.SuppressFinalize(this);
     }
     #endregion
   }

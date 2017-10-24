@@ -15,14 +15,14 @@
   /// <summary>
   /// Defines the <see cref="FeedListView" />
   /// </summary>
-  public class FeedListView
+  public class FeedListView : IDisposable
   {
     private Viewport _mainView;
     internal dynamic headerFormat;
     internal dynamic footerFormat;
 
     /// <summary>
-    /// The FormatFeedView
+    /// Formats displayed string
     /// </summary>
     /// <param name="format">The <see cref="string"/></param>
     /// <returns>The <see cref="string"/></returns>
@@ -36,7 +36,7 @@
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedListView"/> class.
     /// </summary>
-    /// <param name="feedListLayout">The <see cref="dynamic"/></param>
+    /// <param name="feedListLayout">Feed list layout JSON from configuration</param>
     public FeedListView(dynamic feedListLayout)
     {
       //region controls
@@ -102,7 +102,7 @@
     }
 
     /// <summary>
-    /// The ReloadOne
+    /// Reloads selected <see cref="RssFeed"/>
     /// </summary>
     /// <param name="Feed">The <see cref="RssFeed"/></param>
     /// <param name="Refresh">The <see cref="bool"/></param>
@@ -247,6 +247,7 @@
       return true;
     }
 
+    private bool markAllread = false;
     /// <summary>
     /// Marks all articles in <see cref="RssFeed"/> as read.
     /// </summary>
@@ -258,20 +259,32 @@
       {
         if (!selectedItem.IsProcessing)
         {
-          var input = new Input(Config.Global.UI.Strings.PromptMarkAll)
+          Dictionary<string, object> choices = new Dictionary<string, object>();
+          choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 1);
+          choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 2);
+
+          var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
+          dialog.ItemSelected += MarkAllDialog_ItemSelected;
+          dialog.Show();
+
+          _mainView?.Refresh();
+          if (markAllread)
           {
-            Top = Console.WindowHeight - 2,
-            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-          };
-          if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
-          {
-            selectedItem.MarkAllRead();
-            selectedItem.DisplayText = selectedItem.DisplayLine;
+            selectedItem?.MarkAllRead();
           }
+
+          return true;
         }
       }
       return true;
+    }
+
+    private void MarkAllDialog_ItemSelected(object sender, DialogChoice e)
+    {
+      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
+      {
+        markAllread = true;
+      }
     }
 
     /// <summary>
@@ -297,5 +310,40 @@
       }
       return true;
     }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (disposedValue)
+        return;
+      
+      if (disposing)
+      {
+        _mainView.Dispose();
+      }
+
+      // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+      // TODO: set large fields to null.
+
+      disposedValue = true;
+    }
+
+    ~FeedListView()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    public void Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      GC.SuppressFinalize(this);
+    }
+    #endregion
   }
 }

@@ -29,7 +29,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>ExtendedCorrectnessRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>cFeed.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -39,6 +39,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>cFeed.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>cFeed.Program</StartupObject>
@@ -53,10 +54,13 @@
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>cFeed.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CGui, Version=1.1.0.5, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.1.0.5\lib\net40\CGui.dll</HintPath>
+    </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
@@ -86,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entities\Outline.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LiteDb\DbWrapper.cs" />
     <Compile Include="Logging\LogData.cs" />
     <Compile Include="Logging\Logger.cs" />
@@ -117,17 +122,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <EmbeddedResource Include="default.conf" />
+    <None Include="cFeed.ruleset" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Todo.txt" />
-    <EmbeddedResource Include="urls.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\CGui4Net\CGui\CGui.csproj">
-      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
-      <Name>CGui</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

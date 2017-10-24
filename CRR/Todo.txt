@@ -1,12 +1,5 @@
 ﻿"killfile" feed filters
-opml support / rewrite url config
 user config as program argument
 support for custom sort order
 list article urls
 search
-purge articles
-mark all read
-BUG: Dynamic feeds are not updated after article is read
-BUG: Feed unread count not updated after article is read
-BUG: Dynamic feeds should be updated after normal feeds to ensure dynamic content is correctly loaded
-FEATURE: Automatic feed reload
