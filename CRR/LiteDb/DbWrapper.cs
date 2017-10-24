@@ -9,7 +9,7 @@ using LiteDB;
 
 namespace cFeed.LiteDb
 {
-  public class DbWrapper
+  public class DbWrapper : IDisposable
   {
     private readonly object padlock;
     LiteDatabase db;
@@ -76,12 +76,31 @@ namespace cFeed.LiteDb
       }
     }
 
-    internal void Purge(string feedUrl)
+    internal void Purge(Uri feedUrl)
     {
       lock (padlock)
       {
         this.Items.Delete(x => x.FeedUrl == feedUrl && x.Deleted == true);
       }
+    }
+
+    bool disposedValue = false;
+    void IDisposable.Dispose()
+    {
+      Dispose(true);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (disposedValue)
+        return;
+
+      if (disposing)
+      {
+        db.Dispose();
+      }
+
+      disposedValue = true;
     }
   }
 }
