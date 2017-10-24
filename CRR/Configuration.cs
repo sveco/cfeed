@@ -1,13 +1,12 @@
-﻿using System;
-using System.Reflection;
-using CGui.Gui.Primitives;
-using JsonConfig;
-
-namespace cFeed
+﻿namespace cFeed
 {
+  using System;
+  using System.Reflection;
+  using JsonConfig;
   public class Configuration
   {
     #region Singleton implementation
+
     private static readonly Configuration instance = new Configuration();
 
     // Explicit static constructor to tell C# compiler
@@ -25,9 +24,11 @@ namespace cFeed
     {
       get { return instance; }
     }
-    #endregion
+
+    #endregion Singleton implementation
 
     public delegate void OnConfigurationChanged();
+
     public event OnConfigurationChanged OnConfigurationChangedHandler;
 
     private static Version version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -87,11 +88,12 @@ namespace cFeed
     {
       return "\x1b[f:" + colorName + "]";
     }
+
     public static string GetBackgroundColor(string colorName)
     {
       return "\x1b[b:" + colorName + "]";
     }
-    
+
     internal string GetDeletedState(bool deleted)
     {
       var width = Math.Max(deletedState.Length, notDeletedState.Length);
@@ -124,7 +126,6 @@ namespace cFeed
       {
         throw new ArgumentException("Unknow color name, see https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx for valid color names.");
       }
-
     }
 
     internal void RefreshConfig()
