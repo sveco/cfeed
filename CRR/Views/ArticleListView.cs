@@ -124,6 +124,19 @@
       {
         return Download(selectedItem);
       }
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
+      {
+        return OpenArticleInBrowser(selectedItem);
+      }
+      return true;
+    }
+
+    private bool OpenArticleInBrowser(FeedItem selectedItem)
+    {
+      if (selectedItem != null && selectedItem.Links.Count > 0)
+      {
+        Browser.Open(selectedItem.Links[0].Uri);
+      }
       return true;
     }
 

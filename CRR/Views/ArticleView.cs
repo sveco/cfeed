@@ -214,17 +214,7 @@ namespace cFeed
         if (selectedArticle != null &&
             selectedArticle.Links.Count > 0)
         {
-          if (!string.IsNullOrEmpty(Config.Global.Browser)
-              && File.Exists(Config.Global.Browser))
-          {
-            //Open article url with configured browser
-            Process.Start(Config.Global.Browser, selectedArticle.Links[0].Uri.ToString());
-          }
-          else
-          {
-            //Open article url with default system browser
-            Process.Start(selectedArticle.Links[0].Uri.ToString());
-          }
+          Browser.Open(selectedArticle.Links[0].Uri);
         }
       }
 
@@ -233,7 +223,6 @@ namespace cFeed
       {
         if (selectedArticle != null)
         {
-          //selectedArticle.Value.LoadOnlineArticle(_filters, _db);
           Parallel.Invoke(
               new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
               new Action(() => _articleContent.Show())

@@ -217,6 +217,21 @@
       {
         _mainView.Refresh();
       }
+
+      //open feed URL
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
+      {
+        return OpenFeedInBrowser(selectedItem);
+      }
+      return true;
+    }
+
+    private bool OpenFeedInBrowser(RssFeed selectedItem)
+    {
+      if (selectedItem != null && selectedItem.FeedUrl != null)
+      {
+        Browser.Open(selectedItem.FeedUrl);
+      }
       return true;
     }
 

@@ -95,6 +95,7 @@
     <Compile Include="Logging\LogData.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
+    <Compile Include="Util\Browser.cs" />
     <Compile Include="Util\ConsoleKeyInfoExtansions.cs" />
     <Compile Include="Util\ControlFactory.cs" />
     <Compile Include="Util\CustomSyndicationFeed.cs" />

@@ -234,7 +234,7 @@ QuitApp     |   { Key: ["Q"] }                        | Exits the app           
 Reload      |   { Key: ["R"] }                        | Reloads selected feed or article  | Feed list, Article list
 ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]} | Reolad all feeds                  | Feed list
 OpenArticle |   { Key: ["Enter", "Spacebar"] }        | Opens selected article            | Article list
-OpenBrowser |   { Key: ["O"] }                        | Opens article in browser          | Article list, Article
+OpenBrowser |   { Key: ["O"] }                        | Opens article or feed in browser  | Feed list, Article list, Article
 OpenFeed    |   { Key: ["Enter", "Spacebar"] }        | Lists articles in selected feed   | Feed list
 RefreshView |   { Key: ["F"] }                        | Redraws the UI                    | Feed list
 Prev        |   { Key: ["OemComma"] }                 | (<) Previous article              | Article
