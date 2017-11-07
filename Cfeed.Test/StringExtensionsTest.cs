@@ -33,5 +33,29 @@ namespace Cfeed.Test
       Assert.AreEqual<string>(sanitizedPath, "c:\\Test\\");
       Assert.IsTrue(possiblePath);
     }
+
+    [TestMethod]
+    public void PadLeftVisibleTest()
+    {
+      var input = "\x1b[Test]Test";
+      var expected = "      \x1b[Test]Test";
+      var notexpected = "          \x1b[Test]Test";
+      var output = StringExtensions.PadLeftVisible(input, 10);
+
+      Assert.AreEqual<string>(output, expected);
+      Assert.AreNotEqual<string>(output, notexpected);
+    }
+
+    [TestMethod]
+    public void PadRightVisibleTest()
+    {
+      var input = "\x1b[Test]Test";
+      var expected = "\x1b[Test]Test      ";
+      var notexpected = "\x1b[Test]Test          ";
+      var output = StringExtensions.PadRightVisible(input, 10);
+
+      Assert.AreEqual<string>(output, expected);
+      Assert.AreNotEqual<string>(output, notexpected);
+    }
   }
 }
