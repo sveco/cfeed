@@ -325,8 +325,7 @@
       var resultString = conv.ConvertHtml(doc.DocumentNode.OuterHtml,
                                           Links[0].Uri, out links, out images);
       //remove multiple lines from article content. It makes text more condensed.
-      var cleanedContent = Regex.Replace(resultString, @"^\s+$[\r\n]*",
-                                         "\r\n", RegexOptions.Multiline);
+      var cleanedContent = Regex.Replace(resultString, @"^\s+$[\r\n]*", "\r\n", RegexOptions.Multiline);
 
       ExternalLinks = links;
       ImageLinks = images;
