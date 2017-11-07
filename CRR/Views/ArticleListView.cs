@@ -110,6 +110,11 @@
         }
       }
 
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.DeleteAll))
+      {
+        return DeleteAllArticles();
+      }
+
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
       {
         return false;
@@ -129,6 +134,38 @@
         return OpenArticleInBrowser(selectedItem);
       }
       return true;
+    }
+
+    private bool markAllDeleted;
+    private bool DeleteAllArticles()
+    {
+      if (selectedFeed != null && !selectedFeed.IsProcessing)
+      {
+        Dictionary<string, object> choices = new Dictionary<string, object>();
+        choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
+        choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
+
+        var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
+        dialog.ItemSelected += DeleteAll_ItemSelected;
+        dialog.Show();
+
+        _mainView?.Refresh();
+        if (markAllDeleted)
+        {
+          selectedFeed?.MarkAllDeleted();
+          markAllDeleted = false;
+        }
+        return true;
+      }
+      return true;
+    }
+
+    private void DeleteAll_ItemSelected(object sender, DialogChoice e)
+    {
+      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
+      {
+        markAllDeleted = true;
+      }
     }
 
     private bool OpenArticleInBrowser(FeedItem selectedItem)
@@ -189,8 +226,8 @@
     private bool MarkAllRead()
     {
       Dictionary<string, object> choices = new Dictionary<string, object>();
-      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 1);
-      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 2);
+      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
+      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
 
       var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
       dialog.ItemSelected += MarkAllDialog_ItemSelected;

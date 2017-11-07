@@ -209,7 +209,7 @@
       //Purge deleted
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Purge))
       {
-        return PurgeDeletedArticles(selectedItem);
+        return PurgeDeletedArticles(parent);
       }
 
       //Redraw view
@@ -235,31 +235,43 @@
       return true;
     }
 
+    bool purge;
     /// <summary>
     /// Purges articles marked for deletion in selected <see cref="RssFeed"/>.
     /// </summary>
     /// <param name="selectedItem"></param>
     /// <returns></returns>
-    private bool PurgeDeletedArticles(RssFeed selectedItem)
+    private bool PurgeDeletedArticles(Picklist<RssFeed> parent)
     {
-      if (selectedItem != null)
+      Dictionary<string, object> choices = new Dictionary<string, object>();
+      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
+      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
+
+      var dialog = new Dialog(Config.Global.UI.Strings.PromptPurge, choices);
+      dialog.ItemSelected += Purge_ItemSelected;
+      dialog.Show();
+
+      _mainView?.Refresh();
+      if (purge)
       {
-        if (!selectedItem.IsProcessing)
+        foreach (var feed in parent.ListItems.Where(x => !x.IsDynamic))
         {
-          var input = new Input(Config.Global.UI.Strings.PromptPurge)
+          if (!feed.IsProcessing)
           {
-            Top = Console.WindowHeight - 2,
-            ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-            BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-          };
-          if (input.InputText == Config.Global.UI.Strings.PromptAnswerYes)
-          {
-            selectedItem.Purge();
-            selectedItem.DisplayText = selectedItem.DisplayLine;
+            feed.Purge();
           }
         }
+        purge = false;
       }
       return true;
+    }
+
+    private void Purge_ItemSelected(object sender, DialogChoice e)
+    {
+      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
+      {
+        purge = true;
+      }
     }
 
     private bool markAllread = false;
@@ -286,6 +298,7 @@
           if (markAllread)
           {
             selectedItem?.MarkAllRead();
+            markAllread = false;
           }
 
           return true;

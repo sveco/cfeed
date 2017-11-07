@@ -202,7 +202,6 @@
         }
       }
     }
- 
 
     /// <summary>
     /// Formats string and replaces placeholders with actual values
@@ -299,6 +298,16 @@
       }
       return feed;
     }
+    /// <summary>
+    /// Marks all articles for deletion
+    /// </summary>
+    internal void MarkAllDeleted()
+    {
+      foreach (var item in FeedItems)
+      {
+        item.MarkDeleted();
+      }
+    }
 
     /// <summary>
     /// The MarkAllRead
@@ -335,6 +344,10 @@
       if (refresh && FeedUrl != null)
       {
         LoadFeedFromWeb();
+      }
+      if (timer != null)
+      {
+        timer.Change(this.ReloadInterval * 1000, this.ReloadInterval * 1000);
       }
       IsProcessing = false;
     }
