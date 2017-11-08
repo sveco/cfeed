@@ -130,4 +130,15 @@
     <Content Include="Todo.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy *.dll .\bin\ /Y
+xcopy *.xml .\bin\ /Y
+xcopy CGui.dll.config .\bin\ /Y
+xcopy *.pdb .\bin\ /Y /EXCLUDE:cfeed.pdb
+del *.dll
+del *.pdb
+del *.xml
+del CGui.dll.config
+xcopy $(SolutionDir)README.md $(TargetDir)</PostBuildEvent>
+  </PropertyGroup>
 </Project>
