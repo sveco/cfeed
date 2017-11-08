@@ -2,9 +2,11 @@
 Readme file
 
 ## About
-Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for Windows platform built in C#. It uses System.ServiceModel.Syndication namespace to read RSS 2.0 or Atom 1.0 feeds and HtmlAgilityPack to render textual article content.
+Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for Windows platform built in C#. It uses System.ServiceModel.Syndication library to read RSS 1.0, 2.0 or Atom 1.0 feeds.
 
-This project was inspierd by wonderfull Newsbeuter and a lack of similar tool for Windows platform.
+HTML to Text rendering is done using [HtmlAgilityPack](http://html-agility-pack.net)
+
+This project was inspierd by wonderfull [Newsbeuter](https://newsbeuter.org) and a lack of similar tool for Windows platform.
 
 ## Basic Usage
 Before running cfeed for the first time, you have to do some basic configuration. The only required configuration consists of list of URL's of RSS or Atom feeds.
@@ -26,7 +28,7 @@ By default, you can open the feed with **Spacebar** or **Enter** key. This will 
 
 Hitting **R** while on list of feeds will refresh selected feed, and **Control+R** will refresh all feeds."
 
-When on article, article content will be loaded on background. Hitting **O** will open selected article in default (or configured) browser.
+When on article, article content will be loaded on background. Hitting **O** will open selected article in default (or configured) browser. Full list of actions and hotkeys can be found in Configuration section.
 
 ![Article List](screenshot1.png "Article List")
 
@@ -64,13 +66,13 @@ Basic setting.conf can look like this:
         #Hidden: true,
         #If set to true, reloads feed automatically
         AutoReload: true,
-        #If AutoReload is set to true, this defines number of seconds after which feed will be automatically reloaded
+        #If AutoReload is set to true, this defines number of seconds after which feed will be automatically reloaded. Default is 30.
         ReloadInterval: 30
     }
 }
 ```
 
-Only FeedUrl is required, other settings are optional. Filers can be used to "filter" out unwanted content, like page navigation, links, registration forms etc.
+Only FeedUrl is required, other settings are optional. Filters can be used to "filter" out unwanted content, like page navigation, links, registration forms etc.
 To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
 Any content inside filtered elements will not be rendered.
 Title can be used to display custom title of feed, instead of the one defined by feed itself.
@@ -151,8 +153,9 @@ ArticleTextAuthorsLabel     | Label for authors article header | "Author(s): ",
 ArticleTextLinkLabel        | Label for article url in article header | "Link: ",
 ArticleTextPublishDateLabel | Label for publish date in article header | "Date: ",
 PromptMarkAll               | Prompt to confirm to mark all article in feed as read | "Mark all articles as read [Y/n]:",
-PromptPurge                 | Propmt to confirm purging of articles marked for deletion | "Purge deleted articles? [Y/n]:",
-PromptAnswerYes             | Enter this letter for prompt to return true | "Y"
+PromptPurge                 | Prompt to confirm purging of articles marked for deletion | "Purge deleted articles? [Y/n]:",
+PromptAnswerYes             | Option to display in place of "Yes" option | "Yes",
+PromptAnswerNo              | Option to display in place of "No" option | "No"
 
 
 Replacement strings for *ApplicationTitleFormat*:
@@ -230,26 +233,28 @@ Each Key and Modifiers object can be an array. If you define more than one Key, 
 
 Setting | Key | Action | Scope
 :------------ | :------------- | :------------- | :-------------
-QuitApp     |   { Key: ["Q"] }                        | Exits the app                     | Feed list
-Reload      |   { Key: ["R"] }                        | Reloads selected feed or article  | Feed list, Article list
-ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]} | Reolad all feeds                  | Feed list
-OpenArticle |   { Key: ["Enter", "Spacebar"] }        | Opens selected article            | Article list
-OpenBrowser |   { Key: ["O"] }                        | Opens article or feed in browser  | Feed list, Article list, Article
-OpenFeed    |   { Key: ["Enter", "Spacebar"] }        | Lists articles in selected feed   | Feed list
-RefreshView |   { Key: ["F"] }                        | Redraws the UI                    | Feed list
-Prev        |   { Key: ["OemComma"] }                 | (<) Previous article              | Article
-PrevUnread  |   { Key: ["Oem4"] }                     | ([) Previous unread article       | Article
-Next        |   { Key: ["OemPeriod"] }                | (>) Next Article                  | Article
-NextUnread  |   { Key: ["Oem6"] }                     | (]) Next unread article           | Article
-Delete      |   { Key: ["X"] }                        | Mark selected article for deletion| Article
-StepBack    |   { Key: ["Escape", "Backspace"]}       | Navigates back                    | Feed list, Article list, Article
-SaveArticle |   { Key: ["S"] }                        | Reolads article from web and saves| Article
-Download    |   { Key: ["D"] }                        | Downloads Article                 | Article list
-MarkRead    |   { Key: ["M"] }                        | Mark selected article as read     | Article list
-MarkAllRead |   { Key: ["A"]                          | Mark all articles as read		  | Feed List (selected item)
-MarkUnread  |   { Key: ["U"] }                        | Remove read flag                  | Article list
-OpenLink    |   { Key: ["L"] }                        | Open numbered link in browser     | Article
-OpenImage   |   { Key: ["I"] }                        | Open numbered image in browser    | Article
+QuitApp     |   { Key: ["Q"] }                              | Exits the app                     | Feed list
+Reload      |   { Key: ["R"] }                              | Reloads selected feed or article  | Feed list, Article list
+ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]}       | Reolad all feeds                  | Feed list
+OpenArticle |   { Key: ["Enter", "Spacebar"] }              | Opens selected article            | Article list
+OpenBrowser |   { Key: ["O"] }                              | Opens article or feed in browser  | Feed list, Article list, Article
+OpenFeed    |   { Key: ["Enter", "Spacebar"] }              | Lists articles in selected feed   | Feed list
+RefreshView |   { Key: ["F"] }                              | Redraws the UI                    | Feed list
+Prev        |   { Key: ["OemComma"] }                       | (<) Previous article              | Article
+PrevUnread  |   { Key: ["Oem4"] }                           | ([) Previous unread article       | Article
+Next        |   { Key: ["OemPeriod"] }                      | (>) Next Article                  | Article
+NextUnread  |   { Key: ["Oem6"] }                           | (]) Next unread article           | Article
+Delete      |   { Key: ["X"] }                              | Mark selected article for deletion| Article
+DeleteAll   |   { Key: ["X"], Modifiers: ["Control","Alt"]  | Mark all articles for deletion    | Article list
+Purge       |   { Key: ["D4"], Modifiers: ["Shift"]         | Purge deleted articles			| Feed list
+StepBack    |   { Key: ["Escape", "Backspace"]}             | Navigates back                    | Feed list, Article list, Article
+SaveArticle |   { Key: ["S"] }                              | Reolads article from web and saves| Article
+Download    |   { Key: ["D"] }                              | Downloads Article                 | Article list
+MarkRead    |   { Key: ["M"] }                              | Mark selected article as read     | Article list
+MarkAllRead |   { Key: ["A"]                                | Mark all articles as read		    | Article list, Feed List (selected item)
+MarkUnread  |   { Key: ["U"] }                              | Remove read flag                  | Article list
+OpenLink    |   { Key: ["L"] }                              | Open numbered link in browser     | Article
+OpenImage   |   { Key: ["I"] }                              | Open numbered image in browser    | Article
 
 Following keys are set by default on picklists and text area. They are not configurable, however they are fairly obvious.
 
@@ -295,7 +300,7 @@ cfeed [-h] [-d <database>] [-r <true|false>] [-o <opml uri/path>]
 OPML support is limited to reading list of feeds from opml file and displaying them. They are not exported or added to .conf file, this has to be done manually. However read state is tracked for articles in those feeds, and they can also be selected using dynamic query.
 
 ## Acknowledgments
-Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and does not use any portion
+Big thanks to awesome newsbeuter for inspiration. This app is built from scratch, and does not use any portion
 of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
 
 + This app uses [JsonConfig](https://github.com/Dynalon/JsonConfig) to parse configuration files.
