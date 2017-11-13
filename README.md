@@ -153,6 +153,7 @@ ArticleTextAuthorsLabel     | Label for authors article header | "Author(s): ",
 ArticleTextLinkLabel        | Label for article url in article header | "Link: ",
 ArticleTextPublishDateLabel | Label for publish date in article header | "Date: ",
 PromptMarkAll               | Prompt to confirm to mark all article in feed as read | "Mark all articles as read [Y/n]:",
+PromptDeleteAll             | Prompt to confirm to delete all articles in current feed | "Mark all articles for deletion?",
 PromptPurge                 | Prompt to confirm purging of articles marked for deletion | "Purge deleted articles? [Y/n]:",
 PromptAnswerYes             | Option to display in place of "Yes" option | "Yes",
 PromptAnswerNo              | Option to display in place of "No" option | "No"

@@ -1,5 +1,5 @@
-﻿"killfile" feed filters
-user config as program argument
+﻿user config as program argument
 support for custom sort order
 list article urls
 search
+ignore article rules (killfile)
