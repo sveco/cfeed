@@ -145,7 +145,7 @@
         choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
         choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
 
-        var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
+        var dialog = new Dialog(Config.Global.UI.Strings.PromptDeleteAll, choices);
         dialog.ItemSelected += DeleteAll_ItemSelected;
         dialog.Show();
 
