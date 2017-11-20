@@ -6,8 +6,9 @@
   \___|    |_|  \___|\___|\__,_| 
   Console Feed Reader
 
-  Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, and do not use any portion
-  of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
+  Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, 
+  and do not use any portion of newsbeuter code. This is open source project to provide 
+  windows platform users with purely textual Atom and RSS feed reader.
 
   Copyright (c) 2017 Sveco
 

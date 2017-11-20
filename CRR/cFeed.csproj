@@ -104,6 +104,7 @@
     <Compile Include="Util\OpmlImport.cs" />
     <Compile Include="Util\Rss10FeedFormatter.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
+    <Compile Include="Util\GlobalMethods.cs" />
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
@@ -139,6 +140,6 @@ del *.dll
 del *.pdb
 del *.xml
 del CGui.dll.config
-xcopy $(SolutionDir)README.md $(TargetDir)</PostBuildEvent>
+xcopy $(SolutionDir)README.md $(TargetDir) /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>

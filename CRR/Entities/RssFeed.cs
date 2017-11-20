@@ -2,6 +2,7 @@
 {
   using System;
   using System.Collections.Generic;
+  using System.Globalization;
   using System.IO;
   using System.Linq;
   using System.Linq.Dynamic;
@@ -163,7 +164,7 @@
     /// </summary>
     public int UnreadItems
     {
-      get { return FeedItems != null ? FeedItems.Where(x => x.IsNew == true && x.Deleted == false).Count() : 0; }
+      get { return FeedItems != null ? FeedItems.Count(x => x.IsNew == true && x.Deleted == false) : 0; }
     }
 
     /// <summary>
@@ -443,7 +444,7 @@
         else
           if (!string.IsNullOrEmpty(FeedQuery))
           {
-            //Dynamic feed
+        //Dynamic feed
             try
             {
               this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)

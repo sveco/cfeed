@@ -3,6 +3,7 @@
   using System;
   using System.Collections.Generic;
   using System.Collections.ObjectModel;
+  using System.Globalization;
   using System.IO;
   using System.Linq;
   using System.ServiceModel.Syndication;
@@ -69,6 +70,16 @@
       {
         return FormatFileName(fileNameFormat);
       }
+    }
+
+    [BsonIgnore]
+    public CultureInfo Culture
+    {
+      get { return CultureInfo.CurrentCulture; }
+    }
+    public CompareOptions IgnoreCase
+    {
+      get { return CompareOptions.IgnoreCase; }
     }
 
     /// <summary>

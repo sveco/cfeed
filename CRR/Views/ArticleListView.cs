@@ -129,9 +129,18 @@
       {
         return Download(selectedItem);
       }
+      //open in browser
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
       {
         return OpenArticleInBrowser(selectedItem);
+      }
+      //search
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Search))
+      {
+        parent.IsDisplayed = false;
+        var result = GlobalMethods.Search(_mainView);
+        parent.IsDisplayed = true;
+        return result;
       }
       return true;
     }

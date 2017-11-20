@@ -232,35 +232,36 @@ Some key combinations are used by windows itself if you enable advanced console 
 
 Each Key and Modifiers object can be an array. If you define more than one Key, pressing any of the keys will trigger action. If you define more than one modifier, all modifiers have to be pressed. For example, definiton {Key: ["S,D"], Modifiers: ["Control", "Alt"] } means it will trigger on CTRL+ALT+S or CTRL+ALT+D.
 
-Setting | Key | Action | Scope
-:------------ | :------------- | :------------- | :-------------
-QuitApp     |   { Key: ["Q"] }                              | Exits the app                     | Feed list
-Reload      |   { Key: ["R"] }                              | Reloads selected feed or article  | Feed list, Article list
-ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]}       | Reolad all feeds                  | Feed list
-OpenArticle |   { Key: ["Enter", "Spacebar"] }              | Opens selected article            | Article list
-OpenBrowser |   { Key: ["O"] }                              | Opens article or feed in browser  | Feed list, Article list, Article
-OpenFeed    |   { Key: ["Enter", "Spacebar"] }              | Lists articles in selected feed   | Feed list
-RefreshView |   { Key: ["F"] }                              | Redraws the UI                    | Feed list
-Prev        |   { Key: ["OemComma"] }                       | (<) Previous article              | Article
-PrevUnread  |   { Key: ["Oem4"] }                           | ([) Previous unread article       | Article
-Next        |   { Key: ["OemPeriod"] }                      | (>) Next Article                  | Article
-NextUnread  |   { Key: ["Oem6"] }                           | (]) Next unread article           | Article
-Delete      |   { Key: ["X"] }                              | Mark selected article for deletion| Article
-DeleteAll   |   { Key: ["X"], Modifiers: ["Control","Alt"]  | Mark all articles for deletion    | Article list
-Purge       |   { Key: ["D4"], Modifiers: ["Shift"]         | Purge deleted articles			| Feed list
-StepBack    |   { Key: ["Escape", "Backspace"]}             | Navigates back                    | Feed list, Article list, Article
-SaveArticle |   { Key: ["S"] }                              | Reolads article from web and saves| Article
-Download    |   { Key: ["D"] }                              | Downloads Article                 | Article list
-MarkRead    |   { Key: ["M"] }                              | Mark selected article as read     | Article list
-MarkAllRead |   { Key: ["A"]                                | Mark all articles as read		    | Article list, Feed List (selected item)
-MarkUnread  |   { Key: ["U"] }                              | Remove read flag                  | Article list
-OpenLink    |   { Key: ["L"] }                              | Open numbered link in browser     | Article
-OpenImage   |   { Key: ["I"] }                              | Open numbered image in browser    | Article
+Setting     | Key                                           | Action                                | Scope
+:---------- | :-------------------------------------------- | :------------------------------------ | :-------------
+QuitApp     |   { Key: ["Q"] }                              | Exits the app                         | Feed list
+Reload      |   { Key: ["R"] }                              | Reloads selected feed or article      | Feed list, Article list
+ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]}       | Reolad all feeds                      | Feed list
+OpenArticle |   { Key: ["Enter", "Spacebar"] }              | Opens selected article                | Article list
+OpenBrowser |   { Key: ["O"] }                              | Opens article or feed in browser      | Feed list, Article list, Article
+OpenFeed    |   { Key: ["Enter", "Spacebar"] }              | Lists articles in selected feed       | Feed list
+RefreshView |   { Key: ["F"] }                              | Redraws the UI                        | Feed list
+Prev        |   { Key: ["OemComma"] }                       | (<) Previous article                  | Article
+PrevUnread  |   { Key: ["Oem4"] }                           | ([) Previous unread article           | Article
+Next        |   { Key: ["OemPeriod"] }                      | (>) Next Article                      | Article
+NextUnread  |   { Key: ["Oem6"] }                           | (]) Next unread article               | Article
+Delete      |   { Key: ["X"] }                              | Mark selected article for deletion    | Article
+DeleteAll   |   { Key: ["X"], Modifiers: ["Control","Alt"]  | Mark all articles for deletion        | Article list
+Purge       |   { Key: ["D4"], Modifiers: ["Shift"]         | Purge deleted articles			    | Feed list
+StepBack    |   { Key: ["Escape", "Backspace"]}             | Navigates back                        | Feed list, Article list, Article
+SaveArticle |   { Key: ["S"] }                              | Reolads article from web and saves    | Article
+Download    |   { Key: ["D"] }                              | Downloads Article                     | Article list
+MarkRead    |   { Key: ["M"] }                              | Mark selected article as read         | Article list
+MarkAllRead |   { Key: ["A"]                                | Mark all articles as read		        | Article list, Feed List (selected item)
+MarkUnread  |   { Key: ["U"] }                              | Remove read flag                      | Article list
+OpenLink    |   { Key: ["L"] }                              | Open numbered link in browser         | Article
+OpenImage   |   { Key: ["I"] }                              | Open numbered image in browser        | Article
+Search      |   { Key: ["Oem2"]                             | (/) Search feeds (title, description) | Feed list, Article list
 
 Following keys are set by default on picklists and text area. They are not configurable, however they are fairly obvious.
 
-Key     | Action   | Scope
-:------ | :------- | :--------
+Key     | Action               | Scope
+:------ | :------------------- | :--------
 Up      | Up one item          | Feed list, Article list
 Down    | Down one item        | Feed list, Article list
 PgUp    | Scroll up 10 items   | Feed list, Article list
