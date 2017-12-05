@@ -36,6 +36,7 @@
     public string ArticleRootPath { get; private set; }
     public string LoadingSuffix { get; private set; }
     public string LoadingPrefix { get; private set; }
+    public string LoadingText { get; private set; }
     public string ArticleTextHighlight { get; private set; }
 
     public string ArticleTextFeedUrlLabel { get; private set; }
@@ -68,6 +69,7 @@
       ArticleRootPath = Config.Global.SavedFileRoot;
       LoadingSuffix = Config.Global.UI.Strings.LoadingSuffix;
       LoadingPrefix = Config.Global.UI.Strings.LoadingPrefix;
+      LoadingText = Config.Global.UI.Strings.LoadingText;
       ArticleTextHighlight = GetForegroundColor(Config.Global.UI.Colors.ArticleTextHighlight);
 
       ArticleTextFeedUrlLabel = Config.Global.UI.Strings.ArticleTextFeedUrlLabel;
@@ -82,6 +84,7 @@
       downloadStatePending = Config.Global.UI.Strings.DownloadStatePending as string;
       deletedState = Config.Global.UI.Strings.DeleteStateDeleted as string;
       notDeletedState = Config.Global.UI.Strings.DeleteStateNotDeleted as string;
+
     }
 
     public static string GetForegroundColor(string colorName)

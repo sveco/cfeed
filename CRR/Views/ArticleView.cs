@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using cFeed.Entities;
 using cFeed.Util;
 using CGui.Gui;
@@ -27,6 +28,8 @@ namespace cFeed
     private string[] _filters;
     private TextArea _articleContent;
     private bool _displayNext = false;
+
+    Timer timer = new Timer();
 
     public ArticleView(dynamic articleLayout)
     {
@@ -76,6 +79,16 @@ namespace cFeed
         articleFooter.DisplayText = selectedArticle.FormatLine(footerFormat);
       }
 
+      var loadingText = _mainView.Controls.Where(x => x.Name == "Loading").FirstOrDefault() as TextArea;
+      if (loadingText != null)
+      {
+        loadingText.Content = Configuration.Instance.LoadingText;
+        loadingText.TextAlignment = TextAlignment.Center;
+      }
+
+      timer.Interval = 500;
+      timer.Elapsed += Timer_Elapsed;
+
       var textArea = new TextArea(sb.ToString());
       sb = null;
       textArea.Top = 2;
@@ -97,13 +110,25 @@ namespace cFeed
         article.ShowScrollBar = true;
 
         selectedArticle.MarkAsRead();
-
+        timer.Stop();
         article.Show();
       }
 
       selectedArticle.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
-
+      timer.Start();
       _mainView.Show();
+    }
+
+    String timerElipsis = string.Empty;
+    private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+    {
+      if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
+      var loadingText = _mainView.Controls.Where(x => x.Name == "Loading").FirstOrDefault() as TextArea;
+      if (loadingText != null && loadingText.IsDisplayed)
+      {
+        loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
+        loadingText.Refresh();
+      }
     }
 
     public void Show(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)

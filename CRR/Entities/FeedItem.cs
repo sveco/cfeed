@@ -427,7 +427,6 @@
       {
         this.IsProcessing = true;
         DownloadArticleContent(filters);
-        //var items = db.GetCollection<FeedItem>("items");
         var result = DbWrapper.Instance.Find(x => x.Id ==
                                              this.Id).FirstOrDefault();
         if (result != null)

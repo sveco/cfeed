@@ -58,8 +58,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.1.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.1.0.5\lib\net40\CGui.dll</HintPath>
+    <Reference Include="CGui, Version=1.1.0.7, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.1.0.7\lib\net40\CGui.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -136,9 +136,9 @@
 xcopy *.xml .\bin\ /Y
 xcopy CGui.dll.config .\bin\ /Y
 xcopy *.pdb .\bin\ /Y /EXCLUDE:cfeed.pdb
-del *.dll
-del *.pdb
-del *.xml
+#del *.dll
+#del *.pdb
+#del *.xml
 del CGui.dll.config
 xcopy $(SolutionDir)README.md $(TargetDir) /Y</PostBuildEvent>
   </PropertyGroup>
