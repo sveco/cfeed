@@ -9,6 +9,7 @@
   using System.ServiceModel.Syndication;
   using System.Text.RegularExpressions;
   using cFeed.LiteDb;
+  using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui.Primitives;
   using JsonConfig;
@@ -19,6 +20,8 @@
   /// </summary>
   public class FeedItem : ListItem, IDisposable
   {
+    NLog.Logger logger = Log.Instance.Logger;
+
     /// <summary>
     /// Defines the OnContentLoaded
     /// </summary>
@@ -152,7 +155,7 @@
           if (ex is UnauthorizedAccessException ||
               ex is DirectoryNotFoundException)
           {
-            Logging.Logger.Log(ex);
+            Log.Instance.Logger.Error(ex);
             return false;
           }
           else
@@ -403,7 +406,7 @@
               x is FileNotFoundException)
           {
             //For all purposes, file is not accessible to us
-            Logging.Logger.Log(x);
+            logger.Error(x);
             IsLoaded = false;
           }
           else { throw; }

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using cFeed.Entities;
+using cFeed.Logging;
 using cFeed.Util;
 using CGui.Gui;
 using CGui.Gui.Primitives;
@@ -17,6 +18,8 @@ namespace cFeed
 {
   public class ArticleView : IDisposable
   {
+    NLog.Logger logger = Log.Instance.Logger;
+
     private Viewport _mainView;
     dynamic headerFormat;
     dynamic footerFormat;
@@ -287,7 +290,7 @@ namespace cFeed
               }
               catch (Win32Exception ex)
               {
-                Logging.Logger.Log(ex);
+                logger.Error(ex);
               }
             }
           }
@@ -326,7 +329,7 @@ namespace cFeed
               }
               catch (Win32Exception ex)
               {
-                Logging.Logger.Log(ex);
+                logger.Error(ex);
               }
             }
           }

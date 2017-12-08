@@ -88,7 +88,8 @@ namespace cFeed
     /// <param name="args">The <see cref="string[]"/></param>
     internal static void Main(string[] args)
     {
-      Logging.Logger.Log(LogLevel.Info, "App started.");
+      NLog.Logger logger = Log.Instance.Logger;
+      logger.Trace("App started.");
 
       var arguments = new ArgumentParser(args);
 

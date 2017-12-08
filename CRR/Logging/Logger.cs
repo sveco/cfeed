@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Threading;
 using JsonConfig;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace cFeed.Logging
 {
-  public sealed class Logger
+  public sealed class Log
   {
+    LoggingConfiguration config = new LoggingConfiguration();
+    private static string logDir = "";
+    private static string logFile = "log.txt";
+    public readonly Logger Logger = LogManager.GetLogger("Log");
+
+
     private static readonly LogLevel DefaultLogLevel = LogLevel.Info;
     public static LogLevel ConfiguredLogLevel
     {
@@ -20,127 +27,37 @@ namespace cFeed.Logging
         else
         {
           LogLevel result = DefaultLogLevel;
-          Enum.TryParse<LogLevel>(Config.Global.Debug, out result);
-          return result;
+          return Enum.Parse(typeof(LogLevel), Config.Global.Debug);
         }
       }
     }
 
-    private static readonly Logger instance = new Logger();
-    private static ConcurrentQueue<LogData> logQueue = new ConcurrentQueue<LogData>();
-    private static int queueSize = 1;
-    private static int maxLogAge = 10;
-    private static string logDir = "";
-    private static string logFile = "log.txt";
-    private static DateTime LastFlushed = DateTime.Now;
+    private static readonly Log instance = new Log();
     private static LogLevel _defaultLevel = LogLevel.Info;
 
     // Explicit static constructor to tell C# compiler
     // not to mark type as beforefieldinit
-    static Logger()
+    static Log()
     {
     }
 
-    private Logger()
+    private Log()
     {
+      var fileTarget = new FileTarget();
+      config.AddTarget("file", fileTarget);
+      string logPath = logDir + DateTime.Now.Date.ToShortDateString() + "_" + logFile;
+      fileTarget.FileName = "cfeed.log";
+      fileTarget.Layout = "${message}";
+      var rule2 = new LoggingRule("*", LogLevel.Debug, fileTarget);
+      config.LoggingRules.Add(rule2);
+      LogManager.Configuration = config;
     }
 
-    public static Logger Instance
+    public static Log Instance
     {
       get
       {
         return instance;
-      }
-    }
-
-    ~Logger()
-    {
-      FlushLog();
-    }
-
-    private static void FlushLog()
-    {
-      System.Threading.ThreadPool.QueueUserWorkItem(q =>
-      {
-        while (logQueue.Count > 0)
-        {
-          LogData entry;
-          logQueue.TryDequeue(out entry);
-          string logPath = logDir + entry.LogDate + "_" + logFile;
-          try
-          {
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(logPath, true, System.Text.Encoding.UTF8))
-            {
-              file.WriteLine(string.Format("{0}\t{1}", entry.LogTime, entry.Message));
-            }
-          }
-          catch (IOException)
-          {
-            Thread.Sleep(100);
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(logPath, true, System.Text.Encoding.UTF8))
-            {
-              file.WriteLine(string.Format("{0}\t{1}", entry.LogTime, entry.Message));
-            }
-          }
-        }
-      });
-    }
-
-    private static bool DoPeriodicFlush()
-    {
-      TimeSpan logAge = DateTime.Now - LastFlushed;
-      if (logAge.TotalSeconds >= maxLogAge)
-      {
-        LastFlushed = DateTime.Now;
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
-
-    public static void Log(string message)
-    {
-      Log(_defaultLevel, message);
-    }
-
-    public static void Log(LogLevel level, string message)
-    {
-      if (ConfiguredLogLevel > level)
-        return;
-
-      lock (logQueue)
-      {
-        LogData logEntry = new LogData(level, message);
-        logQueue.Enqueue(logEntry);
-
-        if (logQueue.Count >= queueSize || DoPeriodicFlush())
-        {
-          FlushLog();
-        }
-      }
-    }
-
-    public static void Log(Exception ex)
-    {
-      if (ConfiguredLogLevel > LogLevel.Error)
-        return;
-
-      Log(LogLevel.Error, ex);
-    }
-
-    public static void Log(LogLevel level, Exception ex)
-    {
-      lock (logQueue)
-      {
-        LogData logEntry = new LogData(level, ex);
-        logQueue.Enqueue(logEntry);
-
-        if (logQueue.Count >= queueSize || DoPeriodicFlush())
-        {
-          FlushLog();
-        }
       }
     }
   }

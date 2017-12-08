@@ -9,6 +9,7 @@
   using System.Net;
   using System.Net.Sockets;
   using System.ServiceModel.Syndication;
+  using System.Text;
   using System.Threading;
   using System.Xml;
   using cFeed.LiteDb;
@@ -20,8 +21,8 @@
   /// <summary>
   /// Defines the <see cref="RssFeed" />
   /// </summary>
-  public class RssFeed : ListItem, IDisposable
-  {
+  public class RssFeed : ListItem, IDisposable {
+    NLog.Logger logger = Log.Instance.Logger;
     internal bool _isProcessing = false;
     private string _customTitle;
     private Uri _feedUrl;
@@ -246,13 +247,23 @@
       this.GetFeed(refresh);
     }
 
+    public static Stream Flush(string s)
+    {
+      MemoryStream stream = new MemoryStream();
+      StreamWriter writer = new StreamWriter(stream);
+      writer.Write(s);
+      writer.Flush();
+      stream.Position = 0;
+      return stream;
+    }
+
     /// <summary>
     /// Supports RSS 1, 2 and ATOM 1.0 feed standards
     /// </summary>
     /// <param name="url"></param>
     /// <param name="timeout"></param>
     /// <returns></returns>
-    internal static SyndicationFeed GetFeed(Uri url, int timeout = 10000)
+    internal SyndicationFeed GetFeed(Uri url, int timeout = 10000)
     {
       SyndicationFeed feed = null;
 
@@ -261,9 +272,9 @@
       try
       {
         using (WebResponse response = request.GetResponse())
-          using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
-          {
-            if (Rss10FeedFormatter.CanReadFrom(reader))
+        using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
+        {
+          if (Rss10FeedFormatter.CanReadFrom(reader))
             {
               // RSS 1.0
               var rff = new Rss10FeedFormatter();
@@ -279,23 +290,23 @@
               }
               catch (XmlException ex)
               {
-                Logging.Logger.Log(ex);
+                logger.Error(ex);
                 throw;
               }
             }
-          }
+        }
       }
       catch (WebException ex)
       {
-        Logging.Logger.Log(ex);
+        logger.Error(ex);
       }
       catch (SocketException ex)
       {
-        Logging.Logger.Log(ex);
+        logger.Error(ex);
       }
       catch (IOException ex)
       {
-        Logging.Logger.Log(ex);
+        logger.Error(ex);
       }
       return feed;
     }
@@ -392,8 +403,8 @@
             }
             catch (ParseException x)
             {
-              Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-              Logging.Logger.Log(x);
+              logger.Error("Syntax error in FeedQuery:" + FeedQuery);
+              logger.Error(x);
             }
           }
           else
@@ -426,8 +437,8 @@
         }
         catch (ParseException x)
         {
-          Logging.Logger.Log("Syntax error in FeedQuery:" + FeedQuery);
-          Logging.Logger.Log(x);
+          logger.Error("Syntax error in FeedQuery:" + FeedQuery);
+          logger.Error(x);
         }
       }
       else
@@ -444,7 +455,7 @@
         else
           if (!string.IsNullOrEmpty(FeedQuery))
           {
-        //Dynamic feed
+            //Dynamic feed
             try
             {
               this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
@@ -454,13 +465,13 @@
             }
             catch (ParseException x)
             {
-              Logging.Logger.Log(LogLevel.Error, "Syntax error in FeedQuery:" + FeedQuery);
-              Logging.Logger.Log(x);
+              logger.Error("Syntax error in FeedQuery:" + FeedQuery);
+              logger.Error(x);
             }
             catch (ArgumentNullException x)
             {
-              Logging.Logger.Log(LogLevel.Error, "Missing field in db, skipping feed:" + FeedQuery);
-              Logging.Logger.Log(x);
+              logger.Error("Missing field in db, skipping feed:" + FeedQuery);
+              logger.Error(x);
             }
           }
     }
@@ -476,7 +487,7 @@
       }
       catch (Exception ex)
       {
-        Logging.Logger.Log(ex);
+        logger.Error(ex);
         this.CustomTitle = Configuration.GetForegroundColor("Red") + this.Title + " - ERROR" +
                            Configuration.ColorReset;
       }
@@ -489,7 +500,7 @@
         return;
       }
 
-      Logging.Logger.Log(FeedUrl + " loaded");
+      logger.Error(FeedUrl + " loaded");
 
       JoinReindexFeed();
     }

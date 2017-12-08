@@ -17,6 +17,7 @@
   /// </summary>
   public class FeedListView : IDisposable
   {
+    NLog.Logger logger = Log.Instance.Logger;
     private Viewport _mainView;
     internal dynamic headerFormat;
     internal dynamic footerFormat;
@@ -121,13 +122,13 @@
       }
       catch (WebException x)
       {
-        cFeed.Logging.Logger.Log(x);
+        logger.Error(x);
         Feed.DisplayText = Feed.DisplayLine + " ERROR:" + x.Message;
       }
       catch (Exception x)
       {
-        cFeed.Logging.Logger.Log(LogLevel.Error, "Error loading " + Feed.FeedUrl);
-        cFeed.Logging.Logger.Log(x);
+        logger.Error("Error loading " + Feed.FeedUrl);
+        logger.Error(x);
         Feed.DisplayText = Feed.DisplayLine + " ERROR!";
       }
     }
