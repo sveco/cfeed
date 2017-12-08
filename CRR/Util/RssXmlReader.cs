@@ -7,7 +7,7 @@ namespace cFeed.Util
 {
   class RssXmlReader : XmlTextReader
   {
-    private bool readingDate = false;
+    private bool readingDate;
     //const string CustomUtcDateTimeFormat = "ddd MMM dd HH:mm:ss Z yyyy"; // Wed Oct 07 08:00:07 GMT 2009
     const string CustomUtcDateTimeFormat = "ddd MMM dd HH:mm:ss Z"; //Thu, 05 Oct 2017 05:09:42 PDT
 
@@ -17,12 +17,9 @@ namespace cFeed.Util
 
     public override void ReadStartElement()
     {
-      if (string.Equals(base.NamespaceURI, string.Empty, StringComparison.InvariantCultureIgnoreCase) &&
+      readingDate |= (string.Equals(base.NamespaceURI, string.Empty, StringComparison.InvariantCultureIgnoreCase) &&
           (string.Equals(base.LocalName, "lastBuildDate", StringComparison.InvariantCultureIgnoreCase) ||
-           string.Equals(base.LocalName, "pubDate", StringComparison.InvariantCultureIgnoreCase)))
-      {
-        readingDate = true;
-      }
+           string.Equals(base.LocalName, "pubDate", StringComparison.InvariantCultureIgnoreCase)));
       base.ReadStartElement();
     }
 
@@ -41,10 +38,12 @@ namespace cFeed.Util
       {
         string dateString = base.ReadString();
         //this is one ugly hack
-        string correctedDateString = dateString.Replace("PDT", "-0700");
-        DateTime dt;
+        string correctedDateString = dateString
+          .Replace("PDT", "-0700")
+          .Replace("PST", "-0800");
 
-        if (!DateTime.TryParse(correctedDateString, out dt))
+
+        if (!DateTime.TryParse(correctedDateString, out DateTime dt))
         {
           dt = DateTime.ParseExact(correctedDateString, CustomUtcDateTimeFormat, CultureInfo.InvariantCulture);
         }
