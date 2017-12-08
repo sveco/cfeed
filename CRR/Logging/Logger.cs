@@ -16,7 +16,7 @@ namespace cFeed.Logging
 
 
     private static readonly LogLevel DefaultLogLevel = LogLevel.Info;
-    public static LogLevel ConfiguredLogLevel
+    public LogLevel ConfiguredLogLevel
     {
       get
       {
@@ -27,7 +27,15 @@ namespace cFeed.Logging
         else
         {
           LogLevel result = DefaultLogLevel;
-          return Enum.Parse(typeof(LogLevel), Config.Global.Debug);
+          try
+          {
+            result = LogLevel.FromString(Config.Global.Debug);
+          }
+          catch (Exception) {
+            //No point logging error, logger is not ready
+            //Logger.Warn("Unable to parse log level, using default.");
+          }
+          return result;
         }
       }
     }
@@ -45,10 +53,10 @@ namespace cFeed.Logging
     {
       var fileTarget = new FileTarget();
       config.AddTarget("file", fileTarget);
-      string logPath = logDir + DateTime.Now.Date.ToShortDateString() + "_" + logFile;
-      fileTarget.FileName = "cfeed.log";
-      fileTarget.Layout = "${message}";
-      var rule2 = new LoggingRule("*", LogLevel.Debug, fileTarget);
+      string logPath = logDir + DateTime.Now.Date.ToString("yyyyMMdd") + "_" + logFile;
+      fileTarget.FileName =  logPath;
+      fileTarget.Layout = "${longdate}|${level:uppercase=true}|${logger}|${message}";
+      var rule2 = new LoggingRule("*", ConfiguredLogLevel, fileTarget);
       config.LoggingRules.Add(rule2);
       LogManager.Configuration = config;
     }

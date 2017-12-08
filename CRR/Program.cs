@@ -85,7 +85,7 @@ namespace cFeed
     /// <summary>
     /// The Main
     /// </summary>
-    /// <param name="args">The <see cref="string[]"/></param>
+    /// <param name="args">The <see cref="string"/></param>
     internal static void Main(string[] args)
     {
       NLog.Logger logger = Log.Instance.Logger;

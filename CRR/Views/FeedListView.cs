@@ -41,9 +41,11 @@
     public FeedListView(dynamic feedListLayout)
     {
       //region controls
-      _mainView = new Viewport();
-      _mainView.Width = feedListLayout.Width;
-      _mainView.Height = feedListLayout.Height;
+      _mainView = new Viewport
+      {
+        Width = feedListLayout.Width,
+        Height = feedListLayout.Height
+      };
 
       foreach (var control in feedListLayout.Controls)
       {
@@ -81,17 +83,17 @@
                 return item;
               }).ToList();
 
-      if (_mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() is Header feedListHeader)
+      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Header)) is Header feedListHeader)
       {
         feedListHeader.DisplayText = Format(headerFormat);
       }
 
-      if (_mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() is Footer feedListFooter)
+      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Footer)) is Footer feedListFooter)
       {
         feedListFooter.DisplayText = Format(footerFormat);
       }
 
-      var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<RssFeed>)).FirstOrDefault() as Picklist<RssFeed>;
+      var list = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Picklist<RssFeed>)) as Picklist<RssFeed>;
       if (list == null) { throw new InvalidOperationException("Missing list config."); }
       list.UpdateList(rssFeeds);
       list.OnItemKeyHandler += FeedList_OnItemKeyHandler;
@@ -249,13 +251,15 @@
     /// <summary>
     /// Purges articles marked for deletion in selected <see cref="RssFeed"/>.
     /// </summary>
-    /// <param name="selectedItem"></param>
+    /// <param name="parent"></param>
     /// <returns></returns>
     private bool PurgeDeletedArticles(Picklist<RssFeed> parent)
     {
-      Dictionary<string, object> choices = new Dictionary<string, object>();
-      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
-      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
+      Dictionary<string, object> choices = new Dictionary<string, object>
+      {
+        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
+        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
+      };
 
       var dialog = new Dialog(Config.Global.UI.Strings.PromptPurge, choices);
       dialog.ItemSelected += Purge_ItemSelected;
@@ -278,13 +282,10 @@
 
     private void Purge_ItemSelected(object sender, DialogChoice e)
     {
-      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
-      {
-        purge = true;
-      }
+      purge |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
     }
 
-    private bool markAllread = false;
+    private bool markAllread;
     /// <summary>
     /// Marks all articles in <see cref="RssFeed"/> as read.
     /// </summary>
@@ -296,9 +297,11 @@
       {
         if (!selectedItem.IsProcessing)
         {
-          Dictionary<string, object> choices = new Dictionary<string, object>();
-          choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 1);
-          choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 2);
+          Dictionary<string, object> choices = new Dictionary<string, object>
+          {
+            { Config.Global.UI.Strings.PromptAnswerNo, 1 },
+            { Config.Global.UI.Strings.PromptAnswerYes, 2 }
+          };
 
           var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
           dialog.ItemSelected += MarkAllDialog_ItemSelected;
@@ -319,17 +322,14 @@
 
     private void MarkAllDialog_ItemSelected(object sender, DialogChoice e)
     {
-      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
-      {
-        markAllread = true;
-      }
+      markAllread |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
     }
 
     /// <summary>
     /// Shows selected feed articles
     /// </summary>
     /// <param name="selectedItem">Selected <see cref="RssFeed"/> item</param>
-    /// <param name="parent">Parent <see cref="Picklist<RssFeed>"/></param>
+    /// <param name="parent">Parent <see cref="Picklist"/></param>
     /// <returns></returns>
     private bool OpenSelectedFeed(RssFeed selectedItem, Picklist<RssFeed> parent)
     {
@@ -350,7 +350,7 @@
     }
 
     #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
+    private bool disposedValue; // To detect redundant calls
 
     protected virtual void Dispose(bool disposing)
     {

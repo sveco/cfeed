@@ -30,16 +30,18 @@ namespace cFeed
     private FeedItem nextArticle;
     private string[] _filters;
     private TextArea _articleContent;
-    private bool _displayNext = false;
+    private bool _displayNext;
 
     Timer timer = new Timer();
 
     public ArticleView(dynamic articleLayout)
     {
       //region controls
-      _mainView = new Viewport();
-      _mainView.Width = articleLayout.Width;
-      _mainView.Height = articleLayout.Height;
+      _mainView = new Viewport
+      {
+        Width = articleLayout.Width,
+        Height = articleLayout.Height
+      };
 
       foreach (var control in articleLayout.Controls)
       {
@@ -70,20 +72,17 @@ namespace cFeed
       sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
       sb.AppendLine();
 
-      var articleHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
-      if (articleHeader != null)
+      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Header)) is Header articleHeader)
       {
         articleHeader.DisplayText = selectedArticle.TitleLine;
       }
 
-      var articleFooter = _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
-      if (articleFooter != null)
+      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Footer)) is Footer articleFooter)
       {
         articleFooter.DisplayText = selectedArticle.FormatLine(footerFormat);
       }
 
-      var loadingText = _mainView.Controls.Where(x => x.Name == "Loading").FirstOrDefault() as TextArea;
-      if (loadingText != null)
+      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
       {
         loadingText.Content = Configuration.Instance.LoadingText;
         loadingText.TextAlignment = TextAlignment.Center;
@@ -103,12 +102,14 @@ namespace cFeed
 
       void onContentLoaded(string content)
       {
-        var article = new TextArea(content);
-        article.Top = 9;
-        article.Left = 2;
-        article.Height = Console.WindowHeight - 10;
-        article.Width = Console.WindowWidth - 3;
-        article.WaitForInput = true;
+        var article = new TextArea(content)
+        {
+          Top = 9,
+          Left = 2,
+          Height = Console.WindowHeight - 10,
+          Width = Console.WindowWidth - 3,
+          WaitForInput = true
+        };
         article.OnItemKeyHandler += Article_OnItemKeyHandler;
         article.ShowScrollBar = true;
 
@@ -117,7 +118,7 @@ namespace cFeed
         article.Show();
       }
 
-      selectedArticle.OnContentLoaded = new Action<string>(s => { onContentLoaded(s); });
+      selectedArticle.OnContentLoaded = new Action<string>(onContentLoaded);
       timer.Start();
       _mainView.Show();
     }
@@ -126,8 +127,7 @@ namespace cFeed
     private void Timer_Elapsed(object sender, ElapsedEventArgs e)
     {
       if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
-      var loadingText = _mainView.Controls.Where(x => x.Name == "Loading").FirstOrDefault() as TextArea;
-      if (loadingText != null && loadingText.IsDisplayed)
+      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText.IsDisplayed)
       {
         loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
         loadingText.Refresh();
@@ -146,7 +146,7 @@ namespace cFeed
 
         Parallel.Invoke(
             new Action(() => this.selectedArticle.LoadArticle(_filters)),
-            new Action(() => _articleContent.Show())
+            new Action(_articleContent.Show)
             );
 
         this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
@@ -159,7 +159,7 @@ namespace cFeed
           PrepareArticle();
           Parallel.Invoke(
               new Action(() => this.selectedArticle.LoadArticle(_filters)),
-              new Action(() => _articleContent.Show())
+              new Action(_articleContent.Show)
               );
         }
       }
@@ -180,9 +180,8 @@ namespace cFeed
         if (CanShowNext)
         {
           nextArticle = (FeedItem)parentArticleList.ListItems
-              .OrderByDescending(x => x.Index)
-              .Where(x => x.Index < selectedArticle.Index)
-              .FirstOrDefault();
+            .OrderByDescending(x => x.Index)
+            .FirstOrDefault(x => x.Index < selectedArticle.Index);
         }
       }
       //Next unread
@@ -191,9 +190,8 @@ namespace cFeed
         if (CanShowNext)
         {
           nextArticle = (FeedItem)parentArticleList.ListItems
-              .OrderByDescending(x => x.Index)
-              .Where(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index)
-              .FirstOrDefault();
+            .OrderByDescending(x => x.Index)
+            .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index);
         }
       }
       //Prev
@@ -204,9 +202,8 @@ namespace cFeed
           if (selectedArticle.Index < selectedFeed.TotalItems - 1)
           {
             nextArticle = (FeedItem)parentArticleList.ListItems
-                .OrderBy(x => x.Index)
-                .Where(x => x.Index > selectedArticle.Index)
-                .FirstOrDefault();
+              .OrderBy(x => x.Index)
+              .FirstOrDefault(x => x.Index > selectedArticle.Index);
           }
         }
       }
@@ -217,10 +214,9 @@ namespace cFeed
         {
           if (selectedArticle.Index < selectedFeed.TotalItems - 1)
           {
-            nextArticle = (FeedItem)parentArticleList.ListItems
-                .OrderBy(x => x.Index)
-                .Where(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index)
-                .FirstOrDefault();
+            nextArticle = parentArticleList.ListItems
+              .OrderBy(x => x.Index)
+              .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index);
           }
         }
       }
@@ -253,7 +249,7 @@ namespace cFeed
         {
           Parallel.Invoke(
               new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
-              new Action(() => _articleContent.Show())
+              new Action(_articleContent.Show)
               );
         }
       }
@@ -270,8 +266,7 @@ namespace cFeed
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
           };
 
-          int linkNumber;
-          if (int.TryParse(input.InputText, out linkNumber))
+          if (int.TryParse(input.InputText, out int linkNumber))
           {
             if (selectedArticle.ExternalLinks != null
                 && selectedArticle.ExternalLinks.Count >= linkNumber
@@ -309,8 +304,7 @@ namespace cFeed
             BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
           };
 
-          int linkNumber;
-          if (int.TryParse(input.InputText, out linkNumber))
+          if (int.TryParse(input.InputText, out int linkNumber))
           {
             if (selectedArticle.ImageLinks != null
                 && selectedArticle.ImageLinks.Count >= linkNumber
@@ -350,7 +344,7 @@ namespace cFeed
     }
 
     #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
+    private bool disposedValue; // To detect redundant calls
 
     protected virtual void Dispose(bool disposing)
     {

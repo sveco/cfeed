@@ -23,7 +23,7 @@
   /// </summary>
   public class RssFeed : ListItem, IDisposable {
     NLog.Logger logger = Log.Instance.Logger;
-    internal bool _isProcessing = false;
+    internal bool _isProcessing;
     private string _customTitle;
     private Uri _feedUrl;
 
@@ -157,7 +157,7 @@
     /// </summary>
     public int TotalItems
     {
-      get { return FeedItems != null ? FeedItems.Where(x => x.Deleted == false).Count() : 0; }
+      get { return FeedItems != null ? FeedItems.Count(x => x.Deleted == false) : 0; }
     }
 
     /// <summary>
@@ -505,7 +505,7 @@
         return;
       }
 
-      logger.Error(FeedUrl + " loaded");
+      logger.Trace(FeedUrl + " loaded");
 
       JoinReindexFeed();
     }
@@ -519,7 +519,7 @@
     }
 
     #region IDisposable Support
-    private bool disposedValue = false; // To detect redundant calls
+    private bool disposedValue; // To detect redundant calls
 
     protected virtual void Dispose(bool disposing)
     {

@@ -14,7 +14,7 @@ namespace Cfeed.Test
       var invalidChars = Path.GetInvalidFileNameChars();
 
       var pathString = "Test" + new String(invalidChars) + ".txt";
-      var sanitizedPath = StringExtensions.SanitizeFileName(pathString);
+      var sanitizedPath = pathString.SanitizeFileName();
       bool possiblePath = sanitizedPath.IndexOfAny(invalidChars) == -1;
 
       Assert.AreEqual<string>(sanitizedPath, "Test.txt");
@@ -27,7 +27,7 @@ namespace Cfeed.Test
       var invalidChars = Path.GetInvalidPathChars();
 
       var pathString = "c:\\Test" + new String(invalidChars) + "\\";
-      var sanitizedPath = StringExtensions.SanitizePath(pathString);
+      var sanitizedPath = pathString.SanitizePath();
       bool possiblePath = sanitizedPath.IndexOfAny(Path.GetInvalidPathChars()) == -1;
 
       Assert.AreEqual<string>(sanitizedPath, "c:\\Test\\");
@@ -40,7 +40,7 @@ namespace Cfeed.Test
       var input = "\x1b[Test]Test";
       var expected = "      \x1b[Test]Test";
       var notexpected = "          \x1b[Test]Test";
-      var output = StringExtensions.PadLeftVisible(input, 10);
+      var output = input.PadLeftVisible(10);
 
       Assert.AreEqual<string>(output, expected);
       Assert.AreNotEqual<string>(output, notexpected);
@@ -52,7 +52,7 @@ namespace Cfeed.Test
       var input = "\x1b[Test]Test";
       var expected = "\x1b[Test]Test      ";
       var notexpected = "\x1b[Test]Test          ";
-      var output = StringExtensions.PadRightVisible(input, 10);
+      var output = input.PadRightVisible(10);
 
       Assert.AreEqual<string>(output, expected);
       Assert.AreNotEqual<string>(output, notexpected);

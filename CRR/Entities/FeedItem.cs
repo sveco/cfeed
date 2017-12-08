@@ -55,7 +55,7 @@
     private DateTime _publishDate;
     private string _summary;
     private string _title;
-    private bool disposedValue = false;
+    private bool disposedValue;
 
     /// <summary>
     /// Gets or sets the ArticleContent
@@ -327,7 +327,7 @@
     /// <summary>
     /// The DownloadArticleContent
     /// </summary>
-    /// <param name="filters">The <see cref="string[]"/></param>
+    /// <param name="filters">The <see cref="string"/></param>
     public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
@@ -386,7 +386,6 @@
     /// Loads article content from local storage or web. Supressing Code Analysis warning as we are handling errors by type inside catch block.
     /// </summary>
     /// <param name="filters"></param>
-    /// <param name="db"></param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
         "CA1031:DoNotCatchGeneralExceptionTypes")]
     public void LoadArticle(string[] filters)
@@ -421,10 +420,10 @@
     /// <summary>
     /// The LoadOnlineArticle
     /// </summary>
-    /// <param name="filters">The <see cref="string[]"/></param>
+    /// <param name="filters">The <see cref="string"/></param>
     public void LoadOnlineArticle(string[] filters)
     {
-      if (OnContentLoaded == null) { throw new ArgumentNullException("OnContentLoaded"); }
+      if (OnContentLoaded == null) { throw new NullReferenceException("OnContentLoaded"); }
 
       if (Links.Count > 0)
       {
@@ -563,7 +562,7 @@
         if (System.IO.Path.GetFullPath(pathOnly).Length + fileNameOnly.Length
             > 260)
         {
-          int dotPosition = fileNameOnly.LastIndexOf(".");
+          int dotPosition = fileNameOnly.LastIndexOf(".",StringComparison.InvariantCulture);
           string fileName = fileNameOnly.Substring(0, dotPosition);
           string extension = fileNameOnly.Substring(dotPosition,
                              fileNameOnly.Length - dotPosition);
