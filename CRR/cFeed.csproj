@@ -75,6 +75,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\LiteDB.dll</HintPath>
     </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Linq.Dynamic, Version=1.0.6132.35681, Culture=neutral, processorArchitecture=MSIL">
@@ -92,7 +95,6 @@
     <Compile Include="Entities\Outline.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LiteDb\DbWrapper.cs" />
-    <Compile Include="Logging\LogData.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
     <Compile Include="Util\Browser.cs" />
@@ -105,6 +107,7 @@
     <Compile Include="Util\Rss10FeedFormatter.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
     <Compile Include="Util\GlobalMethods.cs" />
+    <Compile Include="Util\XmlSanitizingStream.cs" />
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />

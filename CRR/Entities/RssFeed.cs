@@ -272,9 +272,13 @@
       try
       {
         using (WebResponse response = request.GetResponse())
-        using (RssXmlReader reader = new RssXmlReader(response.GetResponseStream()))
         {
-          if (Rss10FeedFormatter.CanReadFrom(reader))
+
+          XmlSanitizingStream stream = new XmlSanitizingStream(response.GetResponseStream());
+          var xml = stream.ReadToEnd();
+          using (RssXmlReader reader = new RssXmlReader(Flush(xml)))
+          {
+            if (Rss10FeedFormatter.CanReadFrom(reader))
             {
               // RSS 1.0
               var rff = new Rss10FeedFormatter();
@@ -294,6 +298,7 @@
                 throw;
               }
             }
+          }
         }
       }
       catch (WebException ex)
