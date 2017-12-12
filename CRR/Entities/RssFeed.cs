@@ -17,6 +17,7 @@
   using cFeed.Util;
   using CGui.Gui.Primitives;
   using JsonConfig;
+  using NLog;
 
   /// <summary>
   /// Defines the <see cref="RssFeed" />
@@ -116,6 +117,11 @@
     public bool IsDynamic
     {
       get { return FeedUrl == null && !string.IsNullOrEmpty(FeedQuery); }
+    }
+
+    internal void RefreshTitle()
+    {
+      this.DisplayText = this.DisplayLine;
     }
 
     /// <summary>
@@ -266,8 +272,8 @@
     internal SyndicationFeed GetFeed(Uri url, int timeout = 10000)
     {
       SyndicationFeed feed = null;
-
-      WebRequest request = WebRequest.Create(url);
+      HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+      request.UserAgent = "Cfeed (https://github.com/sveco/cfeed)";
       request.Timeout = timeout;
       try
       {
@@ -361,6 +367,7 @@
       if (refresh && FeedUrl != null)
       {
         LoadFeedFromWeb();
+
       }
       if (timer != null)
       {
@@ -393,7 +400,14 @@
             Index = index + 1,
             Tags = Tags
           };
-          DbWrapper.Instance.Insert(newItem);
+          try
+          {
+            DbWrapper.Instance.Insert(newItem);
+          }
+          catch (InvalidOperationException ex)
+          {
+            logger.Log(LogLevel.Error, ex);
+          }
 
           if ((!string.IsNullOrEmpty(FeedQuery)))
           {
