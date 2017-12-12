@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using cFeed.Entities;
+using cFeed.Views;
 using CGui.Gui;
 using JsonConfig;
 
@@ -25,7 +22,7 @@ namespace cFeed.Util
         ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
         BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
       };
-      var searchString = searchInput.InputText.Replace("\\\"", string.Empty); ;
+      var searchString = searchInput.InputText.Replace("\\\"", string.Empty);
       if (String.IsNullOrWhiteSpace(searchString))
       {
         return true;
