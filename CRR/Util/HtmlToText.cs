@@ -156,6 +156,16 @@ namespace cFeed.Util
                 }
               }
               break;
+            case "strong":
+              outText.Write(" " + linkTextHighlight);
+              if (node.HasChildNodes)
+              {
+                ConvertContentTo(node, outText);
+              }
+              outText.Write(resetColor + " ");
+              skip = true;
+              break;
+
             case "a":
               outText.Write(linkTextHighlight + " [Link:");
               if (node.HasChildNodes)
