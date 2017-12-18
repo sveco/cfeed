@@ -500,12 +500,15 @@
     /// </summary>
     private void LoadFeedFromWeb()
     {
+      logger.Trace(FeedUrl + " start loading.");
+
       try
       {
         this.Feed = GetFeed(FeedUrl);
       }
       catch (Exception ex)
       {
+        logger.Error("Error loading " + FeedUrl);
         logger.Error(ex);
         this.CustomTitle = Configuration.GetForegroundColor("Red") + this.Title + " - ERROR" +
                            Configuration.ColorReset;
@@ -519,7 +522,7 @@
         return;
       }
 
-      logger.Trace(FeedUrl + " loaded");
+      logger.Trace(FeedUrl + " loaded.");
 
       JoinReindexFeed();
     }
