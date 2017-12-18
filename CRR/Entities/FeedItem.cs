@@ -593,7 +593,7 @@
       SyndicationItemId = i.Id;
       PublishDate = i.PublishDate.DateTime > i.LastUpdatedTime.DateTime ?
                     i.PublishDate.DateTime : i.LastUpdatedTime.DateTime;
-      Summary = i.Summary.Text;
+      Summary = i.Summary != null ? i.Summary.Text : string.Empty;
       Links = i.Links;
       Authors = i.Authors;
       Title = i.Title.Text;

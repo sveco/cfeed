@@ -45,7 +45,8 @@ namespace cFeed.Util
 
     private static string getSearchQuery(string searchString, RssFeed feed = null)
     {
-      var s = $"(Culture.CompareInfo.IndexOf(Summary, \"{searchString}\", IgnoreCase) >= 0";
+      var s = $"((Summary != null && ";
+      s = s + $"Culture.CompareInfo.IndexOf(Summary, \"{searchString}\", IgnoreCase) >= 0)";
       s = s + $" || Culture.CompareInfo.IndexOf(Title, \"{searchString}\", IgnoreCase) >= 0)";
       if (feed != null)
       {
