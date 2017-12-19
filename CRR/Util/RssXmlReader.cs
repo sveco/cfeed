@@ -39,6 +39,8 @@ namespace cFeed.Util
         string dateString = base.ReadString();
         //this is one ugly hack
         string correctedDateString = dateString
+          .Replace("EDT", "-0400")
+          .Replace("EST", "-0500")
           .Replace("PDT", "-0700")
           .Replace("PST", "-0800");
 
