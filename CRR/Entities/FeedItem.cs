@@ -12,6 +12,7 @@
   using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui.Primitives;
+  using HtmlAgilityPack;
   using JsonConfig;
   using LiteDB;
 
@@ -331,8 +332,23 @@
     public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
-      var doc = w.Load(Links[0].Uri);
-      HtmlToText conv = new HtmlToText() { Filters = filters?.ToList() };
+      HtmlDocument doc = null;
+      if (Links.Count > 0)
+      {
+        try
+        {
+          doc = w.Load(Links[0].Uri);
+        }
+        catch (Exception ex) {
+          this.DisplayText = this.DisplayLine + " ERROR.";
+
+          logger.Error($"Could not load {Links[0].Uri}");
+          logger.Error(ex);
+        }
+      }
+      if (doc == null) return;
+
+      HtmlToText conv = new HtmlToText() { Filters = filters?.ToList(), LinkStartFrom = this.Links.Count };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 

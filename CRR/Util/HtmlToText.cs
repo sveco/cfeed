@@ -23,6 +23,7 @@ namespace cFeed.Util
     char[] trimChars = { ' ', '\t', '\n' };
 
     public List<string> Filters { get; internal set; }
+    public int LinkStartFrom { get; set; }
 
     public HtmlToText()
     {
@@ -181,13 +182,13 @@ namespace cFeed.Util
                     && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                 {
                   Links.Add(uriResult);
-                  outText.Write(linkHighlight + "[" + Links.Count + "] " + resetColor);
+                  outText.Write(linkHighlight + "[" + (Links.Count + LinkStartFrom) + "] " + resetColor);
                 }
                 else if (Uri.TryCreate(BaseUri, uriName, out uriResult)
                   && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                 {
                   Links.Add(uriResult);
-                  outText.Write(linkHighlight + "[" + Links.Count + "] " + resetColor);
+                  outText.Write(linkHighlight + "[" + (Links.Count + LinkStartFrom) + "] " + resetColor);
                 }
 
               }

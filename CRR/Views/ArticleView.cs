@@ -61,6 +61,7 @@
 
         selectedArticle.MarkAsRead();
         timer.Stop();
+        HideLoadingText();
         article.Show();
       }
 
@@ -84,6 +85,13 @@
         loadingText.TextAlignment = TextAlignment.Center;
       }
     }
+    private void HideLoadingText()
+    {
+      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
+      {
+        loadingText.Clear();
+      }
+    }
 
     private void StartTimer()
     {
@@ -94,11 +102,19 @@
 
     private Result showArticleHeader()
     {
+      string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+      string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
+      string resetColor = Configuration.ColorReset;
+
       StringBuilder sb = new StringBuilder();
       sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
       sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
       sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset + selectedArticle.Links?[0].Uri.GetLeftPart(UriPartial.Path));
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset);
+      for (int i = 0; i < selectedArticle.Links.Count; i++)
+      {
+        sb.AppendLine(linkHighlight + "[" + (i+1).ToString() + "] " + resetColor + Configuration.Instance.ArticleTextHighlight + Configuration.ColorReset + selectedArticle.Links?[i].Uri.GetLeftPart(UriPartial.Path));
+      }
       sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
       sb.AppendLine();
 
@@ -118,7 +134,7 @@
     private void Timer_Elapsed(object sender, ElapsedEventArgs e)
     {
       if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
-      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
+      if (_mainView != null && _mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
       {
         loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
         loadingText.Refresh();
@@ -364,18 +380,28 @@
         if (int.TryParse(input.InputText, out int linkNumber))
         {
           if (selectedArticle.ExternalLinks != null
-              && selectedArticle.ExternalLinks.Count >= linkNumber
+              && selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber
               && linkNumber > 0)
           {
+            string link;
+            if (linkNumber <= selectedArticle.Links.Count)
+            {
+              link = selectedArticle.Links[linkNumber - 1].Uri.ToString();
+            }
+            else
+            {
+              link = selectedArticle.ExternalLinks[linkNumber - 1 - selectedArticle.Links.Count].ToString();
+            }
+
             try
             {
               if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
               {
-                Process.Start(Config.Global.Browser, selectedArticle.ExternalLinks[linkNumber - 1].ToString());
+                Process.Start(Config.Global.Browser, link);
               }
               else
               {
-                Process.Start(selectedArticle.ExternalLinks[linkNumber - 1].ToString());
+                Process.Start(link);
               }
             }
             catch (Win32Exception ex)
