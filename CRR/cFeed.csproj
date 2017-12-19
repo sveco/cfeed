@@ -104,6 +104,7 @@
     <Compile Include="Util\ControlFactory.cs" />
     <Compile Include="Util\CustomSyndicationFeed.cs" />
     <Compile Include="Util\Formatter.cs" />
+    <Compile Include="Util\HttpDownloader.cs" />
     <Compile Include="Util\INotifyPropertyChangedExtensions.cs" />
     <Compile Include="Util\OpmlImport.cs" />
     <Compile Include="Util\Rss10FeedFormatter.cs" />

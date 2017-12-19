@@ -132,6 +132,11 @@
       {
         return Download(selectedItem);
       }
+      //Delete locally stored content
+      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.DeleteContent))
+      {
+        return DeleteContent(selectedItem);
+      }
       //open in browser
       if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
       {
@@ -144,6 +149,16 @@
         var result = GlobalMethods.Search(_mainView);
         parent.IsDisplayed = true;
         return result;
+      }
+      return true;
+    }
+
+    private bool DeleteContent(FeedItem selectedItem)
+    {
+      if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == true)
+      {
+        selectedItem.DeleteArticleContent();
+        selectedItem.DisplayText = selectedItem.DisplayLine;
       }
       return true;
     }

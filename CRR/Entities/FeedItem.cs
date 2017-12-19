@@ -205,6 +205,19 @@
       }
     }
 
+    internal void DeleteArticleContent()
+    {
+      try
+      {
+        File.Delete(ArticleFileName);
+      }
+      catch (Exception ex)
+      {
+        Log.Instance.Logger.Error($"Could not delete file {ArticleFileName}");
+        Log.Instance.Logger.Error(ex);
+      }
+    }
+
     /// <summary>
     /// <see cref="SyndicationItem"/>
     /// </summary>
@@ -332,12 +345,15 @@
     public void DownloadArticleContent(string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
-      HtmlDocument doc = null;
+      HtmlDocument doc = new HtmlDocument();
       if (Links.Count > 0)
       {
         try
         {
-          doc = w.Load(Links[0].Uri);
+          HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, null);
+          doc.LoadHtml(downloader.GetPage());
+
+          //doc = w.Load(Links[0].Uri);
         }
         catch (Exception ex) {
           this.DisplayText = this.DisplayLine + " ERROR.";
