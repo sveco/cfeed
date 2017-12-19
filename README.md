@@ -26,7 +26,7 @@ After setting feeds in config file, you can run the app. Application will list c
 
 By default, you can open the feed with **Spacebar** or **Enter** key. This will list articles in the feed. Hitting same kays again will open selected feed item. Use **Arrow Up**, **Arrow Down**, **Page Up** and **Page Down** keys to navigate lists. By default return to previous screen using **Backspace** or **Escape** (can be configured differently in settings).
 
-Hitting **R** while on list of feeds will refresh selected feed, and **Control+R** will refresh all feeds."
+Hitting **R** while on list of feeds will refresh selected feed, and **Control+R** will refresh all feeds.
 
 When on article, article content will be loaded on background. Hitting **O** will open selected article in default (or configured) browser. Full list of actions and hotkeys can be found in Configuration section.
 
@@ -39,18 +39,18 @@ When on article, article content will be loaded on background. Hitting **O** wil
 Cfeed uses json files to store app configuration. Embedded *default.conf* provides default settings when no other config file is present. User setting are stored in *settings.conf*. Any setting in latter file overrides default settings.
 The *settings.conf* also includes list of feeds, but there are plans to move this to separate *feedlist.conf* file.
 
-Structure of JSON object is
+Structure of JSON object:
 
-Feeds - list of feeds and feed related settings
-UI - look & feel of application
-Shortcuts - key bindings
-App - app related settings, like external browser etc.
+ - Feeds - list of feeds and feed related settings (url, filters, custom label)
+ - UI - look & feel of application, layout of views
+ - Shortcuts - key bindings
+ - App - app related settings, like external browser etc.
 
 ***Feeds***
 
 Basic setting.conf can look like this:
 
-```
+```JSON
 {
     Feeds: [
     {
@@ -82,7 +82,7 @@ Title can be used to display custom title of feed, instead of the one defined by
 Yay! It is now supported to filter articles in online feed by defining FeedQuery, or create dynamic feed by specifying FeedQuery without the FeedUrl. Latter will search all downloaded articles, and crete "virtual" feed from search results.
 
 *Example: Dynamic feed*
-```
+```JSON
 { 
     #Dynamic feed - find all articles with word 'Mars' in Title or Summary.
     FeedQuery: "(Summary.Contains(\"Mars\") || Title.Contains(\"Mars\"))",
@@ -91,7 +91,7 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
 ```
 
 *Example: Filtered feed*
-```
+```JSON
 { 
     #Filtered feed - find all articles in newscientist feed with word 'Mars' in Title or Summary
     FeedUrl: "http://feeds.newscientist.com/",

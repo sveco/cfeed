@@ -58,8 +58,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.1.0.7, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.1.0.7\lib\net40\CGui.dll</HintPath>
+    <Reference Include="CGui, Version=1.1.0.8, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.1.0.8\lib\net40\CGui.dll</HintPath>
     </Reference>
     <Reference Include="HtmlAgilityPack, Version=1.5.5.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.5.5\lib\Net45\HtmlAgilityPack.dll</HintPath>
@@ -93,6 +93,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entities\Outline.cs" />
+    <Compile Include="FunctionalExtensions\Result.cs" />
+    <Compile Include="FunctionalExtensions\ResultExtensions.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LiteDb\DbWrapper.cs" />
     <Compile Include="Logging\Logger.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="Views\ArticleView.cs" />
     <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
+    <Compile Include="Views\BaseView.cs" />
     <Compile Include="Views\FeedListView.cs" />
     <Compile Include="Util\HtmlToText.cs" />
     <Compile Include="Native\NativeMethods.cs" />

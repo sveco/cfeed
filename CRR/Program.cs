@@ -1,9 +1,6 @@
 ﻿/*
-             __               _ 
-   ___      / _| ___  ___  __| |
-  / __|____| |_ / _ \/ _ \/ _` |
- | (_|_____|  _|  __/  __/ (_| |
-  \___|    |_|  \___|\___|\__,_| 
+ 
+  RoSetta Stone
   Console Feed Reader
 
   Big thanks to awesome newsbeuter team for inspiration. This app is built from scratch, 
@@ -44,6 +41,7 @@ namespace cFeed
   using cFeed.Logging;
   using cFeed.Native;
   using cFeed.Util;
+  using cFeed.Views;
   using CGui.Gui;
   using JsonConfig;
 

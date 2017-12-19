@@ -1,44 +1,33 @@
-﻿namespace cFeed
+﻿namespace cFeed.Views
 {
   using System;
   using System.Collections.Generic;
   using System.Linq;
   using cFeed.Entities;
+  using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui;
+  using CSharpFunctionalExtensions;
   using JsonConfig;
 
   /// <summary>
   /// Displays list of articles for selected feed
   /// </summary>
-  public class ArticleListView : IDisposable
+  public class ArticleListView : BaseView
   {
-    private Viewport _mainView;
     private dynamic footerFormat;
     private dynamic headerFormat;
     private RssFeed selectedFeed;
 
-    public ArticleListView(dynamic articleListLayout)
+    public ArticleListView(dynamic layout) : base((ConfigObject)layout)
     {
-      _mainView = new Viewport();
-      _mainView.Width = articleListLayout.Width;
-      _mainView.Height = articleListLayout.Height;
-
-      foreach (var control in articleListLayout.Controls)
-      {
-        var guiElement = ControlFactory.Get(control);
-        if (guiElement != null) { _mainView.Controls.Add(guiElement); }
-      }
-
       headerFormat = Config.Global.UI.Strings.ArticleListHeaderFormat;
       footerFormat = Config.Global.UI.Strings.ArticleListFooterFormat;
     }
 
-    public void Show(RssFeed feed)
+    private Result<IList<FeedItem>> GetFeed(RssFeed feed)
     {
-      selectedFeed = feed;
-
-      var items = feed.FeedItems
+      var feedItems =  feed.FeedItems
           .OrderByDescending(x => x.PublishDate)
           .Where(x => x.Deleted == false)
           .Select((item, index) =>
@@ -47,27 +36,41 @@
             item.DisplayText = item.DisplayLine;
             return item;
           }).ToList();
+      return Result.Ok<IList<FeedItem>>(feedItems);
+    }
 
-      var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
-      if (articleListHeader != null)
+    public Result<Picklist<FeedItem>> GetPicklist()
+    {
+      var result = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Picklist<FeedItem>)) as Picklist<FeedItem>;
+      if (result == null)
       {
-        articleListHeader.DisplayText = feed.FormatLine(headerFormat);
+        return Result.Fail<Picklist<FeedItem>>("Missing list config.");
       }
-
-      var articleListFooter = _mainView.Controls.Where(x => x.GetType() == typeof(Footer)).FirstOrDefault() as Footer;
-      if (articleListFooter != null)
-      {
-        articleListFooter.DisplayText = feed.FormatLine(footerFormat);
+      else {
+        return Result.Ok<Picklist<FeedItem>>(result);
       }
+    }
 
-      var list = _mainView.Controls.Where(x => x.GetType() == typeof(Picklist<FeedItem>)).FirstOrDefault() as Picklist<FeedItem>;
-      if (list == null) { throw new InvalidOperationException("Missing list config."); }
-      list.UpdateList(items);
-      list.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
-
-      _mainView.Show();
-
-      selectedFeed.DisplayText = selectedFeed.DisplayLine;
+    public void Show(RssFeed feed)
+    {
+      selectedFeed = feed;
+      Result<IList<FeedItem>> getFeedResult = GetFeed(feed);
+      getFeedResult
+        .OnSuccess(items =>
+          {
+            ShowHeader(feed.FormatLine(headerFormat));
+            ShowFooter(feed.FormatLine(footerFormat));
+          })
+        .OnSuccess(items => GetPicklist().OnSuccess(list =>
+         {
+           list.UpdateList(items);
+           list.OnItemKeyHandler += ArticleList_OnItemKeyHandler;
+         }))
+        .OnSuccess((list) =>
+        {
+          _mainView.Show();
+        })
+        .OnSuccess(list => selectedFeed.RefreshTitle());
     }
 
     private bool ArticleList_OnItemKeyHandler(ConsoleKeyInfo key, FeedItem selectedItem, Picklist<FeedItem> parent)
@@ -150,9 +153,11 @@
     {
       if (selectedFeed != null && !selectedFeed.IsProcessing)
       {
-        Dictionary<string, object> choices = new Dictionary<string, object>();
-        choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
-        choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
+        Dictionary<string, object> choices = new Dictionary<string, object>
+        {
+          { Config.Global.UI.Strings.PromptAnswerYes, 1 },
+          { Config.Global.UI.Strings.PromptAnswerNo, 2 }
+        };
 
         var dialog = new Dialog(Config.Global.UI.Strings.PromptDeleteAll, choices);
         dialog.ItemSelected += DeleteAll_ItemSelected;
@@ -171,10 +176,7 @@
 
     private void DeleteAll_ItemSelected(object sender, DialogChoice e)
     {
-      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
-      {
-        markAllDeleted = true;
-      }
+      markAllDeleted |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
     }
 
     private bool OpenArticleInBrowser(FeedItem selectedItem)
@@ -203,7 +205,7 @@
       {
         selectedFeed.Load(true);
 
-        var articleListHeader = _mainView.Controls.Where(x => x.GetType() == typeof(Header)).FirstOrDefault() as Header;
+        var articleListHeader = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Header)) as Header;
         if (articleListHeader != null)
         {
           articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
@@ -234,9 +236,11 @@
 
     private bool MarkAllRead()
     {
-      Dictionary<string, object> choices = new Dictionary<string, object>();
-      choices.Add(Config.Global.UI.Strings.PromptAnswerYes, 1);
-      choices.Add(Config.Global.UI.Strings.PromptAnswerNo, 2);
+      Dictionary<string, object> choices = new Dictionary<string, object>
+      {
+        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
+        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
+      };
 
       var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
       dialog.ItemSelected += MarkAllDialog_ItemSelected;
@@ -263,41 +267,6 @@
         selectedFeed?.MarkAllRead();
       }
       _mainView?.Refresh();
-    }
-
-    private bool disposedValue = false; // To detect redundant calls
-
-    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-    ~ArticleListView()
-    {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
-    }
-
-    // This code added to correctly implement the disposable pattern.
-    public void Dispose()
-    {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(true);
-      // TODO: uncomment the following line if the finalizer is overridden above.
-      GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-      if (disposedValue)
-        return;
-
-      if (disposing)
-      {
-        if (_mainView != null)
-        {
-          _mainView.Dispose();
-          _mainView = null;
-        }
-      }
-
-      disposedValue = true;
     }
   }
 }

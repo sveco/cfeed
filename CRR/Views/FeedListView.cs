@@ -1,4 +1,4 @@
-﻿namespace cFeed
+﻿namespace cFeed.Views
 {
   using System;
   using System.Collections.Generic;
@@ -7,63 +7,45 @@
   using System.Threading;
   using System.Threading.Tasks;
   using cFeed.Entities;
-  using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui;
+  using CSharpFunctionalExtensions;
   using JsonConfig;
 
   /// <summary>
   /// Defines the <see cref="FeedListView" />
   /// </summary>
-  public class FeedListView : IDisposable
+  public class FeedListView : BaseView
   {
-    NLog.Logger logger = Log.Instance.Logger;
-    private Viewport _mainView;
-    internal dynamic headerFormat;
     internal dynamic footerFormat;
+    internal dynamic headerFormat;
 
-    /// <summary>
-    /// Formats displayed string
-    /// </summary>
-    /// <param name="format">The <see cref="string"/></param>
-    /// <returns>The <see cref="string"/></returns>
-    private static string Format(string format)
-    {
-      return format
-        .Replace("%v", Configuration.VERSION)
-        .Replace("%V", Configuration.MAJOR_VERSION);
-    }
+    private bool markAllread;
+
+    private bool purge;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FeedListView"/> class.
     /// </summary>
-    /// <param name="feedListLayout">Feed list layout JSON from configuration</param>
-    public FeedListView(dynamic feedListLayout)
+    /// <param name="layout">Feed list layout JSON from configuration</param>
+    public FeedListView(dynamic layout) : base((ConfigObject)layout)
     {
-      //region controls
-      _mainView = new Viewport
-      {
-        Width = feedListLayout.Width,
-        Height = feedListLayout.Height
-      };
-
-      foreach (var control in feedListLayout.Controls)
-      {
-        var guiElement = ControlFactory.Get(control);
-        if (guiElement != null) { _mainView.Controls.Add(guiElement); }
-      }
-
       headerFormat = Config.Global.UI.Strings.FeedListHeaderFormat;
       footerFormat = Config.Global.UI.Strings.FeedListFooterFormat;
 
       Configuration.Instance.OnConfigurationChangedHandler += Instance_OnConfigurationChangedHandler;
     }
 
-    private void Instance_OnConfigurationChangedHandler()
+    public Result<Picklist<RssFeed>> GetPicklist()
     {
-      if (_mainView != null && _mainView.IsDisplayed)
+      var result = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Picklist<RssFeed>)) as Picklist<RssFeed>;
+      if (result == null)
       {
-        _mainView.Refresh();
+        return Result.Fail<Picklist<RssFeed>>("Missing list config.");
+      }
+      else
+      {
+        return Result.Ok<Picklist<RssFeed>>(result);
       }
     }
 
@@ -74,89 +56,32 @@
     /// <param name="feeds">The <see cref="IList{RssFeed}"/></param>
     public void Show(bool refresh, IList<RssFeed> feeds)
     {
-      var rssFeeds = feeds
-              .Where(item => item.Hidden == false)
-              .Select((item, index) =>
-              {
-                item.Index = index;
-                item.DisplayText = item.DisplayLine;
-                return item;
-              }).ToList();
+      Result<IList<RssFeed>> getFeedListResult = GetFeedList(feeds);
 
-      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Header)) is Header feedListHeader)
-      {
-        feedListHeader.DisplayText = Format(headerFormat);
-      }
-
-      if (_mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Footer)) is Footer feedListFooter)
-      {
-        feedListFooter.DisplayText = Format(footerFormat);
-      }
-
-      var list = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Picklist<RssFeed>)) as Picklist<RssFeed>;
-      if (list == null) { throw new InvalidOperationException("Missing list config."); }
-      list.UpdateList(rssFeeds);
-      list.OnItemKeyHandler += FeedList_OnItemKeyHandler;
-
-      ReloadAll(list, refresh);
-      rssFeeds = null;
-
-      _mainView.Show();
+      getFeedListResult
+        .OnSuccess((items) => {
+          ShowHeader(Format(headerFormat));
+          ShowFooter(Format(footerFormat));
+        })
+        .OnSuccess(items => GetPicklist().OnSuccess(picklist =>
+        {
+          picklist.UpdateList(items);
+          picklist.OnItemKeyHandler += FeedList_OnItemKeyHandler;
+        }))
+        .OnSuccess(list => ReloadAll(list, refresh))
+        .OnSuccess(list => _mainView.Show());
     }
 
     /// <summary>
-    /// Reloads selected <see cref="RssFeed"/>
+    /// Formats displayed string
     /// </summary>
-    /// <param name="Feed">The <see cref="RssFeed"/></param>
-    /// <param name="Refresh">The <see cref="bool"/></param>
-    private void ReloadOne(RssFeed Feed, bool Refresh)
+    /// <param name="format">The <see cref="string"/></param>
+    /// <returns>The <see cref="string"/></returns>
+    private string Format(string format)
     {
-      try
-      {
-        if (Feed.IsDynamic)
-        {
-          Feed.Load(false);
-        }
-        else
-        {
-          Feed.Load(Refresh);
-        }
-      }
-      catch (WebException x)
-      {
-        logger.Error(x);
-        Feed.DisplayText = Feed.DisplayLine + " ERROR:" + x.Message;
-      }
-      catch (Exception x)
-      {
-        logger.Error("Error loading " + Feed.FeedUrl);
-        logger.Error(x);
-        Feed.DisplayText = Feed.DisplayLine + " ERROR!";
-      }
-    }
-
-    /// <summary>
-    /// Reloads all feeds
-    /// </summary>
-    /// <param name="parent">The parent <see cref="Picklist{RssFeed}"/></param>
-    /// <param name="online">Should it download feed? <see cref="bool"/></param>
-    private void ReloadAll(Picklist<RssFeed> parent, bool online)
-    {
-      new Thread(() =>
-      {
-        Thread.CurrentThread.IsBackground = true;
-        /* first load online feeds */
-        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == false), (item) =>
-        {
-          ReloadOne(item, online);
-        });
-
-        /* then load dynamic feeds */
-        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i)?.IsDynamic == true), (item) =>
-        {
-          ((RssFeed)item).Load(false);
-        });
-      }).Start();
+      return format
+        .Replace("%v", Configuration.VERSION)
+        .Replace("%V", Configuration.MAJOR_VERSION);
     }
 
     /// <summary>
@@ -238,54 +163,27 @@
       return true;
     }
 
-    private bool OpenFeedInBrowser(RssFeed selectedItem)
+    private Result<IList<RssFeed>> GetFeedList(IList<RssFeed> feeds)
     {
-      if (selectedItem != null && selectedItem.FeedUrl != null)
+      var rssFeeds = feeds
+              .Where(item => item.Hidden == false)
+              .Select((item, index) =>
+              {
+                item.Index = index;
+                item.DisplayText = item.DisplayLine;
+                return item;
+              }).ToList();
+      return Result.Ok<IList<RssFeed>>(rssFeeds);
+    }
+
+    private void Instance_OnConfigurationChangedHandler()
+    {
+      if (_mainView != null && _mainView.IsDisplayed)
       {
-        Browser.Open(selectedItem.FeedUrl);
+        _mainView.Refresh();
       }
-      return true;
     }
 
-    bool purge;
-    /// <summary>
-    /// Purges articles marked for deletion in selected <see cref="RssFeed"/>.
-    /// </summary>
-    /// <param name="parent"></param>
-    /// <returns></returns>
-    private bool PurgeDeletedArticles(Picklist<RssFeed> parent)
-    {
-      Dictionary<string, object> choices = new Dictionary<string, object>
-      {
-        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
-        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
-      };
-
-      var dialog = new Dialog(Config.Global.UI.Strings.PromptPurge, choices);
-      dialog.ItemSelected += Purge_ItemSelected;
-      dialog.Show();
-
-      _mainView?.Refresh();
-      if (purge)
-      {
-        foreach (var feed in parent.ListItems.Where(x => !x.IsDynamic))
-        {
-          if (!feed.IsProcessing)
-          {
-            feed.Purge();
-          }
-        }
-        purge = false;
-      }
-      return true;
-    }
-
-    private void Purge_ItemSelected(object sender, DialogChoice e)
-    {
-      purge |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
-    }
-
-    private bool markAllread;
     /// <summary>
     /// Marks all articles in <see cref="RssFeed"/> as read.
     /// </summary>
@@ -325,11 +223,20 @@
       markAllread |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
     }
 
+    private bool OpenFeedInBrowser(RssFeed selectedItem)
+    {
+      if (selectedItem != null && selectedItem.FeedUrl != null)
+      {
+        Browser.Open(selectedItem.FeedUrl);
+      }
+      return true;
+    }
+
     /// <summary>
     /// Shows selected feed articles
     /// </summary>
     /// <param name="selectedItem">Selected <see cref="RssFeed"/> item</param>
-    /// <param name="parent">Parent <see cref="Picklist"/></param>
+    /// <param name="parent">Parent <see cref="Picklist{RssFeed}"/></param>
     /// <returns></returns>
     private bool OpenSelectedFeed(RssFeed selectedItem, Picklist<RssFeed> parent)
     {
@@ -349,39 +256,96 @@
       return true;
     }
 
-    #region IDisposable Support
-    private bool disposedValue; // To detect redundant calls
-
-    protected virtual void Dispose(bool disposing)
+    private void Purge_ItemSelected(object sender, DialogChoice e)
     {
-      if (disposedValue)
-        return;
-      
-      if (disposing)
+      purge |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
+    }
+
+    /// <summary>
+    /// Purges articles marked for deletion in selected <see cref="RssFeed"/>.
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <returns></returns>
+    private bool PurgeDeletedArticles(Picklist<RssFeed> parent)
+    {
+      Dictionary<string, object> choices = new Dictionary<string, object>
       {
-        _mainView.Dispose();
+        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
+        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
+      };
+
+      var dialog = new Dialog(Config.Global.UI.Strings.PromptPurge, choices);
+      dialog.ItemSelected += Purge_ItemSelected;
+      dialog.Show();
+
+      _mainView?.Refresh();
+      if (purge)
+      {
+        foreach (var feed in parent.ListItems.Where(x => !x.IsDynamic))
+        {
+          if (!feed.IsProcessing)
+          {
+            feed.Purge();
+          }
+        }
+        purge = false;
       }
-
-      // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-      // TODO: set large fields to null.
-
-      disposedValue = true;
+      return true;
     }
 
-    ~FeedListView()
+    /// <summary>
+    /// Reloads all feeds
+    /// </summary>
+    /// <param name="parent">The parent <see cref="Picklist{RssFeed}"/></param>
+    /// <param name="online">Should it download feed? <see cref="bool"/></param>
+    private void ReloadAll(Picklist<RssFeed> parent, bool online)
     {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
+      new Thread(() =>
+      {
+        Thread.CurrentThread.IsBackground = true;
+        /* first load online feeds */
+        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i).IsDynamic == false), (item) =>
+        {
+          ReloadOne(item, online);
+        });
+
+        /* then load dynamic feeds */
+        Parallel.ForEach(parent.ListItems.Where(i => ((RssFeed)i)?.IsDynamic == true), (item) =>
+        {
+          ((RssFeed)item).Load(false);
+        });
+      }).Start();
     }
 
-    // This code added to correctly implement the disposable pattern.
-    public void Dispose()
+    /// <summary>
+    /// Reloads selected <see cref="RssFeed"/>
+    /// </summary>
+    /// <param name="Feed">The <see cref="RssFeed"/></param>
+    /// <param name="Refresh">The <see cref="bool"/></param>
+    private void ReloadOne(RssFeed Feed, bool Refresh)
     {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(true);
-      // TODO: uncomment the following line if the finalizer is overridden above.
-      GC.SuppressFinalize(this);
+      try
+      {
+        if (Feed.IsDynamic)
+        {
+          Feed.Load(false);
+        }
+        else
+        {
+          Feed.Load(Refresh);
+        }
+      }
+      catch (WebException x)
+      {
+        logger.Error(x);
+        Feed.DisplayText = Feed.DisplayLine + " ERROR:" + x.Message;
+      }
+      catch (Exception x)
+      {
+        logger.Error("Error loading " + Feed.FeedUrl);
+        logger.Error(x);
+        Feed.DisplayText = Feed.DisplayLine + " ERROR!";
+      }
     }
-    #endregion
   }
 }
