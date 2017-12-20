@@ -390,6 +390,7 @@
           result.Item = i;
           result.Index = index + 1;
           result.Tags = Tags;
+          result.LastUpdated = DateTime.Now;
           DbWrapper.Instance.Update(result);
         }
         else
@@ -398,7 +399,8 @@
           {
             FeedUrl = FeedUrl,
             Index = index + 1,
-            Tags = Tags
+            Tags = Tags,
+            LastUpdated = DateTime.Now
           };
           try
           {
