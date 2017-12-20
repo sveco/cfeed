@@ -276,6 +276,11 @@
     /// </summary>
     public string[] Tags { get; set; }
     /// <summary>
+    /// Date and time of last record update (disregarding read/delete flags)
+    /// </summary>
+    public DateTime LastUpdated { get; set; }
+
+    /// <summary>
     /// Gets or sets the Title
     /// </summary>
     public string Title
@@ -352,8 +357,6 @@
         {
           HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, null);
           doc.LoadHtml(downloader.GetPage());
-
-          //doc = w.Load(Links[0].Uri);
         }
         catch (Exception ex) {
           this.DisplayText = this.DisplayLine + " ERROR.";
@@ -396,10 +399,11 @@
         { "D", Configuration.Instance.GetDownloadState(this.IsDownloaded)},
         { "x", Configuration.Instance.GetDeletedState(this.Deleted)},  //only shown when article is marked as deleted, afterwards filtered out
         { "d", PublishDate.ToString(dateFormat)},
+        { "u", LastUpdated.ToString(dateFormat)},
         { "t", Title},
         { "s", Summary},
         { "l", FeedUrl.ToString()},
-        { "V", Configuration.VERSION},
+        { "V", Configuration.MAJOR_VERSION},
         { "v", Configuration.VERSION}
       };
       var line = Formatter.FormatLine(Format, replacementTable);
@@ -468,6 +472,7 @@
           result.ExternalLinks = ExternalLinks;
           result.ImageLinks = ImageLinks;
           result.Tags = Tags;
+          result.LastUpdated = DateTime.Now;
           DbWrapper.Instance.Update(result);
         }
         this.IsProcessing = false;
@@ -511,8 +516,7 @@
     internal void MarkUnread()
     {
       IsNew = true;
-      var result = DbWrapper.Instance.Find(x => x.Id ==
-                                           this.Id).FirstOrDefault();
+      var result = DbWrapper.Instance.Find(x => x.Id == this.Id).FirstOrDefault();
       if (result != null)
       {
         result.IsNew = true;
