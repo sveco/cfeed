@@ -353,7 +353,7 @@
             new Action(_articleContent.Show)
             );
       }
-      return true;
+      return false;
     }
 
     private bool OpenArticle()
