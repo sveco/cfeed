@@ -173,8 +173,6 @@ String | Meaning
 %i | Feed index
 %l | RSS/ATOM feed url
 %n | Read state flag (New/Read)
-%D | Download state flag (Downloaded/Pending)
-%x | Deleted flag
 %u | # of unread / total items
 %T | # of total items
 %U | # of unread items
@@ -188,11 +186,16 @@ Replacement strings for *ArticleListFormat* and *ArticleTitleFormat*:
 String | Meaning
 ------------ | -------------
 %i | Feed index
-%l | RSS/ATOM feed url
 %n | Read state flag (New/Read)
+%D | Download state flag (Downloaded/Pending)
+%x | Deleted flag
 %d | Article publish date / Last uppdated date (which one is latest)
+%u | Last updated date
 %t | Article title
 %s | Summary
+%l | RSS/ATOM feed url
+%V | Major.Minor version
+%v | Full version, Major.Minor.Revision.Build
 
 
 ***UI.Colors***

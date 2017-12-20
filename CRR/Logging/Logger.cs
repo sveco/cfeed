@@ -32,7 +32,7 @@ namespace cFeed.Logging
             result = LogLevel.FromString(Config.Global.Debug);
           }
           catch (Exception) {
-            //No point logging error, logger is not ready
+            //No point logging error logging, logger is not ready anyway
             //Logger.Warn("Unable to parse log level, using default.");
           }
           return result;
