@@ -112,6 +112,24 @@ namespace cFeed.Util
           bool skip = false;
           switch (node.Name.ToLower())
           {
+            case "title":
+              if (node.HasChildNodes)
+              {
+                ConvertContentTo(node, outText);
+              }
+              skip = true;
+              break;
+
+            case "meta":
+              //extract description
+              if(node.GetAttributeValue("name", "") == "description")
+              {
+                outText.Write(Environment.NewLine);
+                outText.Write(node.GetAttributeValue("content", ""));
+                outText.Write(Environment.NewLine);
+              }
+              break;
+
             //handle headers
             case "h1":
             case "h2":
