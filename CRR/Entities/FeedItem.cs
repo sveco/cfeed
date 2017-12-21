@@ -355,12 +355,12 @@
       {
         try
         {
-          HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, null);
+          HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, Configuration.UserAgent);
           doc.LoadHtml(downloader.GetPage());
         }
         catch (Exception ex) {
+          doc = null;
           this.DisplayText = this.DisplayLine + " ERROR.";
-
           logger.Error($"Could not load {Links[0].Uri}");
           logger.Error(ex);
         }

@@ -273,7 +273,7 @@
     {
       SyndicationFeed feed = null;
       HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-      request.UserAgent = "Cfeed (https://github.com/sveco/cfeed)";
+      request.UserAgent = Configuration.UserAgent;
       request.Timeout = timeout;
       try
       {

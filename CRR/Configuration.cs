@@ -53,6 +53,7 @@
     private string notDeletedState { get; set; }
 
     public static readonly string ReplacementPattern = @"\%([a-zA-Z]):?([\d]*)?([rl]?)?";
+    public static readonly string UserAgent = @"Cfeed(https://github.com/sveco/cfeed)";
 
     public static string Database;
 
