@@ -8,6 +8,7 @@
   using System.Threading.Tasks;
   using System.Timers;
   using cFeed.Entities;
+  using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui;
   using CGui.Gui.Primitives;
@@ -28,6 +29,7 @@
     private bool _displayNext;
 
     Timer timer = new Timer();
+    NLog.Logger logger = Log.Instance.Logger;
 
     public ArticleView(dynamic layout) : base((ConfigObject)layout)
     {
@@ -48,21 +50,19 @@
 
       void onContentLoaded(string content)
       {
-        var article = new TextArea(content)
+        if (_mainView.Controls.FirstOrDefault(x => x.Name == "ArticleContent") is TextArea article)
         {
-          Top = 9,
-          Left = 2,
-          Height = Console.WindowHeight - 10,
-          Width = Console.WindowWidth - 3,
-          WaitForInput = true
-        };
-        article.OnItemKeyHandler += Article_OnItemKeyHandler;
-        article.ShowScrollBar = true;
-
-        selectedArticle.MarkAsRead();
-        timer.Stop();
-        HideLoadingText();
-        article.Show();
+          article.Content = content;
+          article.OnItemKeyHandler += Article_OnItemKeyHandler;
+          article.WaitForInput = true;
+          selectedArticle.MarkAsRead();
+          timer.Stop();
+          HideLoadingText();
+          article.Show();
+        }
+        else {
+          logger.Warn("Missing \"ArticleContent\" text area, cannot display article content.");
+        }
       }
 
       showArticleHeader()
