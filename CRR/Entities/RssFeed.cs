@@ -2,14 +2,12 @@
 {
   using System;
   using System.Collections.Generic;
-  using System.Globalization;
   using System.IO;
   using System.Linq;
   using System.Linq.Dynamic;
   using System.Net;
   using System.Net.Sockets;
   using System.ServiceModel.Syndication;
-  using System.Text;
   using System.Threading;
   using System.Xml;
   using cFeed.LiteDb;
@@ -22,21 +20,24 @@
   /// <summary>
   /// Defines the <see cref="RssFeed" />
   /// </summary>
-  public class RssFeed : ListItem, IDisposable {
-    NLog.Logger logger = Log.Instance.Logger;
+  public class RssFeed : ListItem, IDisposable
+  {
     internal bool _isProcessing;
-    private string _customTitle;
-    private Uri _feedUrl;
+
+    string _customTitle;
+    Uri _feedUrl;
 
     /// <summary>
     /// Time when feed was loaded.
     /// </summary>
-    private DateTime lastLoadtime;
+    DateTime lastLoadtime;
+
+    NLog.Logger logger = Log.Instance.Logger;
 
     /// <summary>
     /// Timer used to automatically reload feed.
     /// </summary>
-    private Timer timer;
+    Timer timer;
 
     /// <summary>
     /// Auto reload feed.
@@ -117,11 +118,6 @@
     public bool IsDynamic
     {
       get { return FeedUrl == null && !string.IsNullOrEmpty(FeedQuery); }
-    }
-
-    internal void RefreshTitle()
-    {
-      this.DisplayText = this.DisplayLine;
     }
 
     /// <summary>
@@ -211,6 +207,16 @@
       }
     }
 
+    public static Stream Flush(string s)
+    {
+      MemoryStream stream = new MemoryStream();
+      StreamWriter writer = new StreamWriter(stream);
+      writer.Write(s);
+      writer.Flush();
+      stream.Position = 0;
+      return stream;
+    }
+
     /// <summary>
     /// Formats string and replaces placeholders with actual values
     /// </summary>
@@ -253,16 +259,6 @@
       this.GetFeed(refresh);
     }
 
-    public static Stream Flush(string s)
-    {
-      MemoryStream stream = new MemoryStream();
-      StreamWriter writer = new StreamWriter(stream);
-      writer.Write(s);
-      writer.Flush();
-      stream.Position = 0;
-      return stream;
-    }
-
     /// <summary>
     /// Supports RSS 1, 2 and ATOM 1.0 feed standards
     /// </summary>
@@ -279,7 +275,6 @@
       {
         using (WebResponse response = request.GetResponse())
         {
-
           XmlSanitizingStream stream = new XmlSanitizingStream(response.GetResponseStream());
           var xml = stream.ReadToEnd();
           using (RssXmlReader reader = new RssXmlReader(Flush(xml)))
@@ -321,6 +316,7 @@
       }
       return feed;
     }
+
     /// <summary>
     /// Marks all articles for deletion
     /// </summary>
@@ -351,6 +347,10 @@
       DbWrapper.Instance.Purge(FeedUrl);
     }
 
+    internal void RefreshTitle()
+    {
+      this.DisplayText = this.DisplayLine;
+    }
 
     /// <summary>
     /// The GetFeed
@@ -367,7 +367,6 @@
       if (refresh && FeedUrl != null)
       {
         LoadFeedFromWeb();
-
       }
       if (timer != null)
       {
@@ -385,13 +384,14 @@
       foreach (var i in this.Feed.Items)
       {
         var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
-        if (result != null)
+        if (result != null && i.Id != null)
         {
           result.Item = i;
           result.Index = index + 1;
           result.Tags = Tags;
           result.LastUpdated = DateTime.Now;
           DbWrapper.Instance.Update(result);
+          //this.FeedItems.Add(result);
         }
         else
         {
@@ -465,36 +465,36 @@
       else
         if (FeedUrl != null &&
             string.IsNullOrEmpty(FeedQuery))
+      {
+        //Only feed, no filtering
+        this.FeedItems =
+          DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
+          .OrderByDescending(x => x.PublishDate)
+        .Select((item, x) => { item.Index = x; return item; })
+        .ToList();
+      }
+      else
+          if (!string.IsNullOrEmpty(FeedQuery))
+      {
+        //Dynamic feed
+        try
         {
-          //Only feed, no filtering
-          this.FeedItems =
-            DbWrapper.Instance.Find(x => x.FeedUrl == FeedUrl)
-            .OrderByDescending(x => x.PublishDate)
+          this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
+                           .OrderByDescending(x => x.PublishDate)
           .Select((item, x) => { item.Index = x; return item; })
           .ToList();
         }
-        else
-          if (!string.IsNullOrEmpty(FeedQuery))
-          {
-            //Dynamic feed
-            try
-            {
-              this.FeedItems = DbWrapper.Instance.FindAll().Where(this.FeedQuery)
-                               .OrderByDescending(x => x.PublishDate)
-              .Select((item, x) => { item.Index = x; return item; })
-              .ToList();
-            }
-            catch (ParseException x)
-            {
-              logger.Error("Syntax error in FeedQuery:" + FeedQuery);
-              logger.Error(x);
-            }
-            catch (ArgumentNullException x)
-            {
-              logger.Error("Missing field in db, skipping feed:" + FeedQuery);
-              logger.Error(x);
-            }
-          }
+        catch (ParseException x)
+        {
+          logger.Error("Syntax error in FeedQuery:" + FeedQuery);
+          logger.Error(x);
+        }
+        catch (ArgumentNullException x)
+        {
+          logger.Error("Missing field in db, skipping feed:" + FeedQuery);
+          logger.Error(x);
+        }
+      }
     }
 
     /// <summary>
@@ -528,6 +528,7 @@
 
       JoinReindexFeed();
     }
+
     /// <summary>
     /// The OnTimer
     /// </summary>
@@ -537,8 +538,22 @@
       GetFeed(true);
     }
 
-    #region IDisposable Support
     private bool disposedValue; // To detect redundant calls
+
+    ~RssFeed()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(false);
+    }
+
+    // This code added to correctly implement the disposable pattern.
+    public void Dispose()
+    {
+      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+      Dispose(true);
+      // TODO: uncomment the following line if the finalizer is overridden above.
+      // GC.SuppressFinalize(this);
+    }
 
     protected virtual void Dispose(bool disposing)
     {
@@ -562,21 +577,5 @@
         disposedValue = true;
       }
     }
-
-    ~RssFeed()
-    {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(false);
-    }
-
-    // This code added to correctly implement the disposable pattern.
-    public void Dispose()
-    {
-      // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-      Dispose(true);
-      // TODO: uncomment the following line if the finalizer is overridden above.
-      // GC.SuppressFinalize(this);
-    }
-    #endregion
   }
 }
