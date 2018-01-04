@@ -1,4 +1,4 @@
-﻿# Console Feed Reader
+﻿# Console RSS/ATOM Feed Reader
 
 Get [latest version here](https://github.com/sveco/cfeed/releases/download/0.8.0/cfeed.v0.8.0.zip).
 

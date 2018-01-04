@@ -17,128 +17,27 @@
 
   public class ArticleView : BaseView
   {
-    dynamic headerFormat;
+    TextArea _articleContent;
+    bool _displayNext;
+    string[] _filters;
     dynamic footerFormat;
-
-    private FeedItem selectedArticle;
-    private RssFeed selectedFeed;
-    private Picklist<FeedItem> parentArticleList;
-    private FeedItem nextArticle;
-    private string[] _filters;
-    private TextArea _articleContent;
-    private bool _displayNext;
-
+    dynamic headerFormat;
+    FeedItem nextArticle;
+    Picklist<FeedItem> parentArticleList;
+    FeedItem selectedArticle;
+    RssFeed selectedFeed;
     Timer timer = new Timer();
-    NLog.Logger logger = Log.Instance.Logger;
+    String timerElipsis = string.Empty;
+
+    private bool CanShowNext
+    {
+      get { return selectedFeed != null && selectedArticle != null; }
+    }
 
     public ArticleView(dynamic layout) : base((ConfigObject)layout)
     {
       headerFormat = Config.Global.UI.Strings.ArticleHeaderFormat;
       footerFormat = Config.Global.UI.Strings.ArticleFooterFormat;
-    }
-
-    private void PrepareArticle()
-    {
-
-      if (selectedFeed != null)
-      {
-        if (selectedFeed.Filters != null)
-        {
-          _filters = selectedFeed.Filters;
-        }
-      }
-
-      void onContentLoaded(string content)
-      {
-        if (_mainView.Controls.FirstOrDefault(x => x.Name == "ArticleContent") is TextArea article)
-        {
-          article.Content = content;
-          article.OnItemKeyHandler += Article_OnItemKeyHandler;
-          article.WaitForInput = true;
-          selectedArticle.MarkAsRead();
-          timer.Stop();
-          HideLoadingText();
-          article.Show();
-        }
-        else {
-          logger.Warn("Missing \"ArticleContent\" text area, cannot display article content.");
-        }
-      }
-
-      showArticleHeader()
-        .OnSuccess(() =>
-        {
-          ShowHeader(selectedArticle.TitleLine);
-          ShowFooter(selectedArticle.FormatLine(footerFormat));
-          selectedArticle.OnContentLoaded = new Action<string>(onContentLoaded);
-        })
-        .OnSuccess(() => ShowLoadingText())
-        .OnSuccess(() => StartTimer())
-        .OnSuccess(() => _mainView.Show());
-    }
-
-    private void ShowLoadingText()
-    {
-      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
-      {
-        loadingText.Content = Configuration.Instance.LoadingText;
-        loadingText.TextAlignment = TextAlignment.Center;
-      }
-    }
-    private void HideLoadingText()
-    {
-      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
-      {
-        loadingText.Clear();
-      }
-    }
-
-    private void StartTimer()
-    {
-      timer.Interval = 500;
-      timer.Elapsed += Timer_Elapsed;
-      timer.Start();
-    }
-
-    private Result showArticleHeader()
-    {
-      string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
-      string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
-      string resetColor = Configuration.ColorReset;
-
-      StringBuilder sb = new StringBuilder();
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset);
-      for (int i = 0; i < selectedArticle.Links.Count; i++)
-      {
-        sb.AppendLine(linkHighlight + "[" + (i+1).ToString() + "] " + resetColor + Configuration.Instance.ArticleTextHighlight + Configuration.ColorReset + selectedArticle.Links?[i].Uri.GetLeftPart(UriPartial.Path));
-      }
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
-      sb.AppendLine();
-
-      var textArea = new TextArea(sb.ToString());
-      sb = null;
-      textArea.Top = 2;
-      textArea.Left = 2;
-      textArea.Width = Console.WindowWidth - 6;
-      textArea.Height = textArea.TotalItems + 1;
-      textArea.WaitForInput = false;
-      _articleContent = textArea;
-
-      return Result.Ok();
-    }
-
-    String timerElipsis = string.Empty;
-    private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-    {
-      if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
-      if (_mainView != null && _mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
-      {
-        loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
-        loadingText.Refresh();
-      }
     }
 
     public void Show(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)
@@ -170,11 +69,6 @@
               );
         }
       }
-    }
-
-    private bool CanShowNext
-    {
-      get { return selectedFeed != null && selectedArticle != null; }
     }
 
     private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
@@ -241,67 +135,36 @@
       return true;
     }
 
-    private bool ShowPreviousUnread()
-    {
-      if (CanShowNext)
-      {
-        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
-        {
-          nextArticle = parentArticleList.ListItems
-            .OrderBy(x => x.Index)
-            .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index);
-        }
-      }
-      return DisplayNext();
-    }
-
-    private bool ShowPrevious()
-    {
-      if (CanShowNext)
-      {
-        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
-        {
-          nextArticle = (FeedItem)parentArticleList.ListItems
-            .OrderBy(x => x.Index)
-            .FirstOrDefault(x => x.Index > selectedArticle.Index);
-        }
-      }
-      return DisplayNext();
-    }
-
-    private bool DisplayNext() {
-      _displayNext = nextArticle != null;
-      return !_displayNext;
-    }
-
-    private bool ShowNextUnread()
-    {
-      if (CanShowNext)
-      {
-        nextArticle = (FeedItem)parentArticleList.ListItems
-          .OrderByDescending(x => x.Index)
-          .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index);
-      }
-      return DisplayNext();
-    }
-
-    private bool ShowNext()
-    {
-      if (CanShowNext)
-      {
-        nextArticle = (FeedItem)parentArticleList.ListItems
-          .OrderByDescending(x => x.Index)
-          .FirstOrDefault(x => x.Index < selectedArticle.Index);
-      }
-      return DisplayNext();
-    }
-
     private bool DeleteArticle()
     {
       if (selectedArticle != null)
       {
         selectedArticle.MarkDeleted();
         selectedArticle.DisplayText = selectedArticle.DisplayText;
+      }
+      return true;
+    }
+
+    private bool DisplayNext()
+    {
+      _displayNext = nextArticle != null;
+      return !_displayNext;
+    }
+
+    private void HideLoadingText()
+    {
+      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
+      {
+        loadingText.Clear();
+      }
+    }
+
+    private bool OpenArticle()
+    {
+      if (selectedArticle != null &&
+          selectedArticle.Links.Count > 0)
+      {
+        Browser.Open(selectedArticle.Links[0].Uri);
       }
       return true;
     }
@@ -340,28 +203,6 @@
             }
           }
         }
-      }
-      return true;
-    }
-
-    private bool SaveArticle()
-    {
-      if (selectedArticle != null)
-      {
-        Parallel.Invoke(
-            new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
-            new Action(_articleContent.Show)
-            );
-      }
-      return false;
-    }
-
-    private bool OpenArticle()
-    {
-      if (selectedArticle != null &&
-          selectedArticle.Links.Count > 0)
-      {
-        Browser.Open(selectedArticle.Links[0].Uri);
       }
       return true;
     }
@@ -412,6 +253,164 @@
         }
       }
       return true;
+    }
+
+    private void PrepareArticle()
+    {
+      if (selectedFeed != null)
+      {
+        if (selectedFeed.Filters != null)
+        {
+          _filters = selectedFeed.Filters;
+        }
+      }
+
+      void onContentLoaded(string content)
+      {
+        if (_mainView.Controls.FirstOrDefault(x => x.Name == "ArticleContent") is TextArea article)
+        {
+          article.Content = content;
+          article.OnItemKeyHandler += Article_OnItemKeyHandler;
+          article.WaitForInput = true;
+          selectedArticle.MarkAsRead();
+          timer.Stop();
+          HideLoadingText();
+          article.Show();
+        }
+        else
+        {
+          logger.Warn("Missing \"ArticleContent\" text area, cannot display article content.");
+        }
+      }
+
+      showArticleHeader()
+        .OnSuccess(() =>
+        {
+          ShowHeader(selectedArticle.TitleLine);
+          ShowFooter(selectedArticle.FormatLine(footerFormat));
+          selectedArticle.OnContentLoaded = new Action<string>(onContentLoaded);
+        })
+        .OnSuccess(() => ShowLoadingText())
+        .OnSuccess(() => StartTimer())
+        .OnSuccess(() => _mainView.Show());
+    }
+
+    private bool SaveArticle()
+    {
+      if (selectedArticle != null)
+      {
+        Parallel.Invoke(
+            new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
+            new Action(_articleContent.Show)
+            );
+      }
+      return false;
+    }
+
+    private Result showArticleHeader()
+    {
+      string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+      string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
+      string resetColor = Configuration.ColorReset;
+
+      StringBuilder sb = new StringBuilder();
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset);
+      for (int i = 0; i < selectedArticle.Links.Count; i++)
+      {
+        sb.AppendLine(linkHighlight + "[" + (i + 1).ToString() + "] " + resetColor + Configuration.Instance.ArticleTextHighlight + Configuration.ColorReset + selectedArticle.Links?[i].Uri.GetLeftPart(UriPartial.Path));
+      }
+      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
+      sb.AppendLine();
+
+      var textArea = new TextArea(sb.ToString());
+      sb = null;
+      textArea.Top = 2;
+      textArea.Left = 2;
+      textArea.Width = Console.WindowWidth - 6;
+      textArea.Height = textArea.TotalItems + 1;
+      textArea.WaitForInput = false;
+      _articleContent = textArea;
+
+      return Result.Ok();
+    }
+
+    private void ShowLoadingText()
+    {
+      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
+      {
+        loadingText.Content = Configuration.Instance.LoadingText;
+        loadingText.TextAlignment = TextAlignment.Center;
+      }
+    }
+
+    private bool ShowNext()
+    {
+      if (CanShowNext)
+      {
+        nextArticle = (FeedItem)parentArticleList.ListItems
+          .OrderByDescending(x => x.Index)
+          .FirstOrDefault(x => x.Index < selectedArticle.Index);
+      }
+      return DisplayNext();
+    }
+
+    private bool ShowNextUnread()
+    {
+      if (CanShowNext)
+      {
+        nextArticle = (FeedItem)parentArticleList.ListItems
+          .OrderByDescending(x => x.Index)
+          .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index);
+      }
+      return DisplayNext();
+    }
+
+    private bool ShowPrevious()
+    {
+      if (CanShowNext)
+      {
+        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
+        {
+          nextArticle = (FeedItem)parentArticleList.ListItems
+            .OrderBy(x => x.Index)
+            .FirstOrDefault(x => x.Index > selectedArticle.Index);
+        }
+      }
+      return DisplayNext();
+    }
+
+    private bool ShowPreviousUnread()
+    {
+      if (CanShowNext)
+      {
+        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
+        {
+          nextArticle = parentArticleList.ListItems
+            .OrderBy(x => x.Index)
+            .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index);
+        }
+      }
+      return DisplayNext();
+    }
+
+    private void StartTimer()
+    {
+      timer.Interval = 500;
+      timer.Elapsed += Timer_Elapsed;
+      timer.Start();
+    }
+
+    private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+    {
+      if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
+      if (_mainView != null && _mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
+      {
+        loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
+        loadingText.Refresh();
+      }
     }
   }
 }

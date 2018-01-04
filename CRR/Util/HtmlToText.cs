@@ -1,26 +1,27 @@
-﻿using JsonConfig;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using HtmlAgilityPack;
+﻿
 
 namespace cFeed.Util
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Collections.ObjectModel;
+  using System.IO;
+  using System.Linq;
+  using HtmlAgilityPack;
+  using JsonConfig;
+
   public class HtmlToText
   {
-    Collection<Uri> Links = new Collection<Uri>();
-    Collection<Uri> Images = new Collection<Uri>();
-    Uri BaseUri;
-    string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
-    string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
-    string imageLinkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkHighlight);
-    string imageLinkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkTextHighlight);
-    string resetColor = Configuration.ColorReset;
+    private Uri BaseUri;
+    private string imageLinkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkHighlight);
+    private string imageLinkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.ImageLinkTextHighlight);
+    private Collection<Uri> Images = new Collection<Uri>();
+    private string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+    private Collection<Uri> Links = new Collection<Uri>();
+    private string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
+    private string resetColor = Configuration.ColorReset;
 
-
-    char[] trimChars = { ' ', '\t', '\n' };
+    private char[] trimChars = { ' ', '\t', '\n' };
 
     public List<string> Filters { get; internal set; }
     public int LinkStartFrom { get; set; }
@@ -51,14 +52,6 @@ namespace cFeed.Util
       links = this.Links;
       images = this.Images;
       return sw.ToString();
-    }
-
-    private void ConvertContentTo(HtmlNode node, TextWriter outText)
-    {
-      foreach (HtmlNode subnode in node.ChildNodes)
-      {
-        ConvertTo(subnode, outText);
-      }
     }
 
     public void ConvertTo(HtmlNode node, TextWriter outText)
@@ -122,7 +115,7 @@ namespace cFeed.Util
 
             case "meta":
               //extract description
-              if(node.GetAttributeValue("name", "") == "description")
+              if (node.GetAttributeValue("name", "") == "description")
               {
                 outText.Write(Environment.NewLine);
                 outText.Write(node.GetAttributeValue("content", ""));
@@ -152,9 +145,11 @@ namespace cFeed.Util
               // treat paragraphs as crlf
               outText.Write(Environment.NewLine);
               break;
+
             case "li":
               outText.Write(Environment.NewLine + "* ");
               break;
+
             case "img":
               outText.Write(Environment.NewLine + imageLinkTextHighlight + "[img:" + node.Attributes["alt"]?.Value + "]" + resetColor);
               if (node.Attributes.Contains("src"))
@@ -175,6 +170,7 @@ namespace cFeed.Util
                 }
               }
               break;
+
             case "strong":
               outText.Write(" " + linkTextHighlight);
               if (node.HasChildNodes)
@@ -208,10 +204,10 @@ namespace cFeed.Util
                   Links.Add(uriResult);
                   outText.Write(linkHighlight + "[" + (Links.Count + LinkStartFrom) + "] " + resetColor);
                 }
-
               }
               skip = true;
               break;
+
             case "i":
               outText.Write(" ");
               if (node.HasChildNodes)
@@ -231,6 +227,14 @@ namespace cFeed.Util
             }
           }
           break;
+      }
+    }
+
+    private void ConvertContentTo(HtmlNode node, TextWriter outText)
+    {
+      foreach (HtmlNode subnode in node.ChildNodes)
+      {
+        ConvertTo(subnode, outText);
       }
     }
   }

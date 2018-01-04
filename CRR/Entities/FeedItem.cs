@@ -21,8 +21,6 @@
   /// </summary>
   public class FeedItem : ListItem, IDisposable
   {
-    NLog.Logger logger = Log.Instance.Logger;
-
     /// <summary>
     /// Defines the OnContentLoaded
     /// </summary>
@@ -32,31 +30,31 @@
     /// <summary>
     /// Defines the dateFormat
     /// </summary>
-    private static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
+    static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
 
     /// <summary>
     /// Defines the displayFormat
     /// </summary>
-    private static string displayFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
+    static string displayFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
 
     /// <summary>
     /// Defines the fileNameFormat
     /// </summary>
-    private static string fileNameFormat = Config.Global.SavedFileName as string;
+    static string fileNameFormat = Config.Global.SavedFileName as string;
 
     /// <summary>
     /// Defines the titleFormat
     /// </summary>
-    private static string titleFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
+    static string titleFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
 
-    private Uri _feedUrl;
-    private bool _isNew = true;
-    private bool _isProcessing;
-
-    private DateTime _publishDate;
-    private string _summary;
-    private string _title;
-    private bool disposedValue;
+    Uri _feedUrl;
+    bool _isNew = true;
+    bool _isProcessing;
+    DateTime _publishDate;
+    string _summary;
+    string _title;
+    bool disposedValue;
+    NLog.Logger logger = Log.Instance.Logger;
 
     /// <summary>
     /// Gets or sets the ArticleContent
@@ -76,20 +74,16 @@
       }
     }
 
+    /// <summary>
+    /// Gets or sets the Authors
+    /// </summary>
+    public Collection<SyndicationPerson> Authors { get; set; }
+
     [BsonIgnore]
     public CultureInfo Culture
     {
       get { return CultureInfo.CurrentCulture; }
     }
-    public CompareOptions IgnoreCase
-    {
-      get { return CompareOptions.IgnoreCase; }
-    }
-
-    /// <summary>
-    /// Gets or sets the Authors
-    /// </summary>
-    public Collection<SyndicationPerson> Authors { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether article was marked for deletion
@@ -134,6 +128,11 @@
     /// </summary>
     public Guid Id { get; set; }
 
+    public CompareOptions IgnoreCase
+    {
+      get { return CompareOptions.IgnoreCase; }
+    }
+
     /// <summary>
     /// Gets or sets the ImageLinks
     /// </summary>
@@ -172,6 +171,7 @@
     /// </summary>
     [BsonIgnore]
     public bool IsLoaded { get; private set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether article is new
     /// </summary>
@@ -205,19 +205,6 @@
       }
     }
 
-    internal void DeleteArticleContent()
-    {
-      try
-      {
-        File.Delete(ArticleFileName);
-      }
-      catch (Exception ex)
-      {
-        Log.Instance.Logger.Error($"Could not delete file {ArticleFileName}");
-        Log.Instance.Logger.Error(ex);
-      }
-    }
-
     /// <summary>
     /// <see cref="SyndicationItem"/>
     /// </summary>
@@ -229,6 +216,11 @@
         SetValues(value);
       }
     }
+
+    /// <summary>
+    /// Date and time of last record update (disregarding read/delete flags)
+    /// </summary>
+    public DateTime LastUpdated { get; set; }
 
     /// <summary>
     /// Gets or sets the Links
@@ -271,14 +263,11 @@
     /// Gets or sets the SyndicationItemId
     /// </summary>
     public string SyndicationItemId { get; set; }
+
     /// <summary>
     /// Gets or sets the Tags
     /// </summary>
     public string[] Tags { get; set; }
-    /// <summary>
-    /// Date and time of last record update (disregarding read/delete flags)
-    /// </summary>
-    public DateTime LastUpdated { get; set; }
 
     /// <summary>
     /// Gets or sets the Title
@@ -295,6 +284,7 @@
         }
       }
     }
+
     /// <summary>
     /// Gets the TitleLine
     /// </summary>
@@ -358,7 +348,8 @@
           HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, Configuration.UserAgent);
           doc.LoadHtml(downloader.GetPage());
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
           doc = null;
           this.DisplayText = this.DisplayLine + " ERROR.";
           logger.Error($"Could not load {Links[0].Uri}");
@@ -495,6 +486,19 @@
       }
     }
 
+    internal void DeleteArticleContent()
+    {
+      try
+      {
+        File.Delete(ArticleFileName);
+      }
+      catch (Exception ex)
+      {
+        Log.Instance.Logger.Error($"Could not delete file {ArticleFileName}");
+        Log.Instance.Logger.Error(ex);
+      }
+    }
+
     /// <summary>
     /// Marks article as deleted.
     /// </summary>
@@ -598,7 +602,7 @@
         if (System.IO.Path.GetFullPath(pathOnly).Length + fileNameOnly.Length
             > 260)
         {
-          int dotPosition = fileNameOnly.LastIndexOf(".",StringComparison.InvariantCulture);
+          int dotPosition = fileNameOnly.LastIndexOf(".", StringComparison.InvariantCulture);
           string fileName = fileNameOnly.Substring(0, dotPosition);
           string extension = fileNameOnly.Substring(dotPosition,
                              fileNameOnly.Length - dotPosition);
@@ -620,6 +624,7 @@
 
       return result;
     }
+
     /// <summary>
     /// Sets the local values based on <see cref="SyndicationItem"/>
     /// </summary>

@@ -1,20 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using cFeed.Entities;
-using LiteDB;
-
-namespace cFeed.LiteDb
+﻿namespace cFeed.LiteDb
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Linq.Expressions;
+  using cFeed.Entities;
+  using LiteDB;
+
   public class DbWrapper : IDisposable
   {
-    private readonly object padlock;
-    LiteDatabase db;
-    #region Singleton implementation
-    private static readonly DbWrapper instance = new DbWrapper();
+    readonly object padlock;
+    readonly LiteDatabase db;
+
+    static readonly DbWrapper instance = new DbWrapper();
+
+    public static DbWrapper Instance
+    {
+      get { return instance; }
+    }
 
     // Explicit static constructor to tell C# compiler
     // not to mark type as beforefieldinit
@@ -25,46 +27,40 @@ namespace cFeed.LiteDb
     private DbWrapper()
     {
       db = new LiteDatabase("Filename=" + Configuration.Database + ";Mode=Exclusive");
-      
+
       items = db.GetCollection<FeedItem>("items");
       padlock = new object();
     }
 
-    public static DbWrapper Instance
-    {
-      get { return instance; }
-    }
-    #endregion
-
+    private bool disposedValue = false;
     private LiteCollection<FeedItem> items;
-    private LiteCollection<FeedItem> Items {
+
+    private LiteCollection<FeedItem> Items
+    {
       get
       {
         return items;
       }
     }
 
+    void IDisposable.Dispose()
+    {
+      Dispose(true);
+    }
+
     internal IEnumerable<FeedItem> Find(Expression<Func<FeedItem, bool>> predicate)
     {
       //lock (padlock)
       //{
-        return items.Find(predicate);
+      return items.Find(predicate);
       //}
-    }
-
-    internal void Update(FeedItem result)
-    {
-      lock (padlock)
-      {
-        this.Items.Update(result);
-      }
     }
 
     internal IEnumerable<FeedItem> FindAll()
     {
       //lock (padlock)
       //{
-        return this.Items.FindAll();
+      return this.Items.FindAll();
       //}
     }
 
@@ -84,10 +80,12 @@ namespace cFeed.LiteDb
       }
     }
 
-    bool disposedValue = false;
-    void IDisposable.Dispose()
+    internal void Update(FeedItem result)
     {
-      Dispose(true);
+      lock (padlock)
+      {
+        this.Items.Update(result);
+      }
     }
 
     protected virtual void Dispose(bool disposing)

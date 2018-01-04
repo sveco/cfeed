@@ -4,7 +4,6 @@
   using System.Collections.Generic;
   using System.Linq;
   using cFeed.Entities;
-  using cFeed.Logging;
   using cFeed.Util;
   using CGui.Gui;
   using CSharpFunctionalExtensions;
@@ -15,28 +14,15 @@
   /// </summary>
   public class ArticleListView : BaseView
   {
-    private dynamic footerFormat;
-    private dynamic headerFormat;
-    private RssFeed selectedFeed;
+    dynamic footerFormat;
+    dynamic headerFormat;
+    bool markAllDeleted;
+    RssFeed selectedFeed;
 
     public ArticleListView(dynamic layout) : base((ConfigObject)layout)
     {
       headerFormat = Config.Global.UI.Strings.ArticleListHeaderFormat;
       footerFormat = Config.Global.UI.Strings.ArticleListFooterFormat;
-    }
-
-    private Result<IList<FeedItem>> GetFeed(RssFeed feed)
-    {
-      var feedItems =  feed.FeedItems
-          .OrderByDescending(x => x.PublishDate)
-          .Where(x => x.Deleted == false)
-          .Select((item, index) =>
-          {
-            item.Index = index;
-            item.DisplayText = item.DisplayLine;
-            return item;
-          }).ToList();
-      return Result.Ok<IList<FeedItem>>(feedItems);
     }
 
     public Result<Picklist<FeedItem>> GetPicklist()
@@ -46,7 +32,8 @@
       {
         return Result.Fail<Picklist<FeedItem>>("Missing list config.");
       }
-      else {
+      else
+      {
         return Result.Ok<Picklist<FeedItem>>(result);
       }
     }
@@ -153,17 +140,11 @@
       return true;
     }
 
-    private bool DeleteContent(FeedItem selectedItem)
+    private void DeleteAll_ItemSelected(object sender, DialogChoice e)
     {
-      if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == true)
-      {
-        selectedItem.DeleteArticleContent();
-        selectedItem.DisplayText = selectedItem.DisplayLine;
-      }
-      return true;
+      markAllDeleted |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
     }
 
-    private bool markAllDeleted;
     private bool DeleteAllArticles()
     {
       if (selectedFeed != null && !selectedFeed.IsProcessing)
@@ -189,16 +170,12 @@
       return true;
     }
 
-    private void DeleteAll_ItemSelected(object sender, DialogChoice e)
+    private bool DeleteContent(FeedItem selectedItem)
     {
-      markAllDeleted |= e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string;
-    }
-
-    private bool OpenArticleInBrowser(FeedItem selectedItem)
-    {
-      if (selectedItem != null && selectedItem.Links.Count > 0)
+      if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == true)
       {
-        Browser.Open(selectedItem.Links[0].Uri);
+        selectedItem.DeleteArticleContent();
+        selectedItem.DisplayText = selectedItem.DisplayLine;
       }
       return true;
     }
@@ -210,6 +187,64 @@
         selectedItem.DisplayText = Configuration.Instance.LoadingPrefix + selectedItem.DisplayText + Configuration.Instance.LoadingSuffix;
         selectedItem.DownloadArticleContent(selectedFeed.Filters);
         selectedItem.DisplayText = selectedItem.DisplayLine;
+      }
+      return true;
+    }
+
+    private Result<IList<FeedItem>> GetFeed(RssFeed feed)
+    {
+      var feedItems = feed.FeedItems
+          .OrderByDescending(x => x.PublishDate)
+          .Where(x => x.Deleted == false)
+          .Select((item, index) =>
+          {
+            item.Index = index;
+            item.DisplayText = item.DisplayLine;
+            return item;
+          }).ToList();
+      return Result.Ok<IList<FeedItem>>(feedItems);
+    }
+
+    private void MarkAllDialog_ItemSelected(object sender, DialogChoice e)
+    {
+      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
+      {
+        selectedFeed?.MarkAllRead();
+      }
+      _mainView?.Refresh();
+    }
+
+    private bool MarkAllRead()
+    {
+      Dictionary<string, object> choices = new Dictionary<string, object>
+      {
+        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
+        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
+      };
+
+      var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
+      dialog.ItemSelected += MarkAllDialog_ItemSelected;
+      dialog.Show();
+      return true;
+    }
+
+    private bool OpenArticle(FeedItem selectedItem, Picklist<FeedItem> parent)
+    {
+      parent.IsDisplayed = false;
+      parent.Clear();
+      using (ArticleView article = new ArticleView(Config.Global.UI.Layout.Article))
+      {
+        article.Show(selectedItem, selectedFeed, parent);
+      }
+      _mainView.Refresh();
+      return true;
+    }
+
+    private bool OpenArticleInBrowser(FeedItem selectedItem)
+    {
+      if (selectedItem != null && selectedItem.Links.Count > 0)
+      {
+        Browser.Open(selectedItem.Links[0].Uri);
       }
       return true;
     }
@@ -247,41 +282,6 @@
         }
       }
       return true;
-    }
-
-    private bool MarkAllRead()
-    {
-      Dictionary<string, object> choices = new Dictionary<string, object>
-      {
-        { Config.Global.UI.Strings.PromptAnswerYes, 1 },
-        { Config.Global.UI.Strings.PromptAnswerNo, 2 }
-      };
-
-      var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
-      dialog.ItemSelected += MarkAllDialog_ItemSelected;
-      dialog.Show();
-      return true;
-    }
-
-    private bool OpenArticle(FeedItem selectedItem, Picklist<FeedItem> parent)
-    {
-      parent.IsDisplayed = false;
-      parent.Clear();
-      using (ArticleView article = new ArticleView(Config.Global.UI.Layout.Article))
-      {
-        article.Show(selectedItem, selectedFeed, parent);
-      }
-      _mainView.Refresh();
-      return true;
-    }
-
-    private void MarkAllDialog_ItemSelected(object sender, DialogChoice e)
-    {
-      if (e.DisplayText == Config.Global.UI.Strings.PromptAnswerYes as string)
-      {
-        selectedFeed?.MarkAllRead();
-      }
-      _mainView?.Refresh();
     }
   }
 }
