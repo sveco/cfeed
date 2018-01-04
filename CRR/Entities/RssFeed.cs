@@ -383,15 +383,14 @@
       int index = 0;
       foreach (var i in this.Feed.Items)
       {
-        var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
-        if (result != null && i.Id != null)
+        var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id || x.SyndicationItemId == i.Links[0].Uri.ToString()).SingleOrDefault();
+        if (result != null)
         {
           result.Item = i;
           result.Index = index + 1;
           result.Tags = Tags;
           result.LastUpdated = DateTime.Now;
           DbWrapper.Instance.Update(result);
-          //this.FeedItems.Add(result);
         }
         else
         {

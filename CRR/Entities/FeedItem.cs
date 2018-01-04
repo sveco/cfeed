@@ -631,7 +631,7 @@
     /// <param name="i">The <see cref="SyndicationItem"/></param>
     private void SetValues(SyndicationItem i)
     {
-      SyndicationItemId = i.Id;
+      SyndicationItemId = !string.IsNullOrEmpty(i.Id) ? i.Id : i.Links[0].Uri.ToString();
       PublishDate = i.PublishDate.DateTime > i.LastUpdatedTime.DateTime ?
                     i.PublishDate.DateTime : i.LastUpdatedTime.DateTime;
       Summary = i.Summary != null ? i.Summary.Text : string.Empty;
