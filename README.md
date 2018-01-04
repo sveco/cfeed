@@ -1,6 +1,6 @@
 ﻿# Console RSS/ATOM Feed Reader
 
-Get [latest version here](https://github.com/sveco/cfeed/releases/download/0.8.0/cfeed.v0.8.0.zip).
+Get [latest version here](https://github.com/sveco/cfeed/releases/download/0.8.0/cfeed.v0.8.4.zip).
 
 ## About
 Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for Windows platform built in C#. It uses System.ServiceModel.Syndication library to read RSS 1.0, 2.0 or Atom 1.0 feeds.
