@@ -95,7 +95,7 @@
       {
         try
         {
-          Encoding = Encoding.GetEncoding(charset);
+          Encoding = Encoding.GetEncoding(charset.Replace("\"", string.Empty )); // Sometimes encoding is enclosed in additional quotes.
         }
         catch (ArgumentException)
         {
