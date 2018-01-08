@@ -22,7 +22,7 @@ namespace cFeed.Util
         ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
         BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
       };
-      var searchString = searchInput.InputText.Replace("\\\"", string.Empty);
+      var searchString = searchInput.InputText?.Replace("\\\"", string.Empty);
       if (String.IsNullOrWhiteSpace(searchString))
       {
         return true;
