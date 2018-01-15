@@ -329,4 +329,4 @@ of newsbeuter code. This is open source project to provide windows users with pu
 License
 ----
 
-MIT 
+MIT
