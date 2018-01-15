@@ -132,6 +132,9 @@
     </Content>
     <EmbeddedResource Include="default.conf" />
     <None Include="cFeed.ruleset" />
+    <None Include="feedly.opml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

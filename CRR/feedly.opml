@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<opml version="1.0">
+    <head>
+        <title>Janko subscriptions in feedly Cloud</title>
+    </head>
+    <body>
+        <outline text="gaming" title="gaming">
+            <outline type="rss" text="Steam RSS News Feed" title="Steam RSS News Feed" xmlUrl="http://store.steampowered.com/feeds/news.xml" htmlUrl="http://www.steampowered.com/"/>
+            <outline type="rss" text="Rock, Paper, Shotgun" title="Rock, Paper, Shotgun" xmlUrl="http://feeds.feedburner.com/RockPaperShotgun" htmlUrl="https://www.rockpapershotgun.com"/>
+            <outline type="rss" text="IGN Video Games" title="IGN Video Games" xmlUrl="http://feeds.ign.com/ign/games-all" htmlUrl="http://www.ign.com/articles"/>
+        </outline>
+        <outline text="comix" title="comix">
+            <outline type="rss" text="Fredo and Pidjin. The Webcomic. » Fredo &amp; Pid’Jin" title="Fredo and Pidjin. The Webcomic. » Fredo &amp; Pid’Jin" xmlUrl="http://feeds.feedburner.com/Pidjin" htmlUrl="http://www.pidjin.net"/>
+            <outline type="rss" text="xkcd.com" title="xkcd.com" xmlUrl="http://xkcd.com/rss.xml" htmlUrl="https://xkcd.com/"/>
+        </outline>
+        <outline text="thinkers" title="thinkers">
+            <outline type="rss" text="Freakonomics Blog" title="Freakonomics Blog" xmlUrl="http://www.freakonomics.com/blog/feed/" htmlUrl="http://freakonomics.com"/>
+            <outline type="rss" text="Marginal Revolution" title="Marginal Revolution" xmlUrl="http://www.marginalrevolution.com/marginalrevolution/index.rdf" htmlUrl="http://marginalrevolution.com"/>
+            <outline type="rss" text="Dumb Little Man - Tips for Life" title="Dumb Little Man - Tips for Life" xmlUrl="http://feeds.feedburner.com/DumbLittleMan" htmlUrl="https://www.dumblittleman.com"/>
+        </outline>
+        <outline text="science" title="science">
+            <outline type="rss" text="Astronomy Picture of the Day RSS Feed" title="Astronomy Picture of the Day RSS Feed" xmlUrl="http://www.acme.com/jef/apod/rss.xml" htmlUrl="http://www.acme.com/jef/apod/"/>
+            <outline type="rss" text="Scientific American Content: Global" title="Scientific American Content: Global" xmlUrl="http://www.sciam.com/xml/sciam.xml" htmlUrl="http://www.scientificamerican.com"/>
+            <outline type="rss" text="Space.com" title="Space.com" xmlUrl="http://www.space.com/syn/space.xml" htmlUrl="https://www.space.com"/>
+            <outline type="rss" text="OSEL.cz" title="OSEL.cz" xmlUrl="http://www.osel.cz/rss/rss.php" htmlUrl="http://www.osel.cz/"/>
+            <outline type="rss" text="NASA Image of the Day" title="NASA Image of the Day" xmlUrl="http://www.nasa.gov/rss/image_of_the_day.rss" htmlUrl="http://www.nasa.gov/"/>
+            <outline type="rss" text="Wired" title="Wired" xmlUrl="http://www.wired.com/news/feeds/rss2/0,2610,,00.xml" htmlUrl="https://www.wired.com"/>
+            <outline type="rss" text="National Geographic News" title="National Geographic News" xmlUrl="http://news.nationalgeographic.com/index.rss" htmlUrl="http://news.nationalgeographic.com"/>
+        </outline>
+        <outline text="fun" title="fun">
+            <outline type="rss" text="Quotes of the Day" title="Quotes of the Day" xmlUrl="http://www.quotationspage.com/data/qotd.rss" htmlUrl="http://www.quotationspage.com/qotd.html"/>
+            <outline type="rss" text="Boing Boing" title="Boing Boing" xmlUrl="http://feeds.boingboing.net/boingboing/iBag" htmlUrl="https://boingboing.net"/>
+            <outline type="rss" text="xkcd.com" title="xkcd.com" xmlUrl="http://xkcd.com/rss.xml" htmlUrl="https://xkcd.com/"/>
+            <outline type="rss" text="The Onion" title="The Onion" xmlUrl="http://www.theonion.com/content/feeds/daily" htmlUrl="http://www.theonion.com"/>
+        </outline>
+        <outline text="technology" title="technology">
+            <outline type="rss" text="TechCrunch" title="TechCrunch" xmlUrl="http://feeds.feedburner.com/Techcrunch" htmlUrl="https://techcrunch.com"/>
+            <outline type="rss" text="Engadget" title="Engadget" xmlUrl="http://www.engadget.com/rss.xml" htmlUrl="http://www.engadget.com"/>
+             <outline type="rss" text="Slashdot" title="Slashdot" xmlUrl="http://slashdot.org/index.rss" htmlUrl="https://slashdot.org/"/>
+            <outline type="rss" text="digg" title="digg" xmlUrl="http://digg.com/rss/index.xml" htmlUrl="http://digg.com/"/>
+            <outline type="rss" text="The Verge" title="The Verge" xmlUrl="http://www.theverge.com/rss/full.xml" htmlUrl="https://www.theverge.com/"/>
+        </outline>
+    </body>
+</opml>
