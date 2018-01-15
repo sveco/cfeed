@@ -6,6 +6,7 @@ using System.ServiceModel.Syndication;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using cFeed.Logging;
 
 namespace cFeed.Util
 {
@@ -13,18 +14,13 @@ namespace cFeed.Util
   // Based on http://www.4guysfromrolla.com/articles/031809-1.aspx
   public class Rss10FeedFormatter : SyndicationFeedFormatter
   {
+    static NLog.Logger logger = Log.Instance.Logger;
     public Rss10FeedFormatter() { }
-
     public Rss10FeedFormatter(SyndicationFeed feed) : base(feed) { }
-
     public override string Version { get { return "Rss10"; } }
-
     public static string LocalName { get { return "RDF"; } }
-
     public static string RdfNamespaceUri { get { return "http://www.w3.org/1999/02/22-rdf-syntax-ns#"; } }
-
     public static string NamespaceUri { get { return "http://purl.org/rss/1.0/"; } }
-
     public static bool CanReadFrom(XmlReader reader)
     {
       return reader.IsStartElement(LocalName, RdfNamespaceUri);
@@ -54,6 +50,7 @@ namespace cFeed.Util
     {
       reader.ReadStartElement();              // Read in <RDF>
       reader.ReadStartElement("channel");     // Read in <channel>
+      result.LastUpdatedTime = DateTime.Now;
       while (reader.IsStartElement())         // Process <channel> children
       {
         if (reader.IsStartElement("title"))
@@ -68,13 +65,16 @@ namespace cFeed.Util
         {
           result.Description = new TextSyndicationContent(reader.ReadElementString());
         }
+        else if (reader.IsStartElement("pubDate"))
+        {
+          result.LastUpdatedTime = DateTime.Parse(reader.ReadElementString());
+        }
         else
         {
           reader.Skip();
         }
       }
       reader.ReadEndElement();                // Read in </channel>
-
       while (reader.IsStartElement())
       {
         if (reader.IsStartElement("item"))
@@ -106,6 +106,17 @@ namespace cFeed.Util
           else if (reader.IsStartElement("description"))
           {
             item.Summary = new TextSyndicationContent(reader.ReadElementString());
+          }
+          else if (reader.IsStartElement("pubDate"))
+          {
+            try
+            {
+              item.PublishDate = DateTime.Parse(reader.ReadElementString());
+            }
+            catch (FormatException ex)
+            {
+              logger.Error(ex, "Date format invalid");
+            }
           }
           else
           {
