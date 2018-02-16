@@ -88,7 +88,6 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +98,7 @@
     <Compile Include="LiteDb\DbWrapper.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="Util\ArgumentParser.cs" />
+    <Compile Include="Util\Atom0_3\Atom03FeedFormatter.cs" />
     <Compile Include="Util\Browser.cs" />
     <Compile Include="Util\ConsoleKeyInfoExtansions.cs" />
     <Compile Include="Util\ControlFactory.cs" />

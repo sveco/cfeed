@@ -13,6 +13,7 @@
   using cFeed.LiteDb;
   using cFeed.Logging;
   using cFeed.Util;
+  using cFeed.Util.Atom0_3;
   using CGui.Gui.Primitives;
   using JsonConfig;
   using NLog;
@@ -25,6 +26,8 @@
     internal bool _isProcessing;
 
     string _customTitle;
+    string _userName;
+    string _password;
     Uri _feedUrl;
 
     /// <summary>
@@ -84,6 +87,17 @@
     public string FeedTitle
     {
       get { return this.Feed?.Title.Text; }
+    }
+
+    public string UserName {
+      get { return _userName; }
+      set { _userName = value; }
+    }
+
+    public string Password
+    {
+      get { return _password; }
+      set { _password = value; }
     }
 
     /// <summary>
@@ -185,7 +199,7 @@
     /// <param name="autoReload">The <see cref="bool"/></param>
     /// <param name="reloadInterval">The <see cref="int"/></param>
     public RssFeed(string url, string query, int index, string customTitle = "",
-                   bool autoReload = false, int reloadInterval = 30)
+                   bool autoReload = false, int reloadInterval = 30, string userName = "", string password = "")
     {
       if (!string.IsNullOrEmpty(url))
       {
@@ -197,6 +211,8 @@
       CustomTitle = customTitle;
       AutoReload = autoReload;
       ReloadInterval = reloadInterval;
+      UserName = userName;
+      Password = password;
 
       if (this.AutoReload)
       {
@@ -265,12 +281,18 @@
     /// <param name="url"></param>
     /// <param name="timeout"></param>
     /// <returns></returns>
-    internal SyndicationFeed GetFeed(Uri url, int timeout = 10000)
+    internal SyndicationFeed GetFeed(Uri url, int timeout, NetworkCredential credentials)
     {
       SyndicationFeed feed = null;
       HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
       request.UserAgent = Configuration.UserAgent;
       request.Timeout = timeout;
+      if (credentials != null)
+      {
+        request.Credentials = credentials;
+        request.PreAuthenticate = true;
+      }
+
       try
       {
         using (WebResponse response = request.GetResponse())
@@ -279,7 +301,13 @@
           var xml = stream.ReadToEnd();
           using (RssXmlReader reader = new RssXmlReader(Flush(xml)))
           {
-            if (Rss10FeedFormatter.CanReadFrom(reader))
+            if (Atom03FeedFormatter.CanReadFrom(reader))
+            {
+              var aff = new Atom03FeedFormatter();
+              aff.ReadFrom(reader);
+              feed = aff.Feed;
+            }
+            else if (Rss10FeedFormatter.CanReadFrom(reader))
             {
               // RSS 1.0
               var rff = new Rss10FeedFormatter();
@@ -315,6 +343,20 @@
         logger.Error(ex);
       }
       return feed;
+    }
+
+    internal SyndicationFeed GetFeed(Uri url, int timeout)
+    {
+      return GetFeed(url, timeout, null);
+    }
+
+    internal SyndicationFeed GetFeed(Uri url)
+    {
+      return GetFeed(url, 10000, null);
+    }
+    internal SyndicationFeed GetFeed(Uri url, NetworkCredential credentials)
+    {
+      return GetFeed(url, 10000, credentials);
     }
 
     /// <summary>
@@ -503,9 +545,16 @@
     {
       logger.Trace(FeedUrl + " start loading.");
 
+      NetworkCredential credential = null;
+
+      if (!String.IsNullOrEmpty(this.UserName))
+      {
+        credential = new NetworkCredential(this.UserName, this.Password);
+      }
+
       try
       {
-        this.Feed = GetFeed(FeedUrl);
+        this.Feed = GetFeed(FeedUrl, credential);
       }
       catch (Exception ex)
       {

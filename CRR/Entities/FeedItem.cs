@@ -150,18 +150,15 @@
         {
           return File.Exists(ArticleFileName);
         }
-        catch (Exception ex)
+        catch (UnauthorizedAccessException ex)
         {
-          if (ex is UnauthorizedAccessException ||
-              ex is DirectoryNotFoundException)
-          {
-            Log.Instance.Logger.Error(ex);
-            return false;
-          }
-          else
-          {
-            throw;
-          }
+          Log.Instance.Logger.Error(ex);
+          return false;
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+          Log.Instance.Logger.Error(ex);
+          return false;
         }
       }
     }
