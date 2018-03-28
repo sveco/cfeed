@@ -209,7 +209,9 @@
           if (markAllread)
           {
             selectedItem?.MarkAllRead();
+            selectedItem?.RefreshTitle();
             markAllread = false;
+           // _mainView.Refresh();
           }
 
           return true;
