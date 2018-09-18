@@ -1,416 +1,414 @@
 ﻿namespace cFeed.Views
 {
-  using System;
-  using System.ComponentModel;
-  using System.Diagnostics;
-  using System.Linq;
-  using System.Text;
-  using System.Threading.Tasks;
-  using System.Timers;
-  using cFeed.Entities;
-  using cFeed.Logging;
-  using cFeed.Util;
-  using CGui.Gui;
-  using CGui.Gui.Primitives;
-  using CSharpFunctionalExtensions;
-  using JsonConfig;
+	using System;
+	using System.ComponentModel;
+	using System.Diagnostics;
+	using System.Linq;
+	using System.Text;
+	using System.Threading.Tasks;
+	using System.Timers;
+	using cFeed.Entities;
+	using cFeed.Logging;
+	using cFeed.Util;
+	using CGui.Gui;
+	using CGui.Gui.Primitives;
+	using CSharpFunctionalExtensions;
+	using JsonConfig;
 
-  public class ArticleView : BaseView
-  {
-    TextArea _articleContent;
-    bool _displayNext;
-    string[] _filters;
-    dynamic footerFormat;
-    dynamic headerFormat;
-    FeedItem nextArticle;
-    Picklist<FeedItem> parentArticleList;
-    FeedItem selectedArticle;
-    RssFeed selectedFeed;
-    Timer timer = new Timer();
-    String timerElipsis = string.Empty;
+	public class ArticleView : BaseView
+	{
+		TextArea _articleContent;
+		bool _displayNext;
+		string[] _filters;
+		dynamic footerFormat;
+		dynamic headerFormat;
 
-    private bool CanShowNext
-    {
-      get { return selectedFeed != null && selectedArticle != null; }
-    }
+		FeedItem _nextArticle;
+		public FeedItem NextArticle { get => _nextArticle; set => _nextArticle = value; }
 
-    public ArticleView(dynamic layout) : base((ConfigObject)layout)
-    {
-      headerFormat = Config.Global.UI.Strings.ArticleHeaderFormat;
-      footerFormat = Config.Global.UI.Strings.ArticleFooterFormat;
-    }
+		Picklist<FeedItem> parentArticleList;
+		FeedItem selectedArticle;
+		RssFeed selectedFeed;
+		Timer timer = new Timer();
+		String timerElipsis = string.Empty;
 
-    public void Show(FeedItem article, RssFeed feed, Picklist<FeedItem> parent)
-    {
-      if (article != null)
-      {
-        this.selectedArticle = article;
-        this.selectedFeed = feed;
-        parentArticleList = parent;
+		private bool CanShowNext
+		{
+			get { return selectedFeed != null && selectedArticle != null; }
+		}
 
-        PrepareArticle();
+		public ArticleView(dynamic layout) : base((ConfigObject)layout)
+		{
+			headerFormat = Config.Global.UI.Strings.ArticleHeaderFormat;
+			footerFormat = Config.Global.UI.Strings.ArticleFooterFormat;
+		}
 
-        Parallel.Invoke(
-            new Action(() => this.selectedArticle.LoadArticle(_filters)),
-            new Action(_articleContent.Show)
-            );
+		public void Show(RssFeed feed, Picklist<FeedItem> parent)
+		{
+			
+			if (_nextArticle != null)
+			{
+				this.selectedArticle = _nextArticle;
+				_nextArticle = null;
+				this.selectedFeed = feed;
+				parentArticleList = parent;
 
-        this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
-        //Given lack of inspiration and a late hour, i commit this code for next article in hope that one day I will rewrite it
-        //and provide this functionality with better design.
-        while (_displayNext)
-        {
-          _displayNext = false;
-          this.selectedArticle = nextArticle;
-          PrepareArticle();
-          Parallel.Invoke(
-              new Action(() => this.selectedArticle.LoadArticle(_filters)),
-              new Action(_articleContent.Show)
-              );
-        }
-      }
-    }
+				PrepareArticle();
 
-    private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
-    {
-      nextArticle = null;
+				Parallel.Invoke(
+					new Action(() => this.selectedArticle.LoadArticle(_filters)),
+					new Action(_articleContent.Show)
+					);
 
-      //Next
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Next))
-      {
-        return ShowNext();
-      }
-      //Next unread
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.NextUnread))
-      {
-        return ShowNextUnread();
-      }
-      //Prev
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Prev))
-      {
-        return ShowPrevious();
-      }
-      //Prev unread
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.PrevUnread))
-      {
-        return ShowPreviousUnread();
-      }
+				this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
+			}
+		}
 
-      //Step back
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
-      {
-        return false;
-      }
+		private bool Article_OnItemKeyHandler(ConsoleKeyInfo key)
+		{
+			_nextArticle = null;
 
-      //Open article
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
-      {
-        return OpenArticle();
-      }
+			//Next
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Next))
+			{
+				return ShowNext();
+			}
+			//Next unread
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.NextUnread))
+			{
+				return ShowNextUnread();
+			}
+			//Prev
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Prev))
+			{
+				return ShowPrevious();
+			}
+			//Prev unread
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.PrevUnread))
+			{
+				return ShowPreviousUnread();
+			}
 
-      //Save article
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.SaveArticle))
-      {
-        return SaveArticle();
-      }
+			//Step back
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.StepBack))
+			{
+				return false;
+			}
 
-      //Open numbered link
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenLink))
-      {
-        return OpenLink();
-      }
+			//Open article
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenBrowser))
+			{
+				return OpenArticle();
+			}
 
-      //Open numbered image
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenImage))
-      {
-        return OpenImage();
-      }
+			//Save article
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.SaveArticle))
+			{
+				return SaveArticle();
+			}
 
-      //Mark article for deletion
-      if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Delete))
-      {
-        return DeleteArticle();
-      }
+			//Open numbered link
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenLink))
+			{
+				return OpenLink();
+			}
 
-      return true;
-    }
+			//Open numbered image
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.OpenImage))
+			{
+				return OpenImage();
+			}
 
-    private bool DeleteArticle()
-    {
-      if (selectedArticle != null)
-      {
-        selectedArticle.MarkDeleted();
-        selectedArticle.DisplayText = selectedArticle.DisplayText;
-      }
-      return true;
-    }
+			//Mark article for deletion
+			if (key.VerifyKey((ConfigObject)Config.Global.Shortcuts.Delete))
+			{
+				return DeleteArticle();
+			}
 
-    private bool DisplayNext()
-    {
-      _displayNext = nextArticle != null;
-      return !_displayNext;
-    }
+			return true;
+		}
 
-    private void HideLoadingText()
-    {
-      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
-      {
-        loadingText.Clear();
-      }
-    }
+		private bool DeleteArticle()
+		{
+			if (selectedArticle != null)
+			{
+				selectedArticle.MarkDeleted();
+				selectedArticle.DisplayText = selectedArticle.DisplayText;
+			}
+			return true;
+		}
 
-    private bool OpenArticle()
-    {
-      if (selectedArticle != null &&
-          selectedArticle.Links.Count > 0)
-      {
-        Browser.Open(selectedArticle.Links[0].Uri);
-      }
-      return true;
-    }
+		private bool DisplayNext()
+		{
+			_displayNext = _nextArticle != null;
+			return !_displayNext;
+		}
 
-    private bool OpenImage()
-    {
-      if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
-      {
-        var input = new Input("Image #:")
-        {
-          Top = Console.WindowHeight - 2,
-          ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-          BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-        };
+		private void HideLoadingText()
+		{
+			if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
+			{
+				loadingText.Clear();
+			}
+		}
 
-        if (int.TryParse(input.InputText, out int linkNumber))
-        {
-          if (selectedArticle.ImageLinks != null
-              && selectedArticle.ImageLinks.Count >= linkNumber
-              && linkNumber > 0)
-          {
-            try
-            {
-              if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
-              {
-                Process.Start(Config.Global.Browser, selectedArticle.ImageLinks[linkNumber - 1].ToString());
-              }
-              else
-              {
-                Process.Start(selectedArticle.ImageLinks[linkNumber - 1].ToString());
-              }
-            }
-            catch (Win32Exception ex)
-            {
-              logger.Error(ex);
-            }
-          }
-        }
-      }
-      return true;
-    }
+		private bool OpenArticle()
+		{
+			if (selectedArticle != null &&
+				selectedArticle.Links.Count > 0)
+			{
+				Browser.Open(selectedArticle.Links[0].Uri);
+			}
+			return true;
+		}
 
-    private bool OpenLink()
-    {
-      if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
-      {
-        var input = new Input("Link #:")
-        {
-          Top = Console.WindowHeight - 2,
-          ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-          BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-        };
+		private bool OpenImage()
+		{
+			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
+			{
+				var input = new Input("Image #:")
+				{
+					Top = Console.WindowHeight - 2,
+					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+				};
 
-        if (int.TryParse(input.InputText, out int linkNumber))
-        {
-          if (selectedArticle.ExternalLinks != null
-              && selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber
-              && linkNumber > 0)
-          {
-            string link;
-            if (linkNumber <= selectedArticle.Links.Count)
-            {
-              link = selectedArticle.Links[linkNumber - 1].Uri.ToString();
-            }
-            else
-            {
-              link = selectedArticle.ExternalLinks[linkNumber - 1 - selectedArticle.Links.Count].ToString();
-            }
+				if (int.TryParse(input.InputText, out int linkNumber))
+				{
+					if (selectedArticle.ImageLinks != null
+						&& selectedArticle.ImageLinks.Count >= linkNumber
+						&& linkNumber > 0)
+					{
+						try
+						{
+							if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
+							{
+								Process.Start(Config.Global.Browser, selectedArticle.ImageLinks[linkNumber - 1].ToString());
+							}
+							else
+							{
+								Process.Start(selectedArticle.ImageLinks[linkNumber - 1].ToString());
+							}
+						}
+						catch (Win32Exception ex)
+						{
+							logger.Error(ex);
+						}
+					}
+				}
+			}
+			return true;
+		}
 
-            try
-            {
-              if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
-              {
-                Process.Start(Config.Global.Browser, link);
-              }
-              else
-              {
-                Process.Start(link);
-              }
-            }
-            catch (Win32Exception ex)
-            {
-              logger.Error(ex);
-            }
-          }
-        }
-      }
-      return true;
-    }
+		private bool OpenLink()
+		{
+			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
+			{
+				var input = new Input("Link #:")
+				{
+					Top = Console.WindowHeight - 2,
+					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+				};
 
-    private void PrepareArticle()
-    {
-      if (selectedFeed != null)
-      {
-        if (selectedFeed.Filters != null)
-        {
-          _filters = selectedFeed.Filters;
-        }
-      }
+				if (int.TryParse(input.InputText, out int linkNumber))
+				{
+					if (selectedArticle.ExternalLinks != null
+						&& selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber
+						&& linkNumber > 0)
+					{
+						string link;
+						if (linkNumber <= selectedArticle.Links.Count)
+						{
+							link = selectedArticle.Links[linkNumber - 1].Uri.ToString();
+						}
+						else
+						{
+							link = selectedArticle.ExternalLinks[linkNumber - 1 - selectedArticle.Links.Count].ToString();
+						}
 
-      void onContentLoaded(string content)
-      {
-        if (_mainView.Controls.FirstOrDefault(x => x.Name == "ArticleContent") is TextArea article)
-        {
-          article.Content = content;
-          article.OnItemKeyHandler += Article_OnItemKeyHandler;
-          article.WaitForInput = true;
-          selectedArticle.MarkAsRead();
-          timer.Stop();
-          HideLoadingText();
-          article.Show();
-        }
-        else
-        {
-          logger.Warn("Missing \"ArticleContent\" text area, cannot display article content.");
-        }
-      }
+						try
+						{
+							if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
+							{
+								Process.Start(Config.Global.Browser, link);
+							}
+							else
+							{
+								Process.Start(link);
+							}
+						}
+						catch (Win32Exception ex)
+						{
+							logger.Error(ex);
+						}
+					}
+				}
+			}
+			return true;
+		}
 
-      showArticleHeader()
-        .OnSuccess(() =>
-        {
-          ShowHeader(selectedArticle.TitleLine);
-          ShowFooter(selectedArticle.FormatLine(footerFormat));
-          selectedArticle.OnContentLoaded = new Action<string>(onContentLoaded);
-        })
-        .OnSuccess(() => ShowLoadingText())
-        .OnSuccess(() => StartTimer())
-        .OnSuccess(() => _mainView.Show());
-    }
+		private void PrepareArticle()
+		{
+			if (selectedFeed != null)
+			{
+				if (selectedFeed.Filters != null)
+				{
+					_filters = selectedFeed.Filters;
+				}
+			}
 
-    private bool SaveArticle()
-    {
-      if (selectedArticle != null)
-      {
-        Parallel.Invoke(
-            new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
-            new Action(_articleContent.Show)
-            );
-      }
-      return false;
-    }
+			void onContentLoaded(string content)
+			{
+				if (_mainView.Controls.FirstOrDefault(x => x.Name == "ArticleContent") is TextArea article)
+				{
+					article.Content = content;
+					article.OnItemKeyHandler += Article_OnItemKeyHandler;
+					article.WaitForInput = true;
+					selectedArticle.MarkAsRead();
+					timer.Stop();
+					HideLoadingText();
+					article.Show();
+				}
+				else
+				{
+					logger.Warn("Missing \"ArticleContent\" text area, cannot display article content.");
+				}
+			}
 
-    private Result showArticleHeader()
-    {
-      string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
-      string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
-      string resetColor = Configuration.ColorReset;
+			showArticleHeader()
+			  .OnSuccess(() =>
+			  {
+				  ShowHeader(selectedArticle.TitleLine);
+				  ShowFooter(selectedArticle.FormatLine(footerFormat));
+				  selectedArticle.OnContentLoaded = new Action<string>(onContentLoaded);
+			  })
+			  .OnSuccess(() => ShowLoadingText())
+			  .OnSuccess(() => StartTimer())
+			  .OnSuccess(() => _mainView.Show());
+		}
 
-      StringBuilder sb = new StringBuilder();
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset);
-      for (int i = 0; i < selectedArticle.Links.Count; i++)
-      {
-        sb.AppendLine(linkHighlight + "[" + (i + 1).ToString() + "] " + resetColor + Configuration.Instance.ArticleTextHighlight + Configuration.ColorReset + selectedArticle.Links?[i].Uri.GetLeftPart(UriPartial.Path));
-      }
-      sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
-      sb.AppendLine();
+		private bool SaveArticle()
+		{
+			if (selectedArticle != null)
+			{
+				Parallel.Invoke(
+					new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
+					new Action(_articleContent.Show)
+					);
+			}
+			return false;
+		}
 
-      var textArea = new TextArea(sb.ToString());
-      sb = null;
-      textArea.Top = 2;
-      textArea.Left = 2;
-      textArea.Width = Console.WindowWidth - 6;
-      textArea.Height = textArea.TotalItems + 1;
-      textArea.WaitForInput = false;
-      _articleContent = textArea;
+		private Result showArticleHeader()
+		{
+			if (selectedArticle == null)
+			{
+				return Result.Fail("Article not selected.");
+			}
 
-      return Result.Ok();
-    }
+			string linkHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkHighlight);
+			string linkTextHighlight = Configuration.GetForegroundColor(Config.Global.UI.Colors.LinkTextHighlight);
+			string resetColor = Configuration.ColorReset;
 
-    private void ShowLoadingText()
-    {
-      if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
-      {
-        loadingText.Content = Configuration.Instance.LoadingText;
-        loadingText.TextAlignment = TextAlignment.Center;
-      }
-    }
+			StringBuilder sb = new StringBuilder();
+			sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextFeedUrlLabel + Configuration.ColorReset + selectedArticle.FeedUrl);
+			sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextTitleLabel + Configuration.ColorReset + selectedArticle.Title);
+			sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextAuthorsLabel + Configuration.ColorReset + String.Join(", ", selectedArticle.Authors.Select(x => x.Name).ToArray()));
+			sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextLinkLabel + Configuration.ColorReset);
+			for (int i = 0; i < selectedArticle.Links.Count; i++)
+			{
+				sb.AppendLine(linkHighlight + "[" + (i + 1).ToString() + "] " + resetColor + Configuration.Instance.ArticleTextHighlight + Configuration.ColorReset + selectedArticle.Links?[i].Uri.GetLeftPart(UriPartial.Path));
+			}
+			sb.AppendLine(Configuration.Instance.ArticleTextHighlight + Configuration.Instance.ArticleTextPublishDateLabel + Configuration.ColorReset + selectedArticle.PublishDate.ToString());
+			sb.AppendLine();
 
-    private bool ShowNext()
-    {
-      if (CanShowNext)
-      {
-        nextArticle = (FeedItem)parentArticleList.ListItems
-          .OrderByDescending(x => x.Index)
-          .FirstOrDefault(x => x.Index < selectedArticle.Index);
-      }
-      return DisplayNext();
-    }
+			var textArea = new TextArea(sb.ToString());
+			sb = null;
+			textArea.Top = 2;
+			textArea.Left = 2;
+			textArea.Width = Console.WindowWidth - 6;
+			textArea.Height = textArea.TotalItems + 1;
+			textArea.WaitForInput = false;
+			_articleContent = textArea;
 
-    private bool ShowNextUnread()
-    {
-      if (CanShowNext)
-      {
-        nextArticle = (FeedItem)parentArticleList.ListItems
-          .OrderByDescending(x => x.Index)
-          .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index);
-      }
-      return DisplayNext();
-    }
+			return Result.Ok();
+		}
 
-    private bool ShowPrevious()
-    {
-      if (CanShowNext)
-      {
-        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
-        {
-          nextArticle = (FeedItem)parentArticleList.ListItems
-            .OrderBy(x => x.Index)
-            .FirstOrDefault(x => x.Index > selectedArticle.Index);
-        }
-      }
-      return DisplayNext();
-    }
+		private void ShowLoadingText()
+		{
+			if (_mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText)
+			{
+				loadingText.Content = Configuration.Instance.LoadingText;
+				loadingText.TextAlignment = TextAlignment.Center;
+			}
+		}
 
-    private bool ShowPreviousUnread()
-    {
-      if (CanShowNext)
-      {
-        if (selectedArticle.Index < selectedFeed.TotalItems - 1)
-        {
-          nextArticle = parentArticleList.ListItems
-            .OrderBy(x => x.Index)
-            .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index);
-        }
-      }
-      return DisplayNext();
-    }
+		private bool ShowNext()
+		{
+			if (CanShowNext)
+			{
+				_nextArticle = (FeedItem)parentArticleList.ListItems
+				  .OrderByDescending(x => x.Index)
+				  .FirstOrDefault(x => x.Index < selectedArticle.Index);
+			}
+			return DisplayNext();
+		}
 
-    private void StartTimer()
-    {
-      timer.Interval = 500;
-      timer.Elapsed += Timer_Elapsed;
-      timer.Start();
-    }
+		private bool ShowNextUnread()
+		{
+			if (CanShowNext)
+			{
+				_nextArticle = (FeedItem)parentArticleList.ListItems
+				  .OrderByDescending(x => x.Index)
+				  .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index < selectedArticle.Index);
+			}
+			return DisplayNext();
+		}
 
-    private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-    {
-      if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
-      if (_mainView != null && _mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
-      {
-        loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
-        loadingText.Refresh();
-      }
-    }
-  }
+		private bool ShowPrevious()
+		{
+			if (CanShowNext)
+			{
+				if (selectedArticle.Index < selectedFeed.TotalItems - 1)
+				{
+					_nextArticle = (FeedItem)parentArticleList.ListItems
+					  .OrderBy(x => x.Index)
+					  .FirstOrDefault(x => x.Index > selectedArticle.Index);
+				}
+			}
+			return DisplayNext();
+		}
+
+		private bool ShowPreviousUnread()
+		{
+			if (CanShowNext)
+			{
+				if (selectedArticle.Index < selectedFeed.TotalItems - 1)
+				{
+					_nextArticle = parentArticleList.ListItems
+					  .OrderBy(x => x.Index)
+					  .FirstOrDefault(i => ((FeedItem)i).IsNew == true && i.Index > selectedArticle.Index);
+				}
+			}
+			return DisplayNext();
+		}
+
+		private void StartTimer()
+		{
+			timer.Interval = 500;
+			timer.Elapsed += Timer_Elapsed;
+			timer.Start();
+		}
+
+		private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+		{
+			if (timerElipsis.Length < 3) { timerElipsis += "."; } else { timerElipsis = string.Empty; }
+			if (_mainView != null && _mainView.Controls.FirstOrDefault(x => x.Name == "Loading") is TextArea loadingText && loadingText != null && loadingText.IsDisplayed)
+			{
+				loadingText.Content = timerElipsis + Configuration.Instance.LoadingText + timerElipsis;
+				loadingText.Refresh();
+			}
+		}
+	}
 }
