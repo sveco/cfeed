@@ -20,6 +20,7 @@
 		TextArea _articleContent;
 		bool _displayNext;
 		string[] _filters;
+		string _select;
 		dynamic footerFormat;
 		dynamic headerFormat;
 
@@ -56,7 +57,7 @@
 				PrepareArticle();
 
 				Parallel.Invoke(
-					new Action(() => this.selectedArticle.LoadArticle(_filters)),
+					new Action(() => this.selectedArticle.LoadArticle(_select, _filters)),
 					new Action(_articleContent.Show)
 					);
 
@@ -255,6 +256,7 @@
 				if (selectedFeed.Filters != null)
 				{
 					_filters = selectedFeed.Filters;
+					_select = selectedFeed.Select;
 				}
 			}
 
@@ -293,7 +295,7 @@
 			if (selectedArticle != null)
 			{
 				Parallel.Invoke(
-					new Action(() => selectedArticle.LoadOnlineArticle(_filters)),
+					new Action(() => selectedArticle.LoadOnlineArticle(_select, _filters)),
 					new Action(_articleContent.Show)
 					);
 			}

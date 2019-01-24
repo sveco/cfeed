@@ -129,6 +129,7 @@ namespace cFeed
 			{
 				feeds.Add(new RssFeed(feed.FeedUrl, feed.FeedQuery, i, feed.Title, feed.AutoReload, feed.ReloadInterval, feed.UserName, feed.Password)
 				{
+					Select = feed.Select,
 					Filters = feed.Filters,
 					Hidden = feed.Hidden,
 					Tags = feed.Tags,

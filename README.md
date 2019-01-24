@@ -57,6 +57,8 @@ Basic setting.conf can look like this:
     {
         #URL of RSS otr Atom feed
         FeedUrl: "http://feeds.newscientist.com/",
+        #XPath selector to select single node as root of article. Filters (see below) are applied after Select
+        Select: "//html",
         #Define filters for html id's and classes. Elements from those classes will be ignored when converting html to text. use '.' prefix for classes and # for id's.
         Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
         #Custom title to override default feed title
@@ -73,7 +75,8 @@ Basic setting.conf can look like this:
 }
 ```
 
-Only FeedUrl is required, other settings are optional. Filters can be used to "filter" out unwanted content, like page navigation, links, registration forms etc.
+Only FeedUrl is required, other settings are optional. A new feature is Select that selects root node of document. Select makes filters much simpler, as you can first select root, 
+and then "filter" out unwanted content from root node, like page navigation, links, registration forms etc.
 To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
 Any content inside filtered elements will not be rendered.
 Title can be used to display custom title of feed, instead of the one defined by feed itself.
@@ -100,6 +103,19 @@ Yay! It is now supported to filter articles in online feed by defining FeedQuery
     Title: "Online feed - Mars"
 }
 ```
+
+
+*Example: Using Select*
+```
+{ 
+    FeedUrl: "http://rss.slashdot.org/slashdot/slashdot",
+    #Select root node first
+    Select: "//div[@id='firehoselist']",
+    #Filter out unwanted links
+    Filters: [".view_mode", "#newa2footerv2"]
+}
+```
+
 
 **FeedQuery syntax**
 

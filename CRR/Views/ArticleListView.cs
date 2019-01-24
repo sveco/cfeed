@@ -185,7 +185,7 @@
 			if (selectedItem != null && selectedFeed != null && selectedItem.IsDownloaded == false)
 			{
 				selectedItem.DisplayText = Configuration.Instance.LoadingPrefix + selectedItem.DisplayText + Configuration.Instance.LoadingSuffix;
-				selectedItem.DownloadArticleContent(selectedFeed.Filters);
+				selectedItem.DownloadArticleContent(selectedFeed.Select, selectedFeed.Filters);
 				selectedItem.DisplayText = selectedItem.DisplayLine;
 			}
 			return true;

@@ -334,7 +334,7 @@
     /// The DownloadArticleContent
     /// </summary>
     /// <param name="filters">The <see cref="string"/></param>
-    public void DownloadArticleContent(string[] filters)
+    public void DownloadArticleContent(string select, string[] filters)
     {
       var w = new HtmlAgilityPack.HtmlWeb();
       HtmlDocument doc = new HtmlDocument();
@@ -355,7 +355,7 @@
       }
       if (doc == null) return;
 
-      HtmlToText conv = new HtmlToText() { Filters = filters?.ToList(), LinkStartFrom = this.Links.Count };
+			HtmlToText conv = new HtmlToText() { Select = select,  Filters = filters?.ToList(), LinkStartFrom = this.Links.Count };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 
@@ -412,7 +412,7 @@
     /// <param name="filters"></param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
         "CA1031:DoNotCatchGeneralExceptionTypes")]
-    public void LoadArticle(string[] filters)
+    public void LoadArticle(string select, string[] filters)
     {
       if (this.IsDownloaded)
       {
@@ -437,7 +437,7 @@
       }
       else
       {
-        LoadOnlineArticle(filters);
+        LoadOnlineArticle(select, filters);
       }
     }
 
@@ -445,14 +445,14 @@
     /// The LoadOnlineArticle
     /// </summary>
     /// <param name="filters">The <see cref="string"/></param>
-    public void LoadOnlineArticle(string[] filters)
+    public void LoadOnlineArticle(string select, string[] filters)
     {
       if (OnContentLoaded == null) { throw new NullReferenceException("OnContentLoaded"); }
 
       if (Links.Count > 0)
       {
         this.IsProcessing = true;
-        DownloadArticleContent(filters);
+        DownloadArticleContent(select, filters);
         var result = DbWrapper.Instance.Find(x => x.Id ==
                                              this.Id).FirstOrDefault();
         if (result != null)
