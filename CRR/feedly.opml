@@ -37,7 +37,7 @@
         <outline text="technology" title="technology">
             <outline type="rss" text="TechCrunch" title="TechCrunch" xmlUrl="http://feeds.feedburner.com/Techcrunch" htmlUrl="https://techcrunch.com"/>
             <outline type="rss" text="Engadget" title="Engadget" xmlUrl="http://www.engadget.com/rss.xml" htmlUrl="http://www.engadget.com"/>
-             <outline type="rss" text="Slashdot" title="Slashdot" xmlUrl="http://slashdot.org/index.rss" htmlUrl="https://slashdot.org/"/>
+             <outline type="rss" text="Slashdot" title="Slashdot" xmlUrl="http://rss.slashdot.org/Slashdot/slashdot" htmlUrl="https://slashdot.org/"/>
             <outline type="rss" text="digg" title="digg" xmlUrl="http://digg.com/rss/index.xml" htmlUrl="http://digg.com/"/>
             <outline type="rss" text="The Verge" title="The Verge" xmlUrl="http://www.theverge.com/rss/full.xml" htmlUrl="https://www.theverge.com/"/>
         </outline>
