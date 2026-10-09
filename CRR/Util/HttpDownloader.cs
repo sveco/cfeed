@@ -1,4 +1,4 @@
-﻿namespace cFeed.Util
+namespace cFeed.Util
 {
   using System;
   using System.IO;
@@ -8,7 +8,7 @@
   using System.Text.RegularExpressions;
 
   /// <summary>
-  /// Wrapped download class which supports gzip and checks encoding header and meta tags in order to decode it correctly. 
+  /// Wrapped download class which supports gzip and checks encoding header and meta tags in order to decode it correctly.
   /// See https://stackoverflow.com/questions/2700638/characters-in-string-changed-after-downloading-html-from-the-internet
   /// </summary>
   public class HttpDownloader
@@ -49,8 +49,6 @@
 
     private string ProcessContent(HttpWebResponse response)
     {
-      SetEncodingFromHeader(response);
-
       Stream s = response.GetResponseStream();
       if (response.ContentEncoding.ToLower().Contains("gzip"))
         s = new GZipStream(s, CompressionMode.Decompress);
@@ -65,8 +63,22 @@
         memStream.Write(buffer, 0, bytesRead);
       }
       s.Close();
+
+      return DecodeContent(memStream.ToArray(), response.ContentType);
+    }
+
+    /// <summary>
+    /// Decodes downloaded html. The charset sent in the Content-Type header wins, then the one declared
+    /// in a meta tag, otherwise ISO-8859-1 is used.
+    /// </summary>
+    /// <param name="data">Response body, already decompressed</param>
+    /// <param name="contentType">Value of the Content-Type header</param>
+    public string DecodeContent(byte[] data, string contentType)
+    {
+      SetEncodingFromHeader(contentType);
+
       string html;
-      memStream.Position = 0;
+      var memStream = new MemoryStream(data);
       using (StreamReader r = new StreamReader(memStream, Encoding))
       {
         html = r.ReadToEnd().Trim();
@@ -76,36 +88,35 @@
       return html;
     }
 
-    private void SetEncodingFromHeader(HttpWebResponse response)
+    private void SetEncodingFromHeader(string contentType)
     {
-      string charset = null;
-      if (string.IsNullOrEmpty(response.CharacterSet))
+      // HttpWebResponse.CharacterSet reports ISO-8859-1 when the server sends no charset at all. That would
+      // override the charset declared inside the page, so only trust a charset that is really in the header.
+      if (string.IsNullOrEmpty(contentType))
+        return;
+
+      Match m = Regex.Match(contentType, @";\s*charset\s*=\s*(?<charset>[^;]*)", RegexOptions.IgnoreCase);
+      if (!m.Success)
+        return;
+
+      string charset = m.Groups["charset"].Value.Trim().Trim('\'', '"'); // Sometimes encoding is enclosed in additional quotes.
+      if (charset.Length == 0)
+        return;
+
+      try
       {
-        Match m = Regex.Match(response.ContentType, @";\s*charset\s*=\s*(?<charset>.*)", RegexOptions.IgnoreCase);
-        if (m.Success)
-        {
-          charset = m.Groups["charset"].Value.Trim(new[] { '\'', '"' });
-        }
+        Encoding = Encoding.GetEncoding(charset);
       }
-      else
+      catch (ArgumentException)
       {
-        charset = response.CharacterSet;
-      }
-      if (!string.IsNullOrEmpty(charset))
-      {
-        try
-        {
-          Encoding = Encoding.GetEncoding(charset.Replace("\"", string.Empty )); // Sometimes encoding is enclosed in additional quotes.
-        }
-        catch (ArgumentException)
-        {
-        }
       }
     }
 
     private string CheckMetaCharSetAndReEncode(Stream memStream, string html)
     {
-      Match m = new Regex(@"<meta\s+.*?charset\s*=\s*(?<charset>[A-Za-z0-9_-]+)", RegexOptions.Singleline | RegexOptions.IgnoreCase).Match(html);
+      // Matches <meta charset=utf-8>, <meta charSet="utf-8" /> and <meta http-equiv=... content="text/html; charset=utf-8">.
+      // The search stays inside one tag, so a later "charset=" in a script is not picked up.
+      Match m = new Regex(@"<meta\s[^>]*?charset\s*=\s*[""']?(?<charset>[A-Za-z0-9_-]+)", RegexOptions.IgnoreCase).Match(html);
       if (m.Success)
       {
         string charset = m.Groups["charset"].Value.ToLower() ?? "iso-8859-1";
@@ -117,7 +128,7 @@
         try
         {
           Encoding metaEncoding = Encoding.GetEncoding(charset);
-          if (Encoding != metaEncoding)
+          if (Encoding.CodePage != metaEncoding.CodePage)
           {
             memStream.Position = 0L;
             StreamReader recodeReader = new StreamReader(memStream, metaEncoding);
