@@ -115,6 +115,9 @@
     <Compile Include="Util\INotifyPropertyChangedExtensions.cs" />
     <Compile Include="Util\OpmlImport.cs" />
     <Compile Include="Util\Rss10FeedFormatter.cs" />
+    <Compile Include="Util\ResizeWatcher.cs" />
+    <Compile Include="Util\ScrollMath.cs" />
+    <Compile Include="Util\SizeChangeDetector.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
     <Compile Include="Util\GlobalMethods.cs" />
     <Compile Include="Util\XmlSanitizingStream.cs" />

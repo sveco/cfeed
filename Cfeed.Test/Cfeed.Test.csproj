@@ -74,6 +74,9 @@
     <Compile Include="HtmlToTextTests.cs" />
     <Compile Include="HttpDownloaderTests.cs" />
     <Compile Include="OpmlImportTests.cs" />
+    <Compile Include="ResizeWatcherTests.cs" />
+    <Compile Include="ScrollMathTests.cs" />
+    <Compile Include="SizeChangeDetectorTests.cs" />
     <Compile Include="StringExtensionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <!-- Requires Microsoft Fakes (VS Enterprise); excluded so the suite builds with Build Tools. -->
