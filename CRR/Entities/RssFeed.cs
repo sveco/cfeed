@@ -406,20 +406,27 @@
 		private void GetFeed(bool refresh)
 		{
 			IsProcessing = true;
-			FeedItems.Clear();
-
-			LoadFeedFromStore();
-
-			//if refresh is on, get feed from web
-			if (refresh && FeedUrl != null)
+			try
 			{
-				LoadFeedFromWeb();
+				FeedItems.Clear();
+
+				LoadFeedFromStore();
+
+				//if refresh is on, get feed from web
+				if (refresh && FeedUrl != null)
+				{
+					LoadFeedFromWeb();
+				}
+				if (timer != null)
+				{
+					timer.Change(this.ReloadInterval * 1000, this.ReloadInterval * 1000);
+				}
 			}
-			if (timer != null)
+			finally
 			{
-				timer.Change(this.ReloadInterval * 1000, this.ReloadInterval * 1000);
+				// Always clear the loading marker, otherwise the feed shows as loading forever.
+				IsProcessing = false;
 			}
-			IsProcessing = false;
 		}
 
 		/// <summary>
@@ -430,7 +437,26 @@
 			int index = 0;
 			foreach (var i in this.Feed.Items)
 			{
-				var result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id || x.SyndicationItemId == i.Links[0].Uri.ToString()).FirstOrDefault();
+				// Items are matched by id, or by first link when the feed gives no id.
+				// Some feeds publish items with neither, those cannot be tracked and are skipped.
+				var link = i.Links.FirstOrDefault()?.Uri.ToString();
+				if (string.IsNullOrEmpty(i.Id) && link == null)
+				{
+					logger.Warn("Skipping item without id or link in " + FeedUrl);
+					index++;
+					continue;
+				}
+
+				FeedItem result = null;
+				if (!string.IsNullOrEmpty(i.Id))
+				{
+					result = DbWrapper.Instance.Find(x => x.SyndicationItemId == i.Id).FirstOrDefault();
+				}
+				if (result == null && link != null)
+				{
+					result = DbWrapper.Instance.Find(x => x.SyndicationItemId == link).FirstOrDefault();
+				}
+
 				if (result != null)
 				{
 					result.Item = i;
@@ -579,7 +605,16 @@
 
 			logger.Trace(FeedUrl + " loaded.");
 
-			JoinReindexFeed();
+			try
+			{
+				JoinReindexFeed();
+			}
+			catch (Exception ex)
+			{
+				// A malformed feed must not take the app down, this also runs on timer threads.
+				logger.Error("Error processing items of " + FeedUrl);
+				logger.Error(ex);
+			}
 		}
 
 		/// <summary>
@@ -588,7 +623,16 @@
 		/// <param name="state">The <see cref="object"/></param>
 		private void OnTimer(object state)
 		{
-			GetFeed(true);
+			try
+			{
+				GetFeed(true);
+			}
+			catch (Exception ex)
+			{
+				// An unhandled exception on a timer thread terminates the process.
+				logger.Error("Auto reload failed for " + FeedUrl);
+				logger.Error(ex);
+			}
 		}
 
 		private bool disposedValue; // To detect redundant calls

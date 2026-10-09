@@ -182,14 +182,7 @@
 					{
 						try
 						{
-							if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
-							{
-								Process.Start(Config.Global.Browser, selectedArticle.ImageLinks[linkNumber - 1].ToString());
-							}
-							else
-							{
-								Process.Start(selectedArticle.ImageLinks[linkNumber - 1].ToString());
-							}
+							Browser.Open(selectedArticle.ImageLinks[linkNumber - 1]);
 						}
 						catch (Win32Exception ex)
 						{
@@ -218,26 +211,19 @@
 						&& selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber
 						&& linkNumber > 0)
 					{
-						string link;
+						Uri link;
 						if (linkNumber <= selectedArticle.Links.Count)
 						{
-							link = selectedArticle.Links[linkNumber - 1].Uri.ToString();
+							link = selectedArticle.Links[linkNumber - 1].Uri;
 						}
 						else
 						{
-							link = selectedArticle.ExternalLinks[linkNumber - 1 - selectedArticle.Links.Count].ToString();
+							link = selectedArticle.ExternalLinks[linkNumber - 1 - selectedArticle.Links.Count];
 						}
 
 						try
 						{
-							if (!String.IsNullOrWhiteSpace(Config.Global.Browser))
-							{
-								Process.Start(Config.Global.Browser, link);
-							}
-							else
-							{
-								Process.Start(link);
-							}
+							Browser.Open(link);
 						}
 						catch (Win32Exception ex)
 						{

@@ -45,6 +45,12 @@
     public string ArticleTextLinkLabel { get; private set; }
     public string ArticleTextPublishDateLabel { get; private set; }
 
+    // Formats used by FeedItem. Kept here so they are refreshed when settings.conf changes.
+    public string ArticleListDateFormat { get; private set; }
+    public string ArticleListItemFormat { get; private set; }
+    public string ArticleHeaderFormat { get; private set; }
+    public string SavedFileName { get; private set; }
+
     private string readStateRead { get; set; }
     private string readStateNew { get; set; }
     private string downloadStateDownloaded { get; set; }
@@ -78,6 +84,11 @@
       ArticleTextAuthorsLabel = Config.Global.UI.Strings.ArticleTextAuthorsLabel;
       ArticleTextLinkLabel = Config.Global.UI.Strings.ArticleTextLinkLabel;
       ArticleTextPublishDateLabel = Config.Global.UI.Strings.ArticleTextPublishDateLabel;
+
+      ArticleListDateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
+      ArticleListItemFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
+      ArticleHeaderFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
+      SavedFileName = Config.Global.SavedFileName as string;
 
       readStateRead = Config.Global.UI.Strings.ReadStateRead as string;
       readStateNew = Config.Global.UI.Strings.ReadStateNew as string;

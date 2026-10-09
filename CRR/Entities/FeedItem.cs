@@ -30,22 +30,22 @@
     /// <summary>
     /// Defines the dateFormat
     /// </summary>
-    static string dateFormat = Config.Global.UI.Strings.ArticleListDateFormat as string;
+    static string dateFormat { get { return Configuration.Instance.ArticleListDateFormat; } }
 
     /// <summary>
     /// Defines the displayFormat
     /// </summary>
-    static string displayFormat = Config.Global.UI.Strings.ArticleListItemFormat as string;
+    static string displayFormat { get { return Configuration.Instance.ArticleListItemFormat; } }
 
     /// <summary>
     /// Defines the fileNameFormat
     /// </summary>
-    static string fileNameFormat = Config.Global.SavedFileName as string;
+    static string fileNameFormat { get { return Configuration.Instance.SavedFileName; } }
 
     /// <summary>
     /// Defines the titleFormat
     /// </summary>
-    static string titleFormat = Config.Global.UI.Strings.ArticleHeaderFormat as string;
+    static string titleFormat { get { return Configuration.Instance.ArticleHeaderFormat; } }
 
     Uri _feedUrl;
     bool _isNew = true;
@@ -420,13 +420,14 @@
         {
           ArticleContent = File.ReadAllText(ArticleFileName);
           IsLoaded = true;
-          OnContentLoaded.Invoke(ArticleContent);
+          OnContentLoaded?.Invoke(ArticleContent);
         }
         catch (Exception x)
         {
           if (x is FileNotFoundException ||
+              x is DirectoryNotFoundException ||
               x is UnauthorizedAccessException ||
-              x is FileNotFoundException)
+              x is IOException)
           {
             //For all purposes, file is not accessible to us
             logger.Error(x);
@@ -628,13 +629,13 @@
     /// <param name="i">The <see cref="SyndicationItem"/></param>
     private void SetValues(SyndicationItem i)
     {
-      SyndicationItemId = !string.IsNullOrEmpty(i.Id) ? i.Id : i.Links[0].Uri.ToString();
+      SyndicationItemId = !string.IsNullOrEmpty(i.Id) ? i.Id : i.Links.FirstOrDefault()?.Uri.ToString();
       PublishDate = i.PublishDate.DateTime > i.LastUpdatedTime.DateTime ?
                     i.PublishDate.DateTime : i.LastUpdatedTime.DateTime;
       Summary = i.Summary != null ? i.Summary.Text : string.Empty;
       Links = i.Links;
       Authors = i.Authors;
-      Title = i.Title.Text;
+      Title = i.Title?.Text ?? string.Empty;
       this.PropertyChanged += FeedItem_PropertyChanged;
     }
   }

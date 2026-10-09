@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -15,15 +15,35 @@ namespace cFeed.Util
     {
       var results = XDocument.Load(uri)
                            .Descendants("outline")
-                           .Where(o => o.Attribute("type") != null && o.Attribute("type").Value == "rss")
-                           //.Elements("outline")
+                           // Subscription outlines carry xmlUrl. Category outlines (folders) do not.
+                           .Where(o => !string.IsNullOrWhiteSpace((string)o.Attribute("xmlUrl"))
+                                       && IsFeedType((string)o.Attribute("type")))
                            .Select(o => new Outline
                            {
-                             Title = o.Attribute("title").Value,
-                             FeedUrl = o.Attribute("xmlUrl").Value,
-                             Tags = (o.Parent != null && o.Parent.Attribute("title") != null) ? new string[] { o.Parent.Attribute("title").Value } : null
+                             // Many exporters write only "text", and some write neither, so fall back to the url.
+                             Title = FirstNonEmpty((string)o.Attribute("title"),
+                                                   (string)o.Attribute("text"),
+                                                   (string)o.Attribute("xmlUrl")),
+                             FeedUrl = ((string)o.Attribute("xmlUrl")).Trim(),
+                             Tags = o.Parent != null
+                                    && !string.IsNullOrWhiteSpace(FirstNonEmpty((string)o.Parent.Attribute("title"), (string)o.Parent.Attribute("text")))
+                                  ? new string[] { FirstNonEmpty((string)o.Parent.Attribute("title"), (string)o.Parent.Attribute("text")) }
+                                  : null
                            });
       return results.ToList();
+    }
+
+    private static bool IsFeedType(string type)
+    {
+      // type is optional, rss is the usual value, atom is used by some exporters
+      return string.IsNullOrEmpty(type)
+             || type.Equals("rss", StringComparison.OrdinalIgnoreCase)
+             || type.Equals("atom", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FirstNonEmpty(params string[] values)
+    {
+      return values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
     }
   }
 }
