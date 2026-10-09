@@ -301,6 +301,14 @@ Article         | Defines layout of Article view
 
 Each elemant can contain Width, Height, and list of controls that will be generated for view. See [default.conf](https://github.com/sveco/CRR/blob/master/CRR/default.conf) for example.
 
+Width and Height of the first view (FeedList) set the size of the console window when the application starts. They are not applied again when other views open, so a window that was resized stays as it is.
+Width and Height of a control can be negative, which means the size of the console minus that number. For example, Width: -3 is the console width minus 3. Such controls follow the console when it is resized.
+
+***Resizing the console***
+
+The console window can be resized at any time. The application waits until the new size has settled, then draws the current view again: header, footer, lists, article text (wrapped to the new width), and keeps the selected item and the scroll position visible.
+Header and footer text that is longer than the window is shortened. Controls with a fixed Top or Height (for example *Top: 20* of the Loading text in the Article layout) stay where they are.
+
 ***Shortcuts***
 
 Defines keyboard keys and modifiers combination that trigger particular action. For a valid list of **[keys see this link](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx)**.
