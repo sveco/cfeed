@@ -38,20 +38,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="cfeed.Fakes">
-      <HintPath>FakesAssemblies\cfeed.Fakes.dll</HintPath>
-    </Reference>
     <Reference Include="CGui, Version=1.1.0.8, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\CGui.1.1.0.8\lib\net40\CGui.dll</HintPath>
     </Reference>
     <Reference Include="JsonConfig, Version=1.0.6473.39546, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Documents\Visual Studio 2017\Projects\CRR\CRR\lib\JsonConfig.dll</HintPath>
+      <HintPath>..\CRR\lib\JsonConfig.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\MSTest.TestFramework.1.2.1\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
     </Reference>
@@ -74,10 +68,11 @@
   <ItemGroup>
     <Compile Include="StringExtensionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Views\FeedListViewTests.cs" />
+    <!-- Requires Microsoft Fakes (VS Enterprise); excluded so the suite builds with Build Tools. -->
+    <None Include="Views\FeedListViewTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Fakes Include="Fakes\cfeed.fakes" />
+    <None Include="Fakes\cfeed.fakes" />
     <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
