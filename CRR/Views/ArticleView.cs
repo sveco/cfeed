@@ -22,6 +22,7 @@
 		string[] _filters;
 		string _select;
 		bool _useFeedContent;
+		bool _stripLinks;
 		dynamic footerFormat;
 		dynamic headerFormat;
 
@@ -58,7 +59,7 @@
 				PrepareArticle();
 
 				Parallel.Invoke(
-					new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent)),
+					new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent, _stripLinks)),
 					new Action(_articleContent.Show)
 					);
 
@@ -240,12 +241,11 @@
 		{
 			if (selectedFeed != null)
 			{
-				if (selectedFeed.Filters != null)
-				{
-					_filters = selectedFeed.Filters;
-					_select = selectedFeed.Select;
-				}
+				// Select used to be applied only together with Filters
+				_filters = selectedFeed.Filters;
+				_select = selectedFeed.Select;
 				_useFeedContent = selectedFeed.UseFeedContent;
+				_stripLinks = selectedFeed.StripLinks;
 			}
 
 			void onContentLoaded(string content)
@@ -283,7 +283,7 @@
 			if (selectedArticle != null)
 			{
 				Parallel.Invoke(
-					new Action(() => selectedArticle.LoadOnlineArticle(_select, _filters, _useFeedContent)),
+					new Action(() => selectedArticle.LoadOnlineArticle(_select, _filters, _useFeedContent, _stripLinks)),
 					new Action(_articleContent.Show)
 					);
 			}

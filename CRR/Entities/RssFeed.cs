@@ -139,6 +139,11 @@
 		public bool UseFeedContent { get; set; }
 
 		/// <summary>
+		/// Show links in articles as plain text, without link markers and numbers.
+		/// </summary>
+		public bool StripLinks { get; set; }
+
+		/// <summary>
 		/// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
 		/// </summary>
 		public bool IsDynamic

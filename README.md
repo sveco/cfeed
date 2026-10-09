@@ -60,7 +60,10 @@ Basic setting.conf can look like this:
         #XPath selector to select single node as root of article. Filters (see below) are applied after Select
         Select: "//html",
         #Define filters for html id's and classes. Elements from those classes will be ignored when converting html to text. use '.' prefix for classes and # for id's.
+        #A filter that starts with / is an XPath expression, for example "//*[@data-block='promoList']". All elements it matches are ignored.
         Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
+        #If set to true, links in articles are shown as plain text, without link markers and numbers. Default is false.
+        #StripLinks: true,
         #Custom title to override default feed title
         Title: "New Scientist - Home Custom",
         #Tags can be used to categorize feeds and articles. Thas can be used in query to filter on
@@ -81,7 +84,38 @@ Only FeedUrl is required, other settings are optional. A new feature is Select t
 and then "filter" out unwanted content from root node, like page navigation, links, registration forms etc.
 To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
 Any content inside filtered elements will not be rendered.
+Select works on its own, Filters are not required.
 Title can be used to display custom title of feed, instead of the one defined by feed itself.
+
+***XPath filters***
+
+Some sites generate class names (for example *ssrcss-15twdc6-Stack*) that change without notice, or put the same class on content and on clutter. For those, a filter that starts with **/** is treated as an XPath expression instead of a class or an id.
+Every element the expression matches is left out, together with its content. Filters of both kinds can be mixed in the same list.
+An expression that is not valid is ignored (and logged), the other filters still apply.
+
+```
+Filters: [".share-tools", "#footer", "//*[@data-block='promoList']", "//div[contains(@class,'advert')]"]
+```
+
+***StripLinks***
+
+By default, a link in an article is shown as *[Link:text][3]* and can be opened with **L**. Set **StripLinks: true** to show just the text of the link, with no marker and no number. Those links are then not available with **L**.
+Images are not affected, use a filter to leave them out.
+
+*Example: BBC News*
+
+BBC article pages keep the story in `<main id="main-content">`, and mark each block with a data-block attribute. This shows the story with the author and the time, and leaves out the menus, photos, video players and the lists of related links:
+```
+{
+    FeedUrl: "http://feeds.bbci.co.uk/news/world/rss.xml",
+    Title: "BBC News - World",
+    Select: "//main[@id='main-content']",
+    StripLinks: true,
+    Filters: ["//*[@data-block='headline']", "//*[@data-block='image']", "//*[@data-block='media']",
+              "//*[@data-block='topicList']", "//*[@data-block='promoList']"]
+}
+```
+Video pages have no article, so they show little text. Add `"//*[@data-block='byline']"` to also leave out the author line.
 
 ***UseFeedContent***
 

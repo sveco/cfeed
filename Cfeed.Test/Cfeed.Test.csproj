@@ -71,6 +71,7 @@
   <ItemGroup>
     <Compile Include="BrowserTests.cs" />
     <Compile Include="FeedItemTests.cs" />
+    <Compile Include="HtmlToTextTests.cs" />
     <Compile Include="HttpDownloaderTests.cs" />
     <Compile Include="OpmlImportTests.cs" />
     <Compile Include="StringExtensionsTest.cs" />

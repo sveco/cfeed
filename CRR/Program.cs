@@ -133,6 +133,7 @@ namespace cFeed
 					Filters = feed.Filters,
 					Hidden = feed.Hidden,
 					UseFeedContent = feed.UseFeedContent,
+					StripLinks = feed.StripLinks,
 					Tags = feed.Tags,
 				});
 				i++;

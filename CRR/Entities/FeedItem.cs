@@ -352,11 +352,11 @@
     /// <param name="select">XPath of the root node to convert, optional</param>
     /// <param name="filters">Html ids and classes to leave out</param>
     /// <param name="useFeedContent">Prefer the content from the feed over downloading the page</param>
-    public void DownloadArticleContent(string select, string[] filters, bool useFeedContent = false)
+    public void DownloadArticleContent(string select, string[] filters, bool useFeedContent = false, bool stripLinks = false)
     {
       if (useFeedContent && !string.IsNullOrWhiteSpace(Content))
       {
-        ConvertContent(Content, Links.Count > 0 ? Links[0].Uri : FeedUrl, select, filters);
+        ConvertContent(Content, Links.Count > 0 ? Links[0].Uri : FeedUrl, select, filters, stripLinks);
         Save();
         return;
       }
@@ -377,7 +377,7 @@
         return;
       }
 
-      ConvertContent(doc.DocumentNode.OuterHtml, Links[0].Uri, select, filters);
+      ConvertContent(doc.DocumentNode.OuterHtml, Links[0].Uri, select, filters, stripLinks);
       Save();
     }
 
@@ -387,10 +387,11 @@
     /// <param name="html">Html to convert</param>
     /// <param name="baseUri">Used to resolve relative links</param>
     /// <param name="select">XPath of the root node to convert, optional</param>
-    /// <param name="filters">Html ids and classes to leave out</param>
-    public void ConvertContent(string html, Uri baseUri, string select, string[] filters)
+    /// <param name="filters">Html ids and classes to leave out, or XPath expressions starting with /</param>
+    /// <param name="stripLinks">Keep link text but leave out link markers and numbers</param>
+    public void ConvertContent(string html, Uri baseUri, string select, string[] filters, bool stripLinks = false)
     {
-      HtmlToText conv = new HtmlToText() { Select = select, Filters = filters?.ToList(), LinkStartFrom = this.Links?.Count ?? 0 };
+      HtmlToText conv = new HtmlToText() { Select = select, Filters = filters?.ToList(), StripLinks = stripLinks, LinkStartFrom = this.Links?.Count ?? 0 };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 
@@ -445,7 +446,7 @@
     /// <param name="filters"></param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
         "CA1031:DoNotCatchGeneralExceptionTypes")]
-    public void LoadArticle(string select, string[] filters, bool useFeedContent = false)
+    public void LoadArticle(string select, string[] filters, bool useFeedContent = false, bool stripLinks = false)
     {
       if (this.IsDownloaded)
       {
@@ -471,7 +472,7 @@
       }
       else
       {
-        LoadOnlineArticle(select, filters, useFeedContent);
+        LoadOnlineArticle(select, filters, useFeedContent, stripLinks);
       }
     }
 
@@ -479,14 +480,14 @@
     /// The LoadOnlineArticle
     /// </summary>
     /// <param name="filters">The <see cref="string"/></param>
-    public void LoadOnlineArticle(string select, string[] filters, bool useFeedContent = false)
+    public void LoadOnlineArticle(string select, string[] filters, bool useFeedContent = false, bool stripLinks = false)
     {
       if (OnContentLoaded == null) { throw new NullReferenceException("OnContentLoaded"); }
 
       if (Links.Count > 0 || (useFeedContent && !string.IsNullOrWhiteSpace(Content)))
       {
         this.IsProcessing = true;
-        DownloadArticleContent(select, filters, useFeedContent);
+        DownloadArticleContent(select, filters, useFeedContent, stripLinks);
         var result = DbWrapper.Instance.Find(x => x.Id ==
                                              this.Id).FirstOrDefault();
         if (result != null)

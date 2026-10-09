@@ -31,6 +31,16 @@ namespace cFeed.Util
 		public string Select { get; internal set; }
 		public int LinkStartFrom { get; set; }
 
+		/// <summary>
+		/// Render links as plain text, without link markers and numbers. Links are not collected either.
+		/// </summary>
+		public bool StripLinks { get; internal set; }
+
+		/// <summary>
+		/// Nodes matched by the XPath entries of <see cref="Filters"/>. Skipped when converting.
+		/// </summary>
+		private HashSet<HtmlNode> excludedNodes = new HashSet<HtmlNode>();
+
 		public HtmlToText()
 		{
 		}
@@ -39,6 +49,7 @@ namespace cFeed.Util
 		{
 			HtmlDocument doc = new HtmlDocument();
 			doc.Load(path);
+			ResolveXPathFilters(doc);
 
 			StringWriter sw = new StringWriter();
 			ConvertTo(doc.DocumentNode, sw);
@@ -50,6 +61,7 @@ namespace cFeed.Util
 		{
 			HtmlDocument doc = new HtmlDocument();
 			doc.LoadHtml(html);
+			ResolveXPathFilters(doc);
 			BaseUri = baseUri;
 			StringWriter sw = new StringWriter();
 			HtmlNode rootNode = doc.DocumentNode;
@@ -69,6 +81,9 @@ namespace cFeed.Util
 
 		public void ConvertTo(HtmlNode node, TextWriter outText)
 		{
+			if (excludedNodes.Contains(node))
+				return;
+
 			if (Filters != null)
 			{
 				if (Filters.Select(x => x.TrimStart('#')).Contains(node.Id.Trim()))
@@ -195,6 +210,26 @@ namespace cFeed.Util
 							break;
 
 						case "a":
+							if (StripLinks)
+							{
+								// Keep the link text, drop the marker and the number. Text nodes are trimmed, so
+								// the spaces that separated the link from its neighbours have to be written here.
+								if (EndsWithWhitespace(node.PreviousSibling))
+								{
+									outText.Write(" ");
+								}
+								if (node.HasChildNodes)
+								{
+									ConvertContentTo(node, outText);
+								}
+								if (StartsWithWhitespace(node.NextSibling))
+								{
+									outText.Write(" ");
+								}
+								skip = true;
+								break;
+							}
+
 							outText.Write(linkTextHighlight + " [Link:");
 							if (node.HasChildNodes)
 							{
@@ -241,6 +276,48 @@ namespace cFeed.Util
 					}
 					break;
 			}
+		}
+
+		/// <summary>
+		/// Filters that start with / or ( are XPath expressions, for example "//*[@data-block='promoList']".
+		/// Class and id filters cannot match sites that generate class names, so those pages need XPath.
+		/// </summary>
+		private void ResolveXPathFilters(HtmlDocument doc)
+		{
+			excludedNodes.Clear();
+			if (Filters == null) return;
+
+			foreach (var filter in Filters.Where(f => !string.IsNullOrWhiteSpace(f) && (f.TrimStart().StartsWith("/") || f.TrimStart().StartsWith("("))))
+			{
+				try
+				{
+					var matches = doc.DocumentNode.SelectNodes(filter.Trim());
+					if (matches != null)
+					{
+						foreach (var match in matches)
+						{
+							excludedNodes.Add(match);
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					// a typo in one filter must not break the article
+					logger.Warn(string.Format("Ignoring invalid XPath filter '{0}': {1}", filter, ex.Message));
+				}
+			}
+		}
+
+		private static bool EndsWithWhitespace(HtmlNode sibling)
+		{
+			var text = sibling as HtmlTextNode;
+			return text != null && text.Text.Length > 0 && char.IsWhiteSpace(text.Text[text.Text.Length - 1]);
+		}
+
+		private static bool StartsWithWhitespace(HtmlNode sibling)
+		{
+			var text = sibling as HtmlTextNode;
+			return text != null && text.Text.Length > 0 && char.IsWhiteSpace(text.Text[0]);
 		}
 
 		private void ConvertContentTo(HtmlNode node, TextWriter outText)
