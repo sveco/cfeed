@@ -132,6 +132,13 @@
 		public bool Hidden { get; set; }
 
 		/// <summary>
+		/// Build article text from the content published in the feed entry instead of downloading the article page.
+		/// Needed for sites whose pages cannot be converted to text, like reddit. Falls back to downloading the page
+		/// when an entry has no content.
+		/// </summary>
+		public bool UseFeedContent { get; set; }
+
+		/// <summary>
 		/// Is feed dynamic (e.g no external feed sources). Used to load dynamic feeds last.
 		/// </summary>
 		public bool IsDynamic
@@ -460,6 +467,7 @@
 				if (result != null)
 				{
 					result.Item = i;
+					result.Content = UseFeedContent ? FeedItem.GetFeedContent(i) : null;
 					result.Index = index + 1;
 					result.Tags = Tags;
 					result.LastUpdated = DateTime.Now;
@@ -470,6 +478,7 @@
 					var newItem = new FeedItem(FeedUrl, i)
 					{
 						FeedUrl = FeedUrl,
+						Content = UseFeedContent ? FeedItem.GetFeedContent(i) : null,
 						Index = index + 1,
 						Tags = Tags,
 						LastUpdated = DateTime.Now

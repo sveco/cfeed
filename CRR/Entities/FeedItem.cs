@@ -79,6 +79,12 @@
     /// </summary>
     public Collection<SyndicationPerson> Authors { get; set; }
 
+    /// <summary>
+    /// Content published in the feed entry itself (html or text), for example Atom content.
+    /// Only stored for feeds with UseFeedContent enabled.
+    /// </summary>
+    public string Content { get; set; }
+
     [BsonIgnore]
     public CultureInfo Culture
     {
@@ -331,36 +337,64 @@
     }
 
     /// <summary>
-    /// The DownloadArticleContent
+    /// Gets the html or text content published in the feed entry, or null when the entry has none.
     /// </summary>
-    /// <param name="filters">The <see cref="string"/></param>
-    public void DownloadArticleContent(string select, string[] filters)
+    public static string GetFeedContent(SyndicationItem item)
     {
-      var w = new HtmlAgilityPack.HtmlWeb();
-      HtmlDocument doc = new HtmlDocument();
-      if (Links.Count > 0)
-      {
-        try
-        {
-          HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, Configuration.UserAgent);
-          doc.LoadHtml(downloader.GetPage());
-        }
-        catch (Exception ex)
-        {
-          doc = null;
-          this.DisplayText = this.DisplayLine + " ERROR.";
-          logger.Error($"Could not load {Links[0].Uri}");
-          logger.Error(ex);
-        }
-      }
-      if (doc == null) return;
+      return (item?.Content as TextSyndicationContent)?.Text;
+    }
 
-			HtmlToText conv = new HtmlToText() { Select = select,  Filters = filters?.ToList(), LinkStartFrom = this.Links.Count };
+    /// <summary>
+    /// Builds the article text and saves it locally. The text comes from the content published in the
+    /// feed when <paramref name="useFeedContent"/> is set and the entry has content, otherwise the
+    /// article page is downloaded.
+    /// </summary>
+    /// <param name="select">XPath of the root node to convert, optional</param>
+    /// <param name="filters">Html ids and classes to leave out</param>
+    /// <param name="useFeedContent">Prefer the content from the feed over downloading the page</param>
+    public void DownloadArticleContent(string select, string[] filters, bool useFeedContent = false)
+    {
+      if (useFeedContent && !string.IsNullOrWhiteSpace(Content))
+      {
+        ConvertContent(Content, Links.Count > 0 ? Links[0].Uri : FeedUrl, select, filters);
+        Save();
+        return;
+      }
+
+      if (Links.Count == 0) return;
+
+      HtmlDocument doc = new HtmlDocument();
+      try
+      {
+        HttpDownloader downloader = new HttpDownloader(Links[0].Uri.ToString(), null, Configuration.UserAgent);
+        doc.LoadHtml(downloader.GetPage());
+      }
+      catch (Exception ex)
+      {
+        this.DisplayText = this.DisplayLine + " ERROR.";
+        logger.Error($"Could not load {Links[0].Uri}");
+        logger.Error(ex);
+        return;
+      }
+
+      ConvertContent(doc.DocumentNode.OuterHtml, Links[0].Uri, select, filters);
+      Save();
+    }
+
+    /// <summary>
+    /// Converts html to the article text and collects its links and images. Does not save anything.
+    /// </summary>
+    /// <param name="html">Html to convert</param>
+    /// <param name="baseUri">Used to resolve relative links</param>
+    /// <param name="select">XPath of the root node to convert, optional</param>
+    /// <param name="filters">Html ids and classes to leave out</param>
+    public void ConvertContent(string html, Uri baseUri, string select, string[] filters)
+    {
+      HtmlToText conv = new HtmlToText() { Select = select, Filters = filters?.ToList(), LinkStartFrom = this.Links?.Count ?? 0 };
       Collection<Uri> links = new Collection<Uri>();
       Collection<Uri> images = new Collection<Uri>();
 
-      var resultString = conv.ConvertHtml(doc.DocumentNode.OuterHtml,
-                                          Links[0].Uri, out links, out images);
+      var resultString = conv.ConvertHtml(html, baseUri, out links, out images);
       //remove multiple lines from article content. It makes text more condensed.
       var cleanedContent = Regex.Replace(resultString, @"^\s+$[\r\n]*", "\r\n", RegexOptions.Multiline);
 
@@ -369,7 +403,6 @@
       ArticleContent = cleanedContent;
 
       IsLoaded = true;
-      Save();
     }
 
     /// <summary>
@@ -412,7 +445,7 @@
     /// <param name="filters"></param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design",
         "CA1031:DoNotCatchGeneralExceptionTypes")]
-    public void LoadArticle(string select, string[] filters)
+    public void LoadArticle(string select, string[] filters, bool useFeedContent = false)
     {
       if (this.IsDownloaded)
       {
@@ -438,7 +471,7 @@
       }
       else
       {
-        LoadOnlineArticle(select, filters);
+        LoadOnlineArticle(select, filters, useFeedContent);
       }
     }
 
@@ -446,14 +479,14 @@
     /// The LoadOnlineArticle
     /// </summary>
     /// <param name="filters">The <see cref="string"/></param>
-    public void LoadOnlineArticle(string select, string[] filters)
+    public void LoadOnlineArticle(string select, string[] filters, bool useFeedContent = false)
     {
       if (OnContentLoaded == null) { throw new NullReferenceException("OnContentLoaded"); }
 
-      if (Links.Count > 0)
+      if (Links.Count > 0 || (useFeedContent && !string.IsNullOrWhiteSpace(Content)))
       {
         this.IsProcessing = true;
-        DownloadArticleContent(select, filters);
+        DownloadArticleContent(select, filters, useFeedContent);
         var result = DbWrapper.Instance.Find(x => x.Id ==
                                              this.Id).FirstOrDefault();
         if (result != null)

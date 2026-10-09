@@ -132,6 +132,7 @@ namespace cFeed
 					Select = feed.Select,
 					Filters = feed.Filters,
 					Hidden = feed.Hidden,
+					UseFeedContent = feed.UseFeedContent,
 					Tags = feed.Tags,
 				});
 				i++;

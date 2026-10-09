@@ -21,6 +21,7 @@
 		bool _displayNext;
 		string[] _filters;
 		string _select;
+		bool _useFeedContent;
 		dynamic footerFormat;
 		dynamic headerFormat;
 
@@ -57,7 +58,7 @@
 				PrepareArticle();
 
 				Parallel.Invoke(
-					new Action(() => this.selectedArticle.LoadArticle(_select, _filters)),
+					new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent)),
 					new Action(_articleContent.Show)
 					);
 
@@ -244,6 +245,7 @@
 					_filters = selectedFeed.Filters;
 					_select = selectedFeed.Select;
 				}
+				_useFeedContent = selectedFeed.UseFeedContent;
 			}
 
 			void onContentLoaded(string content)
@@ -281,7 +283,7 @@
 			if (selectedArticle != null)
 			{
 				Parallel.Invoke(
-					new Action(() => selectedArticle.LoadOnlineArticle(_select, _filters)),
+					new Action(() => selectedArticle.LoadOnlineArticle(_select, _filters, _useFeedContent)),
 					new Action(_articleContent.Show)
 					);
 			}

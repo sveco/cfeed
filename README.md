@@ -67,6 +67,8 @@ Basic setting.conf can look like this:
         Tags: ["Science"],
         #If uncommented, feed will be hidden and only accessible via FeedQuery
         #Hidden: true,
+        #If set to true, article text is built from the content published in the feed instead of downloading the article page. Default is false.
+        #UseFeedContent: true,
         #If set to true, reloads feed automatically
         AutoReload: true,
         #If AutoReload is set to true, this defines number of seconds after which feed will be automatically reloaded. Default is 30.
@@ -80,6 +82,27 @@ and then "filter" out unwanted content from root node, like page navigation, lin
 To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
 Any content inside filtered elements will not be rendered.
 Title can be used to display custom title of feed, instead of the one defined by feed itself.
+
+***UseFeedContent***
+
+By default, opening an article downloads the article's web page and converts it to text. Some sites, like reddit, serve pages that are built by javascript, and those come out empty.
+Set **UseFeedContent: true** on such a feed to build the article from the content that the feed itself publishes (the content element of an Atom entry). Links in that content are numbered as usual, so you can open them with **L**.
+For a link post on reddit, the content has the *[link]* and *[comments]* links, so **L** opens the linked article. Open the reddit comments page itself with **O**.
+
+Notes:
+- If an entry has no content, the article page is downloaded as usual.
+- Select and Filters apply to the feed content in the same way as to a downloaded page.
+- Articles that were already saved locally are shown from the saved copy. Delete the saved copy (**Delete** in the article list) to build it again with the new setting.
+- The content is read when the feed is refreshed. After enabling the option, refresh the feed (**R** in the feed list) so existing articles get their content.
+
+*Example: Reddit*
+```
+{
+    FeedUrl: "https://www.reddit.com/r/news/.rss",
+    UseFeedContent: true,
+    Title: "Reddit News"
+}
+```
 
 ***Dynamic Feeds***
 
