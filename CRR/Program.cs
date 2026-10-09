@@ -111,6 +111,7 @@ namespace cFeed
 			if (arguments.GetArgValue<bool>("h"))
 			{
 				ShowHelp();
+				return;
 			}
 
 			FileInfo conf = new FileInfo("settings.conf");
@@ -204,16 +205,39 @@ namespace cFeed
 		/// </summary>
 		private static void ShowHelp()
 		{
-			var content = "TBD: Help. Esc to continue to app.";
-			var help = new TextArea(content)
-			{
-				Top = 0,
-				Left = 0,
-				Width = Console.WindowWidth,
-				Height = Console.WindowHeight,
-				WaitForInput = true
-			};
-			help.Show();
+			Console.WriteLine(@"cfeed v" + Configuration.VERSION + @" - console RSS/Atom feed reader
+
+Usage:
+  cfeed [-h] [-d <database>] [-r <true|false>] [-o <opml uri/path>]
+
+Options:
+  -h  Show this help and exit.
+  -d  Database; override the default db location (default: cfeed.db).
+  -r  Refresh; whether to refresh all feeds on first load (default: true).
+  -o  Import an OPML feed list.
+
+Configuration:
+  Feeds and settings are read from settings.conf in the application folder,
+  on top of the built-in defaults. A minimal settings.conf:
+
+    { Feeds: [{FeedUrl: ""http://feeds.newscientist.com/""}] }
+
+Keys (defaults):
+  Enter/Space  Open feed or article      Backspace/Esc  Go back
+  Up/Down/PgUp/PgDn  Move in lists       R / Ctrl+R     Reload feed / all feeds
+  O  Open in browser     L / I  Open numbered link / image
+  M / U  Mark read / unread     X  Mark for deletion     /  Search
+  Q  Quit
+
+Detailed help (feed options, filters, UI, shortcuts):
+  " + HelpUrl + @"
+Source and releases:
+  https://github.com/sveco/cfeed");
 		}
+
+		/// <summary>
+		/// Location of the full documentation
+		/// </summary>
+		private const string HelpUrl = "https://github.com/sveco/cfeed#readme";
 	}
 }

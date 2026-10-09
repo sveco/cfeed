@@ -1,110 +1,127 @@
-﻿# Console RSS/ATOM Feed Reader
+﻿# cfeed – Console RSS/Atom Feed Reader
 
-Get [latest version here](https://github.com/sveco/cfeed/releases/download/0.8.0/cfeed.v0.8.4.zip).
+A purely textual, console based RSS and Atom feed reader for Windows, written in C#.
 
-## About
-Cfeed (formerly CRR) is purely textual, console based RSS and Atom feed reader for Windows platform built in C#. It uses System.ServiceModel.Syndication library to read RSS 1.0, 2.0 or Atom 1.0 feeds.
-
-HTML to Text rendering is done using [HtmlAgilityPack](http://html-agility-pack.net)
-
-This project was inspierd by wonderfull [Newsbeuter](https://newsbeuter.org) and a lack of similar tool for Windows platform.
-
-## Basic Usage
-Before running cfeed for the first time, you have to do some basic configuration. The only required configuration consists of list of URL's of RSS or Atom feeds.
-See [settings.conf](https://github.com/sveco/CRR/blob/master/CRR/settings.conf) for example configuration. You can remove everything except the **Feeds** section. The only required property in **Feeds** colleciton is **FeedUrl**. Minimal *settings.conf* looks like this:
-
-```
-{
-    Feeds: [{FeedUrl: "http://feeds.newscientist.com/"}]
-}
-```
-
-Any setting in embedded *default.conf* can be overridden in *settings.conf* placed in application root folder.
-
-More about config in next section.
-
-After setting feeds in config file, you can run the app. Application will list configured feeds, and refresh the feed contents in background.
-
-By default, you can open the feed with **Spacebar** or **Enter** key. This will list articles in the feed. Hitting same kays again will open selected feed item. Use **Arrow Up**, **Arrow Down**, **Page Up** and **Page Down** keys to navigate lists. By default return to previous screen using **Backspace** or **Escape** (can be configured differently in settings).
-
-Hitting **R** while on list of feeds will refresh selected feed, and **Control+R** will refresh all feeds.
-
-When on article, article content will be loaded on background. Hitting **O** will open selected article in default (or configured) browser. Full list of actions and hotkeys can be found in Configuration section.
+**[Download the latest version](https://github.com/sveco/cfeed/releases/latest)**
 
 ![Article List](screenshot1.png "Article List")
 
+## About
 
+cfeed (formerly CRR) reads RSS 1.0, RSS 2.0 and Atom 1.0 feeds using `System.ServiceModel.Syndication`, and renders article HTML as text with [HtmlAgilityPack](http://html-agility-pack.net).
+
+It was inspired by the wonderful [Newsbeuter](https://newsbeuter.org) and the lack of a similar tool for Windows. It is built from scratch and does not use any newsbeuter code.
+
+## Quick Start
+
+1. Create `settings.conf` in the application folder. The only required setting is a list of feeds, and the only required property of a feed is `FeedUrl`:
+
+   ```
+   {
+       Feeds: [{FeedUrl: "http://feeds.newscientist.com/"}]
+   }
+   ```
+
+   See [settings.conf](https://github.com/sveco/cfeed/blob/master/CRR/settings.conf) for a fuller example.
+2. Run `cfeed`. It lists your feeds and refreshes them in the background.
+3. Read:
+
+| Key                          | Action                                                      |
+| :--------------------------- | :---------------------------------------------------------- |
+| **Enter** / **Spacebar**     | Open the selected feed, then the selected article           |
+| **Up / Down / PgUp / PgDn**  | Move through lists                                          |
+| **Backspace** / **Escape**   | Go back                                                     |
+| **R** / **Ctrl+R**           | Refresh the selected feed / all feeds (feed list)           |
+| **O**                        | Open the article in the browser (article content loads in the background) |
+
+All keys can be changed, see [Shortcuts](#shortcuts).
 
 ## Configuration
 
-Cfeed uses json files to store app configuration. Embedded *default.conf* provides default settings when no other config file is present. User setting are stored in *settings.conf*. Any setting in latter file overrides default settings.
-The *settings.conf* also includes list of feeds, but there are plans to move this to separate *feedlist.conf* file.
+Configuration is stored in JSON files:
 
-Structure of JSON object:
+- An embedded *default.conf* provides the defaults ([view it here](https://github.com/sveco/cfeed/blob/master/CRR/default.conf)).
+- *settings.conf* in the application folder overrides any of those settings. It also holds your list of feeds (a separate *feedlist.conf* is planned).
 
- - Feeds - list of feeds and feed related settings (url, filters, custom label)
- - UI - look & feel of application, layout of views
- - Shortcuts - key bindings
- - App - app related settings, like external browser etc.
+Top-level sections:
 
-***Feeds***
+| Section     | Purpose                                                          |
+| :---------- | :--------------------------------------------------------------- |
+| `Feeds`     | Feeds and per-feed settings (URL, filters, custom title, ...)    |
+| `UI`        | Look and feel, layout of the views                               |
+| `Shortcuts` | Key bindings                                                     |
+| App-level   | Browser, database, logging etc. (see [Other settings](#other-settings)) |
 
-Basic setting.conf can look like this:
+### Feeds
+
+A feed with all options (only `FeedUrl` is required; `#` starts a comment):
 
 ```
 {
     Feeds: [
     {
-        #URL of RSS otr Atom feed
+        #URL of the RSS or Atom feed
         FeedUrl: "http://feeds.newscientist.com/",
-        #XPath selector to select single node as root of article. Filters (see below) are applied after Select
+        #XPath selector for the single node used as the root of the article. Filters are applied after Select.
         Select: "//html",
-        #Define filters for html id's and classes. Elements from those classes will be ignored when converting html to text. use '.' prefix for classes and # for id's.
-        #A filter that starts with / is an XPath expression, for example "//*[@data-block='promoList']". All elements it matches are ignored.
-        Filters: ["#main-nav", "#breadcrumbs", ".masthead-container",".signpost", ".entry-meta", ".footer", "#mpu-sidebar", ".leaderboard-container", "#registration-barrier", ".entry-form g50"],
-        #If set to true, links in articles are shown as plain text, without link markers and numbers. Default is false.
+        #Elements to ignore when converting HTML to text. Prefix classes with '.', ids with '#'.
+        #A filter starting with '/' is an XPath expression, e.g. "//*[@data-block='promoList']".
+        Filters: ["#main-nav", ".masthead-container", ".signpost", ".entry-meta", ".footer"],
+        #Show links as plain text, without link markers and numbers. Default: false.
         #StripLinks: true,
-        #Custom title to override default feed title
+        #Custom title that overrides the title of the feed
         Title: "New Scientist - Home Custom",
-        #Tags can be used to categorize feeds and articles. Thas can be used in query to filter on
+        #Tags to categorize feeds and articles. Can be used in queries.
         Tags: ["Science"],
-        #If uncommented, feed will be hidden and only accessible via FeedQuery
+        #Hide the feed from the list; it is then only reachable through a FeedQuery
         #Hidden: true,
-        #If set to true, article text is built from the content published in the feed instead of downloading the article page. Default is false.
+        #Build article text from the content in the feed instead of downloading the page. Default: false.
         #UseFeedContent: true,
-        #If set to true, reloads feed automatically
+        #Reload this feed automatically
         AutoReload: true,
-        #If AutoReload is set to true, this defines number of seconds after which feed will be automatically reloaded. Default is 30.
+        #Seconds between automatic reloads. Default: 30.
         ReloadInterval: 30
-    }
+    }]
 }
 ```
 
-Only FeedUrl is required, other settings are optional. A new feature is Select that selects root node of document. Select makes filters much simpler, as you can first select root, 
-and then "filter" out unwanted content from root node, like page navigation, links, registration forms etc.
-To use filter, look source of the page that you want to display. Prepend all "class" attributes of html elements you want to filter out with ".", and all "id" attributes of html elements with "#".
-Any content inside filtered elements will not be rendered.
-Select works on its own, Filters are not required.
-Title can be used to display custom title of feed, instead of the one defined by feed itself.
+| Property         | Purpose                                                              |
+| :--------------- | :------------------------------------------------------------------- |
+| `FeedUrl`        | **Required** (unless using a dynamic feed). URL of the feed.         |
+| `Title`          | Display title instead of the one the feed defines.                   |
+| `Select`         | XPath of the node to use as article root.                            |
+| `Filters`        | Elements to leave out of the article.                                |
+| `StripLinks`     | Show link text without markers.                                      |
+| `UseFeedContent` | Use the content published in the feed itself.                        |
+| `Tags`           | Categories, usable in queries and shown with `%g`.                   |
+| `Hidden`         | Hide from the feed list.                                             |
+| `UserName`, `Password` | Credentials for feeds that need authentication.                |
+| `AutoReload`, `ReloadInterval` | Automatic refresh and its interval in seconds.         |
+| `FeedQuery`      | Filter articles, or build a dynamic feed (see below).                |
 
-***XPath filters***
+#### Select and Filters
 
-Some sites generate class names (for example *ssrcss-15twdc6-Stack*) that change without notice, or put the same class on content and on clutter. For those, a filter that starts with **/** is treated as an XPath expression instead of a class or an id.
-Every element the expression matches is left out, together with its content. Filters of both kinds can be mixed in the same list.
-An expression that is not valid is ignored (and logged), the other filters still apply.
+Web pages contain navigation, ads and other clutter. To get just the article:
+
+1. **Select** the node that holds the article. This makes the filter list much shorter. Select works on its own; Filters are optional.
+2. **Filter** out what is left over. View the page source, then use `.` before an element's `class` and `#` before its `id`. Anything inside a filtered element is not rendered.
+
+*Example: Slashdot*
+```
+{
+    FeedUrl: "http://rss.slashdot.org/slashdot/slashdot",
+    Select: "//div[@id='firehoselist']",
+    Filters: [".view_mode", "#newa2footerv2"]
+}
+```
+
+**XPath filters.** Some sites generate class names (for example *ssrcss-15twdc6-Stack*) that change without notice, or put the same class on content and on clutter. A filter that starts with `/` is treated as an XPath expression instead of a class or id. Every matching element is left out together with its content. Both kinds can be mixed in one list. An invalid expression is ignored (and logged); the other filters still apply.
 
 ```
 Filters: [".share-tools", "#footer", "//*[@data-block='promoList']", "//div[contains(@class,'advert')]"]
 ```
 
-***StripLinks***
-
-By default, a link in an article is shown as *[Link:text][3]* and can be opened with **L**. Set **StripLinks: true** to show just the text of the link, with no marker and no number. Those links are then not available with **L**.
-Images are not affected, use a filter to leave them out.
-
-*Example: BBC News*
-
-BBC article pages keep the story in `<main id="main-content">`, and mark each block with a data-block attribute. This shows the story with the author and the time, and leaves out the menus, photos, video players and the lists of related links:
+*Example: BBC News.* BBC article pages keep the story in `<main id="main-content">` and mark each block with a `data-block` attribute. This shows the story with author and time, and leaves out menus, photos, video players and related links:
 ```
 {
     FeedUrl: "http://feeds.bbci.co.uk/news/world/rss.xml",
@@ -117,19 +134,16 @@ BBC article pages keep the story in `<main id="main-content">`, and mark each bl
 ```
 Video pages have no article, so they show little text. Add `"//*[@data-block='byline']"` to also leave out the author line.
 
-***UseFeedContent***
+#### StripLinks
 
-By default, opening an article downloads the article's web page and converts it to text. Some sites, like reddit, serve pages that are built by javascript, and those come out empty.
-Set **UseFeedContent: true** on such a feed to build the article from the content that the feed itself publishes (the content element of an Atom entry). Links in that content are numbered as usual, so you can open them with **L**.
-For a link post on reddit, the content has the *[link]* and *[comments]* links, so **L** opens the linked article. Open the reddit comments page itself with **O**.
+By default a link is shown as *[Link:text][3]* and can be opened with **L**. With `StripLinks: true` only the link text is shown, and those links are not available with **L**. Images are not affected; use a filter to leave them out.
 
-Notes:
-- If an entry has no content, the article page is downloaded as usual.
-- Select and Filters apply to the feed content in the same way as to a downloaded page.
-- Articles that were already saved locally are shown from the saved copy. Delete the saved copy (**Delete** in the article list) to build it again with the new setting.
-- The content is read when the feed is refreshed. After enabling the option, refresh the feed (**R** in the feed list) so existing articles get their content.
+#### UseFeedContent
 
-*Example: Reddit*
+By default, opening an article downloads its web page and converts it to text. Some sites, like reddit, serve pages built by JavaScript, which come out empty. Set `UseFeedContent: true` to build the article from the content the feed itself publishes (for example the content element of an Atom entry). Links in that content are numbered as usual and open with **L**.
+
+For a reddit link post, the content has the *[link]* and *[comments]* links, so **L** opens the linked article, while **O** opens the reddit comments page.
+
 ```
 {
     FeedUrl: "https://www.reddit.com/r/news/.rss",
@@ -138,276 +152,238 @@ Notes:
 }
 ```
 
-***Dynamic Feeds***
+Notes:
+- If an entry has no content, the article page is downloaded as usual.
+- `Select` and `Filters` apply to feed content the same way as to a downloaded page.
+- The content is read when the feed is refreshed. After enabling the option, refresh the feed (**R** in the feed list) so existing articles get their content.
+- Articles already saved locally are shown from the saved copy. Delete the saved copy (**Delete** in the article list) to build it again.
 
-Yay! It is now supported to filter articles in online feed by defining FeedQuery, or create dynamic feed by specifying FeedQuery without the FeedUrl. Latter will search all downloaded articles, and crete "virtual" feed from search results.
+#### Dynamic and filtered feeds
 
-*Example: Dynamic feed*
+`FeedQuery` filters the articles of an online feed. Without a `FeedUrl` it searches all downloaded articles and builds a "virtual" feed from the results.
+
 ```
-{ 
-    #Dynamic feed - find all articles with word 'Mars' in Title or Summary.
+{
+    #Dynamic feed: all downloaded articles with 'Mars' in Title or Summary
     FeedQuery: "(Summary.Contains(\"Mars\") || Title.Contains(\"Mars\"))",
     Title: "Dynamic feed - Mars"
-}
-```
-
-*Example: Filtered feed*
-```
-{ 
-    #Filtered feed - find all articles in newscientist feed with word 'Mars' in Title or Summary
+},
+{
+    #Filtered feed: only articles from this feed with 'Mars' in Title or Summary
     FeedUrl: "http://feeds.newscientist.com/",
     FeedQuery: "(Summary.Contains(\"Mars\") || Title.Contains(\"Mars\"))",
     Title: "Online feed - Mars"
 }
 ```
 
+The query is interpreted by `System.Linq.Dynamic.DynamicQueryable`. Fields available in a query:
 
-*Example: Using Select*
-```
-{ 
-    FeedUrl: "http://rss.slashdot.org/slashdot/slashdot",
-    #Select root node first
-    Select: "//div[@id='firehoselist']",
-    #Filter out unwanted links
-    Filters: [".view_mode", "#newa2footerv2"]
-}
-```
+| Name        | Type    | Meaning                                                      |
+| :---------- | :------ | :----------------------------------------------------------- |
+| FeedUrl     | String  | URL of the parent feed                                       |
+| PublishDate | String  | Publish or last updated date (whichever is latest)           |
+| Summary     | String  | Short article summary                                        |
+| Title       | String  | Article title                                                |
+| IsNew       | Boolean | Read/unread flag                                             |
+| Hidden      | Boolean | Whether the feed is hidden in the list                       |
+| Index       | Integer | Article index                                                |
 
+### UI
 
-**FeedQuery syntax**
+The `UI` section controls the look and feel. (Planned: a layout template per displayed element.)
 
-FeedQuery string is interpreted using System.Linq.Dynamic.DynamicQueryable class. Supported entities to use in query are listed in following table:
+#### UI.Strings
 
-Name            | Type          | Meaning
-:-------------- | :------------ | :------------
-FeedUrl         | String        | Url of parent rss feed
-PublishDate     | String        | Article publish date/last updated date (whichever is latest)
-Summary         | String        | Short article summary
-Title           | Strong        | Article title
-IsNew           | Boolean       | Read/Unread flag
-Hidden          | Boolean       | Should feed be hidden in list
-Index           | Integer       | Article Index
+Text and format of UI elements. A format string uses `%` followed by an identifier (tables below). To set a column width add `:width` and an alignment: `"%i:3r"` is the index, right aligned, padded to 3 characters; `"%i:3l"` aligns left.
 
+| Setting                     | Meaning                                              | Default |
+| :-------------------------- | :--------------------------------------------------- | :------ |
+| ReadStateNew                | Feed has unread items / article is new               | `"N"` |
+| ReadStateRead               | All items read / article is not new                  | `" "` |
+| DownloadStateDownloaded     | Article content is saved locally                     | `"D"` |
+| DownloadStatePending        | Article content is not downloaded                    | `" "` |
+| DeleteStateDeleted          | Article is marked for deletion                       | `"X"` |
+| DeleteStateNotDeleted       | Article is not marked for deletion                   | `" "` |
+| LoadingSuffix               | Shown after a feed or article being loaded           | `" - Loading..."` |
+| LoadingPrefix               | Shown before a feed or article being loaded          | `""` |
+| FeedListHeaderFormat        | Header of the feed list                              | `"╗ cfeed v%V - console feed reader ╔"` |
+| FeedListItemFormat          | Feed list item                                       | `"%i:3r %n [%u] %g:16l %t"` |
+| FeedListFooterFormat        | Footer of the feed list                              | `" Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all "` |
+| ArticleListHeaderFormat     | Header of the article list (uses the *feed list* identifiers) | `"╗ cFeed v%V - Articles in '%t' (%U unread, %T total) ╔"` |
+| ArticleListItemFormat       | Article list item                                    | `"%i:3r [%n\|%D\|%x] %d  %t"` |
+| ArticleListDateFormat       | Date format in the article list                      | `"MMM dd"` |
+| ArticleListFooterFormat     | Footer of the article list                           | `" ESC/Backspace:Back M:Mark read U:Mark Unread R:Reload "` |
+| ArticleHeaderFormat         | Header of the article view                           | `" cFeed v%V - Article:%t - Last update: %u "` |
+| ArticleFooterFormat         | Footer of the article view                           | `" ESC/Backspace:Back O:Open N:Next L:Link I:Image S:Download <:Prev >:Next [:Prev Unread ]:Next Unread "` |
+| LoadingText                 | Shown in the article view while content loads        | `" loading content "` |
+| ArticleTextFeedUrlLabel     | Feed URL label in the article header                 | `"Feed: "` |
+| ArticleTextTitleLabel       | Title label in the article header                    | `"Title: "` |
+| ArticleTextAuthorsLabel     | Authors label in the article header                  | `"Author(s): "` |
+| ArticleTextLinkLabel        | Article URL label in the article header              | `"Link(s): "` |
+| ArticleTextPublishDateLabel | Publish date label in the article header             | `"Date: "` |
+| PromptMarkAll               | Confirm marking all articles in a feed as read       | `"Mark all articles as read?"` |
+| PromptDeleteAll             | Confirm marking all articles in a feed for deletion  | `"Mark all articles for deletion?"` |
+| PromptPurge                 | Confirm purging articles marked for deletion         | `"Purge deleted articles?"` |
+| PromptAnswerYes             | Text of the "Yes" option                             | `"Yes"` |
+| PromptAnswerNo              | Text of the "No" option                              | `"No"` |
 
-***UI***
+Which identifiers apply depends on the format. `%V` and `%v` work in every format.
 
-UI section of config can be used to customize look and feel of application.
+| String | Meaning                                        |
+| :----- | :--------------------------------------------- |
+| %V     | Major.Minor version                            |
+| %v     | Full version, Major.Minor.Revision.Build       |
 
-TODO: In the future, I plan to change how UI is configured, by providing layout template in for each displayed UI element.
+**Identifiers for feed formats** (`FeedList*` and `ArticleListHeaderFormat`/`ArticleListFooterFormat`):
 
-***UI.Strings***
+| String | Meaning                              |
+| :----- | :----------------------------------- |
+| %i     | Feed index (starts at 1)             |
+| %l     | Feed URL                             |
+| %n     | Read state flag (New/Read)           |
+| %u     | Unread / total items                 |
+| %T     | Total items                          |
+| %U     | Unread items                         |
+| %t     | CustomTitle ?? Title ?? FeedUrl      |
+| %g     | Feed tags                            |
 
-Formatting for various UI elements. Formatting string must start by % followed by specific identifier, dependant on type of element displayed. To define column width use following format:
-"%i:3r" is replaced by Index, right aligned and padded to 3 characters width. To align string left, use "l", e.g. "%i:3l".
+**Identifiers for article formats** (`ArticleListItemFormat`, `ArticleHeaderFormat`):
 
-Following tables defines identifiers for each UI.String element
+| String | Meaning                                                 |
+| :----- | :------------------------------------------------------ |
+| %i     | Article index (starts at 1)                             |
+| %n     | Read state flag (New/Read)                              |
+| %D     | Download state flag (Downloaded/Pending)                |
+| %x     | Deleted flag                                            |
+| %d     | Publish or last updated date (whichever is latest)      |
+| %u     | Last updated date                                       |
+| %t     | Article title                                           |
+| %s     | Summary                                                 |
+| %l     | Feed URL                                                |
 
-Setting | Meaning | Default value
-:------------ | :------------- | :------------
-ReadStateNew                | String to show when feed contains unread items, or article is new. | "N"
-ReadStateRead               | String to show when all items in feed has been read, or article is not new. | " "
-DownloadStateDownloaded     | String to show when article content is saved locally |  "D"
-DownloadStatePending        | String to show when article content is not downloaded | " "
-DeleteStateDeleted          | String to show when article has been marked for deletion | "X",
-DeleteStateNotDeleted       | String to show when article has not been marked for deletion | " ",
-LoadingSuffix               | Suffix shown when feed or article are being loaded | " - Loading..."
-LoadingPrefix               | Prefix shown when feed or article are being loaded | ""
-FeedListHeaderFormat        | Title shown in header when list of feeds is displayed | "╗ cfeed v%V - console feed reader ╔",
-FeedListItemFormat          | Format of feed list items | "%i:3r %n [%u] %g:16l %t",
-FeedListFooterFormat        | Format for feed list footer | " Q:Quit ENTER/Space:List articles R:Reload Ctrl+R:Reload all ",
-ArticleListHeaderFormat     | Format of article list titlw | "╗ cFeed v%V - Articles in \'%t\' %u ╔",
-ArticleListItemFormat       | Format of article list item | "%i:3r [%n\|%D\|%x] %d %t",
-ArticleListDateFormat       | Date format for dates shown in article list | "MMM dd",
-ArticleListFooterFormat     | Format for article list footer | " ESC/Backspace:Back M:Mark read U:Mark Unread R:Reload ",
-ArticleTitleFormat          | Format of article title | "cFeed v%V - Article:%t ",
-ArticleFooter               | Format for article footer | " ESC/Backspace:Back O:Open N:Next L:Link I:Image",
-ArticleTextFeedUrlLabel     | Label for feed url in article header | "Feed: ",
-ArticleTextTitleLabel       | Label for article title in article header | "Title: ",
-ArticleTextAuthorsLabel     | Label for authors article header | "Author(s): ",
-ArticleTextLinkLabel        | Label for article url in article header | "Link: ",
-ArticleTextPublishDateLabel | Label for publish date in article header | "Date: ",
-PromptMarkAll               | Prompt to confirm to mark all article in feed as read | "Mark all articles as read [Y/n]:",
-PromptDeleteAll             | Prompt to confirm to delete all articles in current feed | "Mark all articles for deletion?",
-PromptPurge                 | Prompt to confirm purging of articles marked for deletion | "Purge deleted articles? [Y/n]:",
-PromptAnswerYes             | Option to display in place of "Yes" option | "Yes",
-PromptAnswerNo              | Option to display in place of "No" option | "No"
+#### UI.Colors
 
+Defines colors used inside article text. Header, footer and list colors are set per control in the layout (`ForegroundColor`, `BackgroundColor`). Valid names are listed in [ConsoleColor](https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx).
 
-Replacement strings for *ApplicationTitleFormat*:
+| Setting                | Default        |
+| :--------------------- | :------------- |
+| ArticleTextHighlight   | `"Yellow"`     |
+| LinkHighlight          | `"DarkCyan"`   |
+| LinkTextHighlight      | `"White"`      |
+| ImageLinkHighlight     | `"Yellow"`     |
+| ImageLinkTextHighlight | `"Yellow"`     |
+| LinkInputForeground    | `"Black"`      |
+| LinkInputBackground    | `"DarkYellow"` |
 
-String | Meaning
------------- | -------------
-%V | Major.Minor version
-%v | Full version, Major.Minor.Revision.Build
+#### UI.Layout
 
-Replacement strings for *FeedListFormat* and *FeedTitleFormat*:
+Defines the layout of the three views:
 
-String | Meaning
------------- | -------------
-%i | Feed index
-%l | RSS/ATOM feed url
-%n | Read state flag (New/Read)
-%u | # of unread / total items
-%T | # of total items
-%U | # of unread items
-%t | CustomTitle ?? Title ?? FeedUrl
-%V | Major.Minor version
-%v | Full version, Major.Minor.Revision.Build
-%g | Feed tags
+| Element     | Description                |
+| :---------- | :------------------------- |
+| FeedList    | Layout of the feed list    |
+| ArticleList | Layout of the article list |
+| Article     | Layout of the article view |
 
-Replacement strings for *ArticleListFormat* and *ArticleTitleFormat*:
+Each element has a `Width`, a `Height` and a list of controls generated for the view. See [default.conf](https://github.com/sveco/cfeed/blob/master/CRR/default.conf) for an example.
 
-String | Meaning
------------- | -------------
-%i | Feed index
-%n | Read state flag (New/Read)
-%D | Download state flag (Downloaded/Pending)
-%x | Deleted flag
-%d | Article publish date / Last uppdated date (which one is latest)
-%u | Last updated date
-%t | Article title
-%s | Summary
-%l | RSS/ATOM feed url
-%V | Major.Minor version
-%v | Full version, Major.Minor.Revision.Build
+- The `Width` and `Height` of the first view (FeedList) set the console window size at startup. They are not applied again when other views open, so a window you resized stays as it is.
+- A control's `Width` or `Height` can be negative, meaning the console size minus that number (`Width: -3` is the console width minus 3). Such controls follow the console when it is resized.
 
+**Resizing the console.** You can resize the window at any time. cfeed waits until the new size has settled, then redraws the current view: header, footer, lists, and article text (re-wrapped to the new width). The selected item and scroll position stay visible. Header and footer text longer than the window is shortened. Controls with a fixed `Top` or `Height` (for example `Top: 20` of the Loading text in the Article layout) stay where they are.
 
-***UI.Colors***
+### Shortcuts
 
-Colors section can be used to define custom color "theme" for the app. Colors for UI elements are defined in Layout section.
-For a valid list of color names see this [list on MSDN](https://msdn.microsoft.com/en-us/library/system.consolecolor(v=vs.110).aspx).
+Each shortcut binds a key (and optional modifiers) to an action.
 
-Setting | Default value
-:------------ | :-------------
-ArticleHeaderBackground | "DarkCyan",
-ArticleHeaderForeground | "Yellow",
-ArticleFooterBackground | "DarkCyan",
-ArticleFooterForeground | "Yellow",
-ArticleTextHighlight    | "Yellow",
-LinkHighlight           | "DarkCyan",
-ImageLinkHighlight      | "Yellow",
-LinkInputForeground     | "Black",
-LinkInputBackground     | "DarkYellow"
+- Valid [key names](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx) and [modifier names](https://msdn.microsoft.com/en-us/library/system.consolemodifiers(v=vs.110).aspx) come from the .NET `ConsoleKey` and `ConsoleModifiers` enums.
+- `Key` and `Modifiers` can be arrays. With several keys, **any** of them triggers the action. With several modifiers, **all** must be held. `{Key: ["S", "D"], Modifiers: ["Control", "Alt"]}` triggers on Ctrl+Alt+S or Ctrl+Alt+D.
+- Windows reserves some key combinations when advanced console features are enabled. [Avoid those](https://technet.microsoft.com/en-us/library/mt427362.aspx).
 
-***UI.Layout***
+| Setting     | Default binding                                   | Action                                | Scope |
+| :---------- | :------------------------------------------------ | :------------------------------------ | :---- |
+| QuitApp     | `{Key: ["Q"]}`                                    | Exit the app                          | Feed list |
+| Reload      | `{Key: ["R"]}`                                    | Reload selected feed or article       | Feed list, Article list |
+| ReloadAll   | `{Key: ["R"], Modifiers: ["Control"]}`            | Reload all feeds                      | Feed list |
+| OpenFeed    | `{Key: ["Enter", "Spacebar"]}`                    | List articles in selected feed        | Feed list |
+| OpenArticle | `{Key: ["Enter", "Spacebar"]}`                    | Open selected article                 | Article list |
+| OpenBrowser | `{Key: ["O"]}`                                    | Open article or feed in browser       | Feed list, Article list, Article |
+| RefreshView | `{Key: ["F"]}`                                    | Redraw the UI                         | Feed list |
+| Prev        | `{Key: ["OemComma"]}`                             | `<` Previous article                  | Article |
+| PrevUnread  | `{Key: ["Oem4"]}`                                 | `[` Previous unread article           | Article |
+| Next        | `{Key: ["OemPeriod"]}`                            | `>` Next article                      | Article |
+| NextUnread  | `{Key: ["Oem6"]}`                                 | `]` Next unread article               | Article |
+| Delete      | `{Key: ["X"]}`                                    | Mark selected article for deletion    | Article list, Article |
+| DeleteContent | `{Key: ["Delete"]}`                             | Delete locally saved article content  | Article list |
+| DeleteAll   | `{Key: ["X"], Modifiers: ["Control", "Alt"]}`     | Mark all articles for deletion        | Article list |
+| Purge       | `{Key: ["D4"], Modifiers: ["Shift"]}`             | Purge deleted articles                | Feed list |
+| StepBack    | `{Key: ["Escape", "Backspace"]}`                  | Navigate back                         | Feed list, Article list, Article |
+| SaveArticle | `{Key: ["S"]}`                                    | Reload article from the web and save  | Article |
+| Download    | `{Key: ["D"]}`                                    | Download article                      | Article list |
+| MarkRead    | `{Key: ["M"]}`                                    | Mark selected article as read         | Article list |
+| MarkAllRead | `{Key: ["A"]}`                                    | Mark all articles as read             | Article list, Feed list (selected item) |
+| MarkUnread  | `{Key: ["U"]}`                                    | Remove read flag                      | Article list |
+| OpenLink    | `{Key: ["L"]}`                                    | Open numbered link in browser         | Article |
+| OpenImage   | `{Key: ["I"]}`                                    | Open numbered image in browser        | Article |
+| Search      | `{Key: ["Oem2"]}`                                 | `/` Search feeds (title, description) | Feed list, Article list |
 
-Defines general layout of the application. Layout must containg following items:
+Navigation keys in lists are fixed and not configurable:
 
-Element         | Description
-:------------   | :-------------
-FeedList        | Defines layout of Feed List view 
-ArticleList     | Defines layout of Article List view 
-Article         | Defines layout of Article view 
+| Key    | Action               | Scope |
+| :----- | :------------------- | :---- |
+| Up     | Up one item          | Feed list, Article list |
+| Down   | Down one item        | Feed list, Article list |
+| PgUp   | Scroll up 10 items   | Feed list, Article list |
+| PgDown | Scroll down 10 items | Feed list, Article list |
 
-Each elemant can contain Width, Height, and list of controls that will be generated for view. See [default.conf](https://github.com/sveco/CRR/blob/master/CRR/default.conf) for example.
+### Other settings
 
-Width and Height of the first view (FeedList) set the size of the console window when the application starts. They are not applied again when other views open, so a window that was resized stays as it is.
-Width and Height of a control can be negative, which means the size of the console minus that number. For example, Width: -3 is the console width minus 3. Such controls follow the console when it is resized.
+| Setting        | Description                                                          | Default |
+| :------------- | :------------------------------------------------------------------- | :------ |
+| SavedFileName  | File name format for saved articles                                  | `".\\saved\\%d\\%t.txt"` |
+| Database       | Name of the LiteDB database that stores metadata                     | `"cfeed.db"` |
+| Opml           | Path to an OPML file to load (or use `-o` on the command line)       | empty |
+| Refresh        | Refresh feeds on load                                                | `true` |
+| Browser        | Full path of a browser executable to open links with. Used only if the file exists, otherwise the system default browser opens. Only http and https links are opened. | empty |
+| Debug          | NLog log level: Trace, Debug, Info, Warn, Error, Fatal, Off. A level logs itself and everything more severe ("Warn" logs Warn, Error, Fatal). Off turns logging off. | `"Warn"` |
 
-***Resizing the console***
+`SavedFileName` supports the following replacements. The file name is sanitized. Absolute, relative and network locations work, as long as you have write access.
 
-The console window can be resized at any time. The application waits until the new size has settled, then draws the current view again: header, footer, lists, article text (wrapped to the new width), and keeps the selected item and the scroll position visible.
-Header and footer text that is longer than the window is shortened. Controls with a fixed Top or Height (for example *Top: 20* of the Loading text in the Article layout) stay where they are.
-
-***Shortcuts***
-
-Defines keyboard keys and modifiers combination that trigger particular action. For a valid list of **[keys see this link](https://msdn.microsoft.com/en-us/library/system.consolekey(v=vs.110).aspx)**.
-For a valid list of **[modifiers see here](https://msdn.microsoft.com/en-us/library/system.consolemodifiers(v=vs.110).aspx)**.
-Some key combinations are used by windows itself if you enable advanced console features. **[Avoid those combinations](https://technet.microsoft.com/en-us/library/mt427362.aspx)**.
-
-Each Key and Modifiers object can be an array. If you define more than one Key, pressing any of the keys will trigger action. If you define more than one modifier, all modifiers have to be pressed. For example, definiton {Key: ["S,D"], Modifiers: ["Control", "Alt"] } means it will trigger on CTRL+ALT+S or CTRL+ALT+D.
-
-Setting     | Key                                           | Action                                | Scope
-:---------- | :-------------------------------------------- | :------------------------------------ | :-------------
-QuitApp     |   { Key: ["Q"] }                              | Exits the app                         | Feed list
-Reload      |   { Key: ["R"] }                              | Reloads selected feed or article      | Feed list, Article list
-ReloadAll   |   { Key: ["R"], Modifiers: ["Control"]}       | Reolad all feeds                      | Feed list
-OpenArticle |   { Key: ["Enter", "Spacebar"] }              | Opens selected article                | Article list
-OpenBrowser |   { Key: ["O"] }                              | Opens article or feed in browser      | Feed list, Article list, Article
-OpenFeed    |   { Key: ["Enter", "Spacebar"] }              | Lists articles in selected feed       | Feed list
-RefreshView |   { Key: ["F"] }                              | Redraws the UI                        | Feed list
-Prev        |   { Key: ["OemComma"] }                       | (<) Previous article                  | Article
-PrevUnread  |   { Key: ["Oem4"] }                           | ([) Previous unread article           | Article
-Next        |   { Key: ["OemPeriod"] }                      | (>) Next Article                      | Article
-NextUnread  |   { Key: ["Oem6"] }                           | (]) Next unread article               | Article
-Delete      |   { Key: ["X"] }                              | Mark selected article for deletion    | Article
-DeleteAll   |   { Key: ["X"], Modifiers: ["Control","Alt"]  | Mark all articles for deletion        | Article list
-Purge       |   { Key: ["D4"], Modifiers: ["Shift"]         | Purge deleted articles			    | Feed list
-StepBack    |   { Key: ["Escape", "Backspace"]}             | Navigates back                        | Feed list, Article list, Article
-SaveArticle |   { Key: ["S"] }                              | Reolads article from web and saves    | Article
-Download    |   { Key: ["D"] }                              | Downloads Article                     | Article list
-MarkRead    |   { Key: ["M"] }                              | Mark selected article as read         | Article list
-MarkAllRead |   { Key: ["A"]                                | Mark all articles as read		        | Article list, Feed List (selected item)
-MarkUnread  |   { Key: ["U"] }                              | Remove read flag                      | Article list
-OpenLink    |   { Key: ["L"] }                              | Open numbered link in browser         | Article
-OpenImage   |   { Key: ["I"] }                              | Open numbered image in browser        | Article
-Search      |   { Key: ["Oem2"]                             | (/) Search feeds (title, description) | Feed list, Article list
-
-Following keys are set by default on picklists and text area. They are not configurable, however they are fairly obvious.
-
-Key     | Action               | Scope
-:------ | :------------------- | :--------
-Up      | Up one item          | Feed list, Article list
-Down    | Down one item        | Feed list, Article list
-PgUp    | Scroll up 10 items   | Feed list, Article list
-PgDown  | Scroll down 10 items | Feed list, Article list
-
-***Other settings***
-
-Setting | Description | Default value
-:------------ | :-------------------------------------------------------------------------- | -----------------------
-SavedFileName | Format for file name of saved articles                                      | ".\\saved\\%d\\%t.txt"
-Database      | Name of liteDB database used to store metadata                              | "cfeed.db" 
-Opml          | Path to OPML file to load. Can be also set by command line param -o \<path> | \<empty> 
-Refresh       | Refresh feeds on load                                                       | true
-Browser       | Custom browser to use to open articles, links and images                    | \<empty\>
-Debug         | Debug level to write to log. Levels are None, Debug, Info, Warning, Error, Critical, in that order. Setting level to "Warning", will log Warning, Error and Critical. SEtting none turns off logging. | "Warning"
-ReloadInterval| Default reload interval for feeds set to auto update                        | 30
-
-
-Replacement strings for *SavedFileName*. File name will be sanitized. Absolute, relative and network locations are supported, just make sure you have write access to defined location.
-
-String | Meaning
------------- | -------------
-%i | Feed index
-%l | RSS/ATOM feed url
-%n | Read state flag (New/Read)
-%d | Article publish date
-%t | Article title
+| String | Meaning                    |
+| :----- | :------------------------- |
+| %i     | Feed index                 |
+| %l     | Feed URL                   |
+| %n     | Read state flag (New/Read) |
+| %d     | Article publish date       |
+| %t     | Article title              |
 
 ## Command Line Arguments
+
 ```
 cfeed [-h] [-d <database>] [-r <true|false>] [-o <opml uri/path>]
 
- -h  Show help.
- -d  Database; Override default db location.
- -r  Refresh; Whether to refresh all feeds on first load.
- -o  Import OPML feed list
+ -h  Show help and exit.
+ -d  Database; override the default db location.
+ -r  Refresh; whether to refresh all feeds on first load.
+ -o  Import an OPML feed list.
 ```
-OPML support is limited to reading list of feeds from opml file and displaying them. They are not exported or added to .conf file, this has to be done manually. However read state is tracked for articles in those feeds, and they can also be selected using dynamic query.
+
+OPML support is limited: the list of feeds is read from the file and displayed, but not exported or added to a `.conf` file (do that manually). Read state is still tracked for articles in those feeds, and they can be used in dynamic queries.
 
 ## Acknowledgments
-Big thanks to awesome newsbeuter for inspiration. This app is built from scratch, and does not use any portion
-of newsbeuter code. This is open source project to provide windows users with purely textual Atom and RSS feed reader.
 
-+ This app uses [JsonConfig](https://github.com/Dynalon/JsonConfig) to parse configuration files.
-+ [HtmlAgilityPack](https://github.com/zzzprojects/html-agility-pack) is used to parse article content.
-+ [LiteDb](https://github.com/mbdavid/LiteDB) is used for local storage of article metadata.
+- [JsonConfig](https://github.com/Dynalon/JsonConfig) parses the configuration files.
+- [HtmlAgilityPack](https://github.com/zzzprojects/html-agility-pack) parses article content.
+- [LiteDB](https://github.com/mbdavid/LiteDB) stores article metadata locally.
 
-### Todos
-+ Write unit tests
-+ Add more features
-+ Get some rest
+## Contributing
 
-### Contributing
+1. Fork it
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request
 
-1. Fork it!
-2. Create your feature branch: git checkout -b my-new-feature
-3. Commit your changes: git commit -am 'Add some feature'
-4. Push to the branch: git push origin my-new-feature
-5. Submit a pull request :D
-
-License
-----
+## License
 
 MIT
