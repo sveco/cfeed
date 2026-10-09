@@ -119,6 +119,7 @@
     <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Views\BaseView.cs" />
+    <Compile Include="Views\LayoutViewport.cs" />
     <Compile Include="Views\FeedListView.cs" />
     <Compile Include="Util\HtmlToText.cs" />
     <Compile Include="Native\NativeMethods.cs" />

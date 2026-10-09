@@ -153,7 +153,14 @@ namespace cFeed
 			}
 
 			feedList = new FeedListView(Config.Global.UI.Layout.FeedList);
-			feedList.Show(refresh, feeds);
+
+			// The views wait for keys, so something else has to notice that the window was resized.
+			using (var resizeWatcher = new ResizeWatcher(() => Console.WindowWidth, () => Console.WindowHeight, BaseView.ResizeActive))
+			{
+				ResizeWatcher.Current = resizeWatcher;
+				resizeWatcher.Start();
+				feedList.Show(refresh, feeds);
+			}
 			Console.Clear();
 		}
 

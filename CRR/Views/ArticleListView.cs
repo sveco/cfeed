@@ -55,7 +55,7 @@
 			   }))
 			  .OnSuccess((list) =>
 			  {
-				  _mainView.Show();
+				  using (Activate()) { _mainView.Show(); }
 			  })
 			  .OnSuccess(list => selectedFeed.RefreshTitle());
 		}
@@ -157,7 +157,7 @@
 
 				var dialog = new Dialog(Config.Global.UI.Strings.PromptDeleteAll, choices);
 				dialog.ItemSelected += DeleteAll_ItemSelected;
-				dialog.Show();
+				using (ResizeWatcher.Suspend()) { dialog.Show(); }
 
 				_mainView?.Refresh();
 				if (markAllDeleted)
@@ -224,7 +224,7 @@
 
 			var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
 			dialog.ItemSelected += MarkAllDialog_ItemSelected;
-			dialog.Show();
+			using (ResizeWatcher.Suspend()) { dialog.Show(); }
 			return true;
 		}
 
@@ -263,7 +263,7 @@
 				var articleListHeader = _mainView.Controls.FirstOrDefault(x => x.GetType() == typeof(Header)) as Header;
 				if (articleListHeader != null)
 				{
-					articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
+					ShowHeader(selectedFeed.FormatLine(headerFormat));
 					articleListHeader.Refresh();
 				}
 
@@ -282,7 +282,7 @@
 
 				if (articleListHeader != null)
 				{
-					articleListHeader.DisplayText = selectedFeed.FormatLine(headerFormat);
+					ShowHeader(selectedFeed.FormatLine(headerFormat));
 					articleListHeader.Refresh();
 				}
 			}

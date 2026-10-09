@@ -69,7 +69,13 @@
           picklist.OnItemKeyHandler += FeedList_OnItemKeyHandler;
         }))
         .OnSuccess(list => ReloadAll(list, refresh))
-        .OnSuccess(list => _mainView.Show());
+        .OnSuccess(list =>
+        {
+          using (Activate())
+          {
+            _mainView.Show();
+          }
+        });
     }
 
     /// <summary>
@@ -203,7 +209,7 @@
 
           var dialog = new Dialog(Config.Global.UI.Strings.PromptMarkAll, choices);
           dialog.ItemSelected += MarkAllDialog_ItemSelected;
-          dialog.Show();
+          using (ResizeWatcher.Suspend()) { dialog.Show(); }
 
           _mainView?.Refresh();
           if (markAllread)
@@ -276,7 +282,7 @@
 
       var dialog = new Dialog(Config.Global.UI.Strings.PromptPurge, choices);
       dialog.ItemSelected += Purge_ItemSelected;
-      dialog.Show();
+      using (ResizeWatcher.Suspend()) { dialog.Show(); }
 
       _mainView?.Refresh();
       if (purge)

@@ -56,12 +56,15 @@
 				this.selectedFeed = feed;
 				parentArticleList = parent;
 
-				PrepareArticle();
+				using (Activate())
+				{
+					PrepareArticle();
 
-				Parallel.Invoke(
-					new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent, _stripLinks)),
-					new Action(_articleContent.Show)
-					);
+					Parallel.Invoke(
+						new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent, _stripLinks)),
+						new Action(_articleContent.Show)
+						);
+				}
 
 				this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
 			}
@@ -165,18 +168,43 @@
 			return true;
 		}
 
-		private bool OpenImage()
+		/// <summary>
+		/// The article info block is not part of the layout, it is sized when it is created. Size it again for
+		/// the new console size before the view is drawn.
+		/// </summary>
+		internal override void OnResize()
 		{
-			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
+			if (_articleContent != null)
 			{
-				var input = new Input("Image #:")
+				_articleContent.Width = Console.WindowWidth - 6;
+				_articleContent.Height = _articleContent.TotalItems + 1;
+			}
+			base.OnResize();
+			_articleContent?.Refresh();
+		}
+
+		/// <summary>
+		/// Asks for a text on the bottom line. A redraw after a resize would wipe the prompt, so it is paused.
+		/// </summary>
+		private static string Prompt(string text)
+		{
+			using (ResizeWatcher.Suspend())
+			{
+				var input = new Input(text)
 				{
 					Top = Console.WindowHeight - 2,
 					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
 					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
 				};
+				return input.InputText;
+			}
+		}
 
-				if (int.TryParse(input.InputText, out int linkNumber))
+		private bool OpenImage()
+		{
+			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
+			{
+				if (int.TryParse(Prompt("Image #:"), out int linkNumber))
 				{
 					if (selectedArticle.ImageLinks != null
 						&& selectedArticle.ImageLinks.Count >= linkNumber
@@ -200,14 +228,7 @@
 		{
 			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
 			{
-				var input = new Input("Link #:")
-				{
-					Top = Console.WindowHeight - 2,
-					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-				};
-
-				if (int.TryParse(input.InputText, out int linkNumber))
+				if (int.TryParse(Prompt("Link #:"), out int linkNumber))
 				{
 					if (selectedArticle.ExternalLinks != null
 						&& selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber
