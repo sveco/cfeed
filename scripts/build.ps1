@@ -8,10 +8,6 @@ $root = Split-Path $PSScriptRoot -Parent
 $ms = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
 if (-not (Test-Path $ms)) { throw "MSBuild not found at $ms" }
 
-# CRR\cFeed.csproj builds the CGui project from the repository next to this one, until CGui 1.3 is a package
-$cgui = Join-Path $root '..\CGui4Net\CGui\CGui.csproj'
-if (-not (Test-Path $cgui)) { throw "CGui project not found at $cgui. Clone https://github.com/sveco/CGui4Net next to this repository and check out the resize-support branch." }
-
 $extra = @()
 if ($OutputPath) { $extra += "-p:OutputPath=$OutputPath" }
 

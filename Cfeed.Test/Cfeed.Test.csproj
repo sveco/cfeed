@@ -38,6 +38,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CGui, Version=1.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CGui.1.3.0\lib\net461\CGui.dll</HintPath>
+    </Reference>
     <Reference Include="JsonConfig, Version=1.0.6473.39546, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CRR\lib\JsonConfig.dll</HintPath>
@@ -84,10 +87,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CGui4Net\CGui\CGui.csproj">
-      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
-      <Name>CGui</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CRR\cFeed.csproj">
       <Project>{c517a101-2396-4f0e-8f75-3752df56a830}</Project>
       <Name>cFeed</Name>
