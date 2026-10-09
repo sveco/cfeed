@@ -16,18 +16,13 @@ namespace cFeed.Util
     public static bool Search(Viewport view, RssFeed feed = null)
     {
 
-      string searchString;
-      // a redraw after a resize would wipe the prompt
-      using (ResizeWatcher.Suspend())
+      var searchInput = new Input("Search for: ")
       {
-        var searchInput = new Input("Search for: ")
-        {
-          Top = Console.WindowHeight - 2,
-          ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
-          BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
-        };
-        searchString = searchInput.InputText?.Replace("\\\"", string.Empty);
-      }
+        Top = Console.WindowHeight - 2,
+        ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+        BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+      };
+      var searchString = searchInput.InputText?.Replace("\\\"", string.Empty);
       if (String.IsNullOrWhiteSpace(searchString))
       {
         return true;

@@ -58,9 +58,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.2.1\lib\net461\CGui.dll</HintPath>
-    </Reference>
     <Reference Include="Gma.System.MouseKeyHook, Version=5.6.130.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MouseKeyHook.5.6.0\lib\net40\Gma.System.MouseKeyHook.dll</HintPath>
     </Reference>
@@ -115,9 +112,6 @@
     <Compile Include="Util\INotifyPropertyChangedExtensions.cs" />
     <Compile Include="Util\OpmlImport.cs" />
     <Compile Include="Util\Rss10FeedFormatter.cs" />
-    <Compile Include="Util\ResizeWatcher.cs" />
-    <Compile Include="Util\ScrollMath.cs" />
-    <Compile Include="Util\SizeChangeDetector.cs" />
     <Compile Include="Util\RssXmlReader.cs" />
     <Compile Include="Util\GlobalMethods.cs" />
     <Compile Include="Util\XmlSanitizingStream.cs" />
@@ -125,7 +119,6 @@
     <Compile Include="Views\ArticleListView.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Views\BaseView.cs" />
-    <Compile Include="Views\LayoutViewport.cs" />
     <Compile Include="Views\FeedListView.cs" />
     <Compile Include="Util\HtmlToText.cs" />
     <Compile Include="Native\NativeMethods.cs" />
@@ -151,6 +144,12 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\CGui4Net\CGui\CGui.csproj">
+      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
+      <Name>CGui</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Todo.txt" />

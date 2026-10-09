@@ -38,9 +38,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CGui, Version=1.1.0.8, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\CGui.1.1.0.8\lib\net40\CGui.dll</HintPath>
-    </Reference>
     <Reference Include="JsonConfig, Version=1.0.6473.39546, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CRR\lib\JsonConfig.dll</HintPath>
@@ -74,9 +71,6 @@
     <Compile Include="HtmlToTextTests.cs" />
     <Compile Include="HttpDownloaderTests.cs" />
     <Compile Include="OpmlImportTests.cs" />
-    <Compile Include="ResizeWatcherTests.cs" />
-    <Compile Include="ScrollMathTests.cs" />
-    <Compile Include="SizeChangeDetectorTests.cs" />
     <Compile Include="StringExtensionsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <!-- Requires Microsoft Fakes (VS Enterprise); excluded so the suite builds with Build Tools. -->
@@ -90,6 +84,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\CGui4Net\CGui\CGui.csproj">
+      <Project>{7579fb0b-6900-4c21-8660-edd8f99943a7}</Project>
+      <Name>CGui</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CRR\cFeed.csproj">
       <Project>{c517a101-2396-4f0e-8f75-3752df56a830}</Project>
       <Name>cFeed</Name>

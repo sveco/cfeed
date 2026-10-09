@@ -44,6 +44,23 @@
 		{
 			headerFormat = Config.Global.UI.Strings.ArticleHeaderFormat;
 			footerFormat = Config.Global.UI.Strings.ArticleFooterFormat;
+
+			// The article info block is not a control of the viewport, it is sized when it is created. The
+			// viewport draws its controls when the console is resized, this takes care of the info block.
+			_mainView.Resizing += (sender, e) => FitArticleInfo();
+			_mainView.Resized += (sender, e) => _articleContent?.Refresh();
+		}
+
+		/// <summary>
+		/// Sizes the article info block for the current console size.
+		/// </summary>
+		private void FitArticleInfo()
+		{
+			if (_articleContent != null)
+			{
+				_articleContent.Width = Console.WindowWidth - 6;
+				_articleContent.Height = _articleContent.TotalItems + 1;
+			}
 		}
 
 		public void Show(RssFeed feed, Picklist<FeedItem> parent)
@@ -56,15 +73,12 @@
 				this.selectedFeed = feed;
 				parentArticleList = parent;
 
-				using (Activate())
-				{
-					PrepareArticle();
+				PrepareArticle();
 
-					Parallel.Invoke(
-						new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent, _stripLinks)),
-						new Action(_articleContent.Show)
-						);
-				}
+				Parallel.Invoke(
+					new Action(() => this.selectedArticle.LoadArticle(_select, _filters, _useFeedContent, _stripLinks)),
+					new Action(_articleContent.Show)
+					);
 
 				this.selectedArticle.DisplayText = this.selectedArticle.DisplayText;
 			}
@@ -168,43 +182,18 @@
 			return true;
 		}
 
-		/// <summary>
-		/// The article info block is not part of the layout, it is sized when it is created. Size it again for
-		/// the new console size before the view is drawn.
-		/// </summary>
-		internal override void OnResize()
+		private bool OpenImage()
 		{
-			if (_articleContent != null)
+			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
 			{
-				_articleContent.Width = Console.WindowWidth - 6;
-				_articleContent.Height = _articleContent.TotalItems + 1;
-			}
-			base.OnResize();
-			_articleContent?.Refresh();
-		}
-
-		/// <summary>
-		/// Asks for a text on the bottom line. A redraw after a resize would wipe the prompt, so it is paused.
-		/// </summary>
-		private static string Prompt(string text)
-		{
-			using (ResizeWatcher.Suspend())
-			{
-				var input = new Input(text)
+				var input = new Input("Image #:")
 				{
 					Top = Console.WindowHeight - 2,
 					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
 					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
 				};
-				return input.InputText;
-			}
-		}
 
-		private bool OpenImage()
-		{
-			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
-			{
-				if (int.TryParse(Prompt("Image #:"), out int linkNumber))
+				if (int.TryParse(input.InputText, out int linkNumber))
 				{
 					if (selectedArticle.ImageLinks != null
 						&& selectedArticle.ImageLinks.Count >= linkNumber
@@ -228,7 +217,14 @@
 		{
 			if (selectedArticle != null && selectedArticle != null && selectedArticle.IsLoaded)
 			{
-				if (int.TryParse(Prompt("Link #:"), out int linkNumber))
+				var input = new Input("Link #:")
+				{
+					Top = Console.WindowHeight - 2,
+					ForegroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputForeground),
+					BackgroundColor = Configuration.GetColor(Config.Global.UI.Colors.LinkInputBackground),
+				};
+
+				if (int.TryParse(input.InputText, out int linkNumber))
 				{
 					if (selectedArticle.ExternalLinks != null
 						&& selectedArticle.ExternalLinks.Count + selectedArticle.Links.Count >= linkNumber

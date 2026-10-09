@@ -47,62 +47,6 @@ namespace Cfeed.Test
     }
 
     [TestMethod]
-    public void TruncateVisible_ShortTextIsUnchanged()
-    {
-      Assert.AreEqual("Hello", "Hello".TruncateVisible(5));
-      Assert.AreEqual("Hello", "Hello".TruncateVisible(50));
-      Assert.AreEqual("", "".TruncateVisible(3));
-      Assert.IsNull(((string)null).TruncateVisible(3));
-    }
-
-    [TestMethod]
-    public void TruncateVisible_CutsLongText()
-    {
-      Assert.AreEqual("Hello", "Hello world".TruncateVisible(5));
-      Assert.AreEqual("", "Hello".TruncateVisible(0));
-    }
-
-    [TestMethod]
-    public void TruncateVisible_ColourTagsDoNotCountAndAreKept()
-    {
-      var text = "\x1b[f:Red]Hello\x1b[Reset] world";
-
-      var result = text.TruncateVisible(7);
-
-      // 7 visible characters, "Hello w", with both tags still there
-      Assert.AreEqual("\x1b[f:Red]Hello\x1b[Reset] w", result);
-    }
-
-    [TestMethod]
-    public void TruncateVisible_KeepsATrailingResetTag()
-    {
-      var text = "\x1b[f:Red]Hello world\x1b[Reset]";
-
-      var result = text.TruncateVisible(5);
-
-      Assert.AreEqual("\x1b[f:Red]Hello\x1b[Reset]", result);
-    }
-
-    [TestMethod]
-    public void TruncateVisible_TextWithOnlyTagsIsUnchanged()
-    {
-      var text = "\x1b[f:Red]\x1b[Reset]";
-
-      Assert.AreEqual(text, text.TruncateVisible(0));
-    }
-
-    [TestMethod]
-    public void TruncateVisible_ArticleFooterAtANarrowWidth()
-    {
-      var footer = " ESC/Backspace:Back O:Open N:Next L:Link I:Image S:Download <:Prev >:Next [:Prev Unread ]:Next Unread ";
-
-      var result = footer.TruncateVisible(69);
-
-      Assert.AreEqual(69, result.Length);
-      Assert.IsTrue(footer.StartsWith(result));
-    }
-
-    [TestMethod]
     public void PadRightVisibleTest()
     {
       var input = "\x1b[Test]Test";
